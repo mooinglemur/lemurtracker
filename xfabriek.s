@@ -57,7 +57,32 @@ main:
 	jsr xf_set_charset
 	jsr xf_clear_screen
 	jsr xf_install_custom_chars
+
+@mainloop:
 	jsr xf_draw_tracker_grid
+	wai
+
+	VERA_SET_ADDR $0000,2
+	jsr GETIN
+	pha
+
+	beq :+
+	jsr xf_byte_to_hex
+	sta VERA_data0
+	stx VERA_data0
+	:
+
+
+	pla
+	cmp #$11
+	bne :+
+		inc tracker_y_position
+	:
+	cmp #$91
+	bne :+
+		dec tracker_y_position
+	:
+	bra @mainloop
 
 ;	DO THIS WHEN WE'RE EXITING FOR REAL
 ;	jsr xf_reset_charset
@@ -65,11 +90,11 @@ main:
 
 xf_set_charset:
 	lda #3
-	jmp SCREEN_SET_CHARSET ; jmp replaces jsr followed by ret
+	jmp SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
 
 xf_reset_charset:
 	lda #2
-	jmp SCREEN_SET_CHARSET ; jmp replaces jsr followed by ret
+	jmp SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
 
 xf_clear_screen:
 	VERA_SET_ADDR $0000,1
@@ -132,6 +157,11 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2
 	sta $9F20
 	
 	lda xf_tmp2
+	sec
+	sbc #20
+	bcc @blankrow
+	
+@filledrow:
 	jsr xf_byte_to_hex
 	sta VERA_data0
 	stx VERA_data0
@@ -152,7 +182,29 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2
 	lda #$A3
 	sta VERA_data0
 
+	bra @endofrow
+@blankrow:
+	lda #$20
+	sta VERA_data0
+	sta VERA_data0
 
+	ldx #10
+	:
+		lda #$A3
+		sta VERA_data0
+		lda #' '
+		sta VERA_data0
+		sta VERA_data0
+		sta VERA_data0
+		sta VERA_data0
+		sta VERA_data0
+		sta VERA_data0
+		dex
+		bne :-
+	lda #$A3
+	sta VERA_data0
+
+@endofrow:
 	inc xf_tmp2
 	inc xf_tmp1
 	lda xf_tmp1
@@ -164,6 +216,29 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2
 ;	sta VERA_data0
 ;	lda #$91
 ;	sta VERA_data0
+
+
+
+@colorcursorline:
+	lda #(0 | $20) ; low page, stride = 2
+	sta $9F22
+
+	lda #23; row number
+	sta $9F21
+
+	lda #7 ; address color memory inside grid
+	sta $9F20
+	
+	ldx #70
+	lda #%00100001
+	:
+		sta VERA_data0
+		dex
+		bne :-
+		
+	
+
+
 
 	rts
 
