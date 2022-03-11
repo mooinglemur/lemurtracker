@@ -22,6 +22,17 @@ setup:
 	cli
 
 	rts
+
+teardown:
+	sei
+	lda previous_handler
+	sta $0314
+	lda previous_handler+1
+	sta $0315
+	cli
+
+	rts
+
 handler:
 	php
 	sei

@@ -30,12 +30,15 @@ entry:
 .include "cx16-concerto/concerto_synth/x16.asm"
 .include "macros.inc"
 .include "customchars.s"
+concerto_use_timbres_from_file = 1
+.define CONCERTO_TIMBRES_PATH "cx16-concerto/FACTORY.COB"
 .include "cx16-concerto/concerto_synth/concerto_synth.asm"
 .include "irq.s"
 
 XF_BASE_BG_COLOR = $00 ; black
 XF_AUDITION_BG_COLOR = $60 ; blue
 XF_NOTE_ENTRY_BG_COLOR = $20 ; red
+XF_CURSOR_BG_COLOR = $F0 ; light grey
 XF_HILIGHT_BG_COLOR_1 = $B0 ; dark grey
 XF_HILIGHT_BG_COLOR_2 = $C0 ; grey
 
@@ -71,6 +74,7 @@ main:
 	sta tracker_global_frame_length
 
 	jsr xf_irq::setup
+	jsr concerto_synth::initialize
 
 
 @mainloop:
@@ -87,9 +91,19 @@ main:
 	stx VERA_data0
 	:
 
+	VERA_SET_ADDR $0010,2
+	lda tracker_cursor_position
+	jsr xf_byte_to_hex
+	sta VERA_data0
+	stx VERA_data0
+	
+	lda tracker_x_position
+	jsr xf_byte_to_hex
+	sta VERA_data0
+	stx VERA_data0
 
 	pla
-	cmp #$11
+	cmp #$11 ; down
 	bne :++
 		ldy tracker_y_position
 		cpy tracker_global_frame_length
@@ -99,7 +113,7 @@ main:
 		:
 		inc tracker_y_position
 	:
-	cmp #$91
+	cmp #$91 ; up
 	bne :++
 		ldy tracker_y_position
 		bne :+
@@ -110,10 +124,63 @@ main:
 		:
 		dec tracker_y_position
 	:
-	bra @mainloop
+	cmp #$9D ; left
+	bne @endleft
+		ldx tracker_cursor_position
+		dex
+		cpx #1
+		bne :+
+			dex
+		:
+		cpx #8
+		bcc :+
+			ldx #7
+			dec tracker_x_position
+			ldy tracker_x_position
+			cpy #8
+			bcc :+
+			stx tracker_x_position
+		:
+		stx tracker_cursor_position
 
+	@endleft:
+	cmp #$1D ; right
+	bne @endright
+		ldx tracker_cursor_position
+		inx
+		cpx #1
+		bne :+
+			inx
+		:
+		cpx #8
+		bcc :+
+			ldx #0
+			inc tracker_x_position
+			ldy tracker_x_position
+			cpy #8
+			bcc :+
+			stz tracker_x_position
+		:
+		stx tracker_cursor_position
+
+	@endright:
+	cmp #$51 ; Q
+	bne :+
+		ldy #1
+		sty concerto_synth::note_channel
+		ldy tracker_y_position
+		sty concerto_synth::note_timbre
+		ldy #50
+		sty concerto_synth::note_pitch
+		lda #63
+
+		jsr concerto_synth::play_note
+	:
+	jmp @mainloop
+@exit:
 ;	DO THIS WHEN WE'RE EXITING FOR REAL
-;	jsr xf_reset_charset
+	jsr xf_irq::teardown
+	jsr xf_reset_charset
 	rts
 
 xf_set_charset:
@@ -150,11 +217,12 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 	;lda #$A3
 	;sta VERA_data0
 	
-	ldx #10
+	ldx #8
 	:
 		lda #$A1
 		sta VERA_data0
 		lda #$A0
+		sta VERA_data0
 		sta VERA_data0
 		sta VERA_data0
 		sta VERA_data0
@@ -245,12 +313,14 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
 
 @got_color:
-	ldx #10
+	ldx #8
 	:
 		lda #$A4
 		sta VERA_data0
 		sty VERA_data0
 		lda #'.'
+		sta VERA_data0
+		sty VERA_data0
 		sta VERA_data0
 		sty VERA_data0
 		sta VERA_data0
@@ -279,12 +349,14 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 	sta VERA_data0
 	sty VERA_data0
 
-	ldx #10
+	ldx #8
 	:
 		lda #$A3
 		sta VERA_data0
 		sty VERA_data0
 		lda #' '
+		sta VERA_data0
+		sty VERA_data0
 		sta VERA_data0
 		sty VERA_data0
 		sta VERA_data0
@@ -318,6 +390,35 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 		jmp @rowstart
 	:
 
+; now put the cursor where it belongs
+	lda #(0 | $20) ; low page, stride = 2
+	sta $9F22
+
+	lda #23 ; row number
+	sta $9F21
+
+	lda tracker_x_position
+	asl
+	asl
+	asl
+	
+	clc
+	adc tracker_cursor_position
+	adc #3
+	asl
+	ina
+
+	sta $9F20
+	
+	lda #(XF_CURSOR_BG_COLOR | XF_BASE_FG_COLOR)
+	sta VERA_data0
+
+	ldy tracker_cursor_position
+	bne :+
+		sta VERA_data0
+	:
+
+
 
 ;	lda #$81
 ;	sta VERA_data0
@@ -343,7 +444,7 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 ;		dex
 ;		bne :-
 ;
-;	rts
+	rts
 
 xf_byte_to_hex: ; converts a number to two ASCII/PETSCII hex digits: input A = number to convert, output A = most sig nybble, X = least sig nybble, affects A,X
 	pha
