@@ -27,6 +27,13 @@
 entry:
 	jmp main
 
+.pushseg
+.segment "ZEROPAGE"
+xf_tmp1: .res 1
+xf_tmp2: .res 1
+xf_tmp3: .res 1
+.popseg
+
 .include "cx16-concerto/concerto_synth/x16.asm"
 .include "macros.inc"
 .include "customchars.s"
@@ -59,10 +66,7 @@ tracker_global_frame_length: .res 1 ; frame length for frames that don't end ear
 
 XF_PATTERN_PAGE = 16
 XF_BASE_PAGE = 1
-.segment "ZEROPAGE"
-xf_tmp1: .res 1
-xf_tmp2: .res 1
-xf_tmp3: .res 1
+
 
 .segment "CODE"
 
@@ -206,30 +210,4 @@ xf_clear_screen:
 		dey
 		bne :-
 
-	rts
-
-
-
-
-xf_byte_to_hex: ; converts a number to two ASCII/PETSCII hex digits: input A = number to convert, output A = most sig nybble, X = least sig nybble, affects A,X
-	pha
-
-	and #$0f
-	tax
-	pla
-	lsr
-	lsr
-	lsr
-	lsr
-	pha
-	txa
-	jsr @hexify
-	tax
-	pla
-@hexify:
-	cmp #10
-	bcc @nothex
-	adc #$66
-@nothex:
-	eor #%00110000
 	rts
