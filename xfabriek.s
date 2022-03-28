@@ -40,8 +40,10 @@ xf_tmp3: .res 1
 concerto_use_timbres_from_file = 1
 .define CONCERTO_TIMBRES_PATH "cx16-concerto/FACTORY.COB"
 .include "cx16-concerto/concerto_synth/concerto_synth.asm"
+.include "util.s"
 .include "irq.s"
 .include "tracker_grid.s"
+
 
 XF_BASE_BG_COLOR = $00 ; black
 XF_AUDITION_BG_COLOR = $60 ; blue
@@ -186,28 +188,4 @@ main:
 ;	DO THIS WHEN WE'RE EXITING FOR REAL
 	jsr xf_irq::teardown
 	jsr xf_reset_charset
-	rts
-
-xf_set_charset:
-	lda #3
-	jmp SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
-
-xf_reset_charset:
-	lda #2
-	jmp SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
-
-xf_clear_screen:
-	VERA_SET_ADDR $0000,1
-	ldy #64 ; rows
-	ldx #128 ; columns
-	:
-		lda #32 ; empty tile
-		sta VERA_data0
-		lda #%00000001 ; (BBBB|FFFF) background and foreground colors
-		sta VERA_data0
-		dex
-		bne :-
-		dey
-		bne :-
-
 	rts
