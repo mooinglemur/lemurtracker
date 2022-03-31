@@ -75,8 +75,12 @@ XF_BASE_PAGE = 1
 
 main:
 	jsr xf_set_charset
+
 	jsr xf_clear_screen
+
 	jsr xf_install_custom_chars
+
+
 	lda #$3F
 	sta tracker_global_frame_length
 
@@ -88,7 +92,7 @@ main:
 	jsr xf_draw_tracker_grid
 	wai
 
-	VERA_SET_ADDR $0000,2
+	VERA_SET_ADDR ($0000+$1B000),2
 	jsr GETIN
 	pha
 
@@ -98,7 +102,7 @@ main:
 	stx VERA_data0
 	:
 
-	VERA_SET_ADDR $0010,2
+	VERA_SET_ADDR ($0010+$1B000),2
 	lda tracker_cursor_position
 	jsr xf_byte_to_hex
 	sta VERA_data0
@@ -171,6 +175,7 @@ main:
 		stx tracker_cursor_position
 
 	@endright:
+
 	cmp #$51 ; Q
 	bne :+
 		ldy #1

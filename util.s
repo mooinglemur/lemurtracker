@@ -32,17 +32,18 @@ xf_reset_charset:
 	jmp SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
 
 xf_clear_screen:
-	VERA_SET_ADDR $0000,1
+	VERA_SET_ADDR $1B000,1
 	ldy #64 ; rows
-	ldx #128 ; columns
-	:
+@row:
+  ldx #128 ; columns
+@column:
 		lda #32 ; empty tile
 		sta VERA_data0
 		lda #%00000001 ; (BBBB|FFFF) background and foreground colors
 		sta VERA_data0
 		dex
-		bne :-
+		bne @column
 		dey
-		bne :-
+		bne @row
 
 	rts

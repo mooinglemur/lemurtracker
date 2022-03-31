@@ -1,7 +1,7 @@
 xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
 	; Top of grid
-	VERA_SET_ADDR $0206,2
+	VERA_SET_ADDR ($0206+$1B000),2
 
 	;lda #$A3
 	;sta VERA_data0
@@ -35,10 +35,12 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 	stz xf_tmp3
 
 @rowstart:
-	lda #(0 | $10) ; low page, stride = 1
+	lda #(1 | $10) ; high bank, stride = 1
 	sta $9F22
 
 	lda xf_tmp1 ; row number
+  clc
+  adc #$b0
 	sta $9F21
 
 	lda #2 ; one character over
@@ -180,10 +182,12 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 	:
 
 ; now put the cursor where it belongs
-	lda #(0 | $20) ; low page, stride = 2
+	lda #(1 | $20) ; high page, stride = 2
 	sta $9F22
 
 	lda #23 ; row number
+  clc
+  adc #$b0
 	sta $9F21
 
 	lda tracker_x_position
