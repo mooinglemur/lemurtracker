@@ -1,7 +1,8 @@
 # Welcome to Xfabriek
 
-xfabriek is a tracker music editor for the Commander X16. It currently uses 
-the CONCERTO synthesizer engine by Carl Georg Biermann.
+xfabriek is a tracker music editor for the Commander X16. It currently uses
+the CONCERTO synthesizer engine by Carl Georg Biermann, but it will end up
+with its own sound engine in order to save low memory.
 
 It is designed for composing music, either for standalone playback, or to
 be included in assembly language demos and games.
@@ -9,7 +10,7 @@ be included in assembly language demos and games.
 ## Design goals
 
 xfabriek is designed with a balance between memory footprint, ease of
-programming, and functionality. 
+programming, and functionality.
 
 While xfabriek is intended to give chiptune musicians a simple and familiar
 tracker interface in which to edit music, the main motivation for this
@@ -32,16 +33,14 @@ transitions within the music. This is done in two different ways:
 
 * Songs can have conditional jump or loop points. At specific points in the
   song, an effect can call a user callback subroutine. The return value given
-  by that subroutine (in the 3 registers) will inform the player where and 
+  by that subroutine (in the 3 registers) will inform the player where and
   whether to jump. A possible scenario could be a game where the music
-  begins 
+  builds up and transitions as the player progresses into a new area, or loops
+  a short section until the player proceeds.
 
 ### Sound effects
 
-* Sound effects are simply stored as frames of a song. They are meant to be
-  short, as the sound effect playback will only play through one frame. Other
-  frames are treated as other sound effects.
-  xfabriek will track two simultaneous sound effects (high and low priority).
-  The *mix* is taken into effect so the same sound effect can be set to
-  change characteristics depending on the mix being played.
-
+* Sound effects are simply created a short song. They are meant to be
+  short, as the sound effect is stored in a linear type+register+value+delta
+  format. xfabriek will track two simultaneous sound effects (high and low
+  priority).
