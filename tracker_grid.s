@@ -9,19 +9,19 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 	ldx #8
 	:
 		lda #$A1
-		sta VERA_data0
+		sta Vera::Reg::Data0
 		lda #$A0
-		sta VERA_data0
-		sta VERA_data0
-		sta VERA_data0
-		sta VERA_data0
-		sta VERA_data0
-		sta VERA_data0
-		sta VERA_data0
+		sta Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sta Vera::Reg::Data0
 		dex
 		bne :-
 	lda #$A2
-	sta VERA_data0
+	sta Vera::Reg::Data0
 
 
 	; cycle through 40 rows
@@ -73,10 +73,10 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 @filledrow:
 	jsr xf_byte_to_hex
 	ldy #(XF_BASE_BG_COLOR | XF_BASE_FG_COLOR)
-	sta VERA_data0
-	sty VERA_data0
-	stx VERA_data0
-	sty VERA_data0
+	sta Vera::Reg::Data0
+	sty Vera::Reg::Data0
+	stx Vera::Reg::Data0
+	sty Vera::Reg::Data0
 
 	; color current row
 	lda xf_tmp2
@@ -107,65 +107,65 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 	ldx #8
 	:
 		lda #$A4
-		sta VERA_data0
-		sty VERA_data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
 		lda #'.'
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
 		dex
 		bne :-
 	lda #$A3
-	sta VERA_data0
+	sta Vera::Reg::Data0
 	ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
-	sty VERA_data0
+	sty Vera::Reg::Data0
 
 	bra @endofrow
 @blankrow:
 	lda #$20
 	ldy #%00000001 ; color value for blank row is 0 bg, 1 fg
-	sta VERA_data0
-	sty VERA_data0
-	sta VERA_data0
-	sty VERA_data0
+	sta Vera::Reg::Data0
+	sty Vera::Reg::Data0
+	sta Vera::Reg::Data0
+	sty Vera::Reg::Data0
 
 	ldx #8
 	:
 		lda #$A3
-		sta VERA_data0
-		sty VERA_data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
 		lda #' '
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
-		sta VERA_data0
-		sty VERA_data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
+		sta Vera::Reg::Data0
+		sty Vera::Reg::Data0
 		dex
 		bne :-
 	lda #$A3
-	sta VERA_data0
+	sta Vera::Reg::Data0
 	ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
-	sty VERA_data0
+	sty Vera::Reg::Data0
 
 @endofrow:
 	lda xf_tmp3
@@ -204,11 +204,11 @@ xf_draw_tracker_grid: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 	sta $9F20
 
 	lda #(XF_CURSOR_BG_COLOR | XF_BASE_FG_COLOR)
-	sta VERA_data0
+	sta Vera::Reg::Data0
 
 	ldy tracker_cursor_position
 	bne :+
-		sta VERA_data0
+		sta Vera::Reg::Data0
 	:
 
 

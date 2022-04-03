@@ -37,7 +37,7 @@ handler:
     php
     sei
 
-    lda VERA_isr
+    lda Vera::Reg::ISR
     and #$01
     beq @after_handler
 
@@ -51,11 +51,11 @@ handler:
     pha
     lda concerto_synth::mzpbg
     pha
-    lda VERA_addr_low
+    lda Vera::Reg::AddrL
     pha
-    lda VERA_addr_mid
+    lda Vera::Reg::AddrM
     pha
-    lda VERA_addr_high
+    lda Vera::Reg::AddrH
     pha
     ; call playback routine
     jsr concerto_synth::concerto_playback_routine
@@ -63,11 +63,11 @@ handler:
     jsr concerto_synth::synth_engine::synth_tick
     ; restore shared variables
     pla
-    sta VERA_addr_high
+    sta Vera::Reg::AddrH
     pla
-    sta VERA_addr_mid
+    sta Vera::Reg::AddrM
     pla
-    sta VERA_addr_low
+    sta Vera::Reg::AddrL
     pla
     sta concerto_synth::mzpbg
     pla

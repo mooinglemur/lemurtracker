@@ -25,11 +25,11 @@ xf_byte_to_hex: ; converts a number to two ASCII/PETSCII hex digits: input A = n
 
 xf_set_charset:
     lda #3
-    jmp SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
+    jmp x16::Kernal::SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
 
 xf_reset_charset:
     lda #2
-    jmp SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
+    jmp x16::Kernal::SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
 
 xf_clear_screen:
     VERA_SET_ADDR $1B000,1
@@ -38,9 +38,9 @@ xf_clear_screen:
     ldx #128 ; columns
 @column:
     lda #32 ; empty tile
-    sta VERA_data0
+    sta Vera::Reg::Data0
     lda #%00000001 ; (BBBB|FFFF) background and foreground colors
-    sta VERA_data0
+    sta Vera::Reg::Data0
     dex
     bne @column
     dey

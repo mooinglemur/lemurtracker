@@ -34,8 +34,8 @@ xf_tmp2: .res 1
 xf_tmp3: .res 1
 .popseg
 
-.include "cx16-concerto/concerto_synth/x16.asm"
-.include "macros.inc"
+;.include "cx16-concerto/concerto_synth/x16.asm"
+.include "x16.inc"
 .include "customchars.s"
 concerto_use_timbres_from_file = 1
 .define CONCERTO_TIMBRES_PATH "cx16-concerto/FACTORY.COB"
@@ -93,25 +93,25 @@ main:
     wai
 
     VERA_SET_ADDR ($0000+$1B000),2
-    jsr GETIN
+    jsr x16::Kernal::GETIN
     pha
 
     beq :+
     jsr xf_byte_to_hex
-    sta VERA_data0
-    stx VERA_data0
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
     :
 
     VERA_SET_ADDR ($0010+$1B000),2
     lda tracker_cursor_position
     jsr xf_byte_to_hex
-    sta VERA_data0
-    stx VERA_data0
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
 
     lda tracker_x_position
     jsr xf_byte_to_hex
-    sta VERA_data0
-    stx VERA_data0
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
 
     pla
     cmp #$11 ; down
