@@ -25,7 +25,7 @@
 
 ; Entry point at $080d
 entry:
-	jmp main
+    jmp main
 
 .pushseg
 .segment "ZEROPAGE"
@@ -74,123 +74,123 @@ XF_BASE_PAGE = 1
 
 
 main:
-	jsr xf_set_charset
+    jsr xf_set_charset
 
-	jsr xf_clear_screen
+    jsr xf_clear_screen
 
-	jsr xf_install_custom_chars
+    jsr xf_install_custom_chars
 
 
-	lda #$3F
-	sta tracker_global_frame_length
+    lda #$3F
+    sta tracker_global_frame_length
 
-	jsr xf_irq::setup
-	jsr concerto_synth::initialize
+    jsr xf_irq::setup
+    jsr concerto_synth::initialize
 
 
 @mainloop:
-	jsr xf_draw_tracker_grid
-	wai
+    jsr xf_draw_tracker_grid
+    wai
 
-	VERA_SET_ADDR ($0000+$1B000),2
-	jsr GETIN
-	pha
+    VERA_SET_ADDR ($0000+$1B000),2
+    jsr GETIN
+    pha
 
-	beq :+
-	jsr xf_byte_to_hex
-	sta VERA_data0
-	stx VERA_data0
-	:
+    beq :+
+    jsr xf_byte_to_hex
+    sta VERA_data0
+    stx VERA_data0
+    :
 
-	VERA_SET_ADDR ($0010+$1B000),2
-	lda tracker_cursor_position
-	jsr xf_byte_to_hex
-	sta VERA_data0
-	stx VERA_data0
+    VERA_SET_ADDR ($0010+$1B000),2
+    lda tracker_cursor_position
+    jsr xf_byte_to_hex
+    sta VERA_data0
+    stx VERA_data0
 
-	lda tracker_x_position
-	jsr xf_byte_to_hex
-	sta VERA_data0
-	stx VERA_data0
+    lda tracker_x_position
+    jsr xf_byte_to_hex
+    sta VERA_data0
+    stx VERA_data0
 
-	pla
-	cmp #$11 ; down
-	bne :++
-		ldy tracker_y_position
-		cpy tracker_global_frame_length
-		bcc :+
-			stz tracker_y_position
-			bra :++
-		:
-		inc tracker_y_position
-	:
-	cmp #$91 ; up
-	bne :++
-		ldy tracker_y_position
-		bne :+
-			ldy tracker_global_frame_length
-			sty tracker_y_position
-			bra :++
+    pla
+    cmp #$11 ; down
+    bne :++
+    ldy tracker_y_position
+    cpy tracker_global_frame_length
+    bcc :+
+    stz tracker_y_position
+    bra :++
+    :
+    inc tracker_y_position
+    :
+    cmp #$91 ; up
+    bne :++
+    ldy tracker_y_position
+    bne :+
+    ldy tracker_global_frame_length
+    sty tracker_y_position
+    bra :++
 
-		:
-		dec tracker_y_position
-	:
-	cmp #$9D ; left
-	bne @endleft
-		ldx tracker_cursor_position
-		dex
-		cpx #1
-		bne :+
-			dex
-		:
-		cpx #8
-		bcc :+
-			ldx #7
-			dec tracker_x_position
-			ldy tracker_x_position
-			cpy #8
-			bcc :+
-			stx tracker_x_position
-		:
-		stx tracker_cursor_position
+    :
+    dec tracker_y_position
+    :
+    cmp #$9D ; left
+    bne @endleft
+    ldx tracker_cursor_position
+    dex
+    cpx #1
+    bne :+
+    dex
+    :
+    cpx #8
+    bcc :+
+    ldx #7
+    dec tracker_x_position
+    ldy tracker_x_position
+    cpy #8
+    bcc :+
+    stx tracker_x_position
+    :
+    stx tracker_cursor_position
 
-	@endleft:
-	cmp #$1D ; right
-	bne @endright
-		ldx tracker_cursor_position
-		inx
-		cpx #1
-		bne :+
-			inx
-		:
-		cpx #8
-		bcc :+
-			ldx #0
-			inc tracker_x_position
-			ldy tracker_x_position
-			cpy #8
-			bcc :+
-			stz tracker_x_position
-		:
-		stx tracker_cursor_position
+    @endleft:
+    cmp #$1D ; right
+    bne @endright
+    ldx tracker_cursor_position
+    inx
+    cpx #1
+    bne :+
+    inx
+    :
+    cpx #8
+    bcc :+
+    ldx #0
+    inc tracker_x_position
+    ldy tracker_x_position
+    cpy #8
+    bcc :+
+    stz tracker_x_position
+    :
+    stx tracker_cursor_position
 
-	@endright:
+    @endright:
 
-	cmp #$51 ; Q
-	bne :+
-		ldy #1
-		sty concerto_synth::note_channel
-		ldy tracker_y_position
-		sty concerto_synth::note_timbre
-		ldy #50
-		sty concerto_synth::note_pitch
-		lda #63
+    cmp #$51 ; Q
+    bne :+
+    ldy #1
+    sty concerto_synth::note_channel
+    ldy tracker_y_position
+    sty concerto_synth::note_timbre
+    ldy #50
+    sty concerto_synth::note_pitch
+    lda #63
 
-		jsr concerto_synth::play_note
-	:
-	jmp @mainloop
+    jsr concerto_synth::play_note
+    :
+    jmp @mainloop
 @exit:
 ;	DO THIS WHEN WE'RE EXITING FOR REAL
-	jsr xf_irq::teardown
-	jsr xf_reset_charset
-	rts
+    jsr xf_irq::teardown
+    jsr xf_reset_charset
+    rts
