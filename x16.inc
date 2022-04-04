@@ -1,6 +1,7 @@
 .ifndef x16_inc
 x16_inc = 1
 
+
 .scope Vera
     .scope Reg
         AddrL      = $9F20    ; VRAM Address (7:0)

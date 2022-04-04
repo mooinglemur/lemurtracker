@@ -113,6 +113,7 @@ main:
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
 
+
     pla
     cmp #$11 ; down
     bne :++
