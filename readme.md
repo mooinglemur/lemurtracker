@@ -44,3 +44,17 @@ transitions within the music. This is done in two different ways:
   short, as the sound effect is stored in a linear type+register+value+delta
   format. xfabriek will track two simultaneous sound effects (high and low
   priority).
+
+### Terminology
+
+* Module - The entire project
+* Song - An individual distinct tune within the module
+* Mix - A sequence of patterns within a song. If there are multiple mixes, the
+  player can switch between them during song playback.
+* Channel - Any one of the columns in the tracker grid, capable of containing
+  notes and effects.
+* Pattern - A channel-specific reference to a sequence of notes and effects.
+* Instrument - Parameters that describe hardware, timbre, and envelopes, used
+  for playing notes.
+* Voice - A logical slot (in hardware) used for playing the sounds of an
+  instrument. There are 16 PSG voices and 8 FM voices.

@@ -191,6 +191,7 @@ x16_inc = 1
         IRQVec      := $0314
         BRKVec      := $0316
         NMIVec      := $0318
+        KbdVec      := $032E
         FETVec      := $03AF
         ;STAVec      := TBD
         ;CMPVec      := TBD
