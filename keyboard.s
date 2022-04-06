@@ -4,7 +4,7 @@
 
 ; storage
 old_vec: .res 2
-last_key: .res 2
+scancode: .res 2
 
 setup_handler:
     sei
@@ -38,6 +38,15 @@ handler:
     pha
     phx
 
+    bcs @keyup
+@keydown:
+    sta scancode
+    stx scancode+1
+
+    bra @exit
+@keyup:
+    stz scancode
+    stz scancode+1
 @exit:
     plx
     pla

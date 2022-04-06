@@ -43,6 +43,7 @@ concerto_use_timbres_from_file = 1
 .include "util.s"
 .include "irq.s"
 .include "tracker_grid.s"
+.include "keyboard.s"
 
 
 XF_BASE_BG_COLOR = $00 ; black
@@ -56,22 +57,17 @@ XF_BASE_FG_COLOR = $01 ; white
 XF_NOTE_FG_COLOR = $05 ; green
 XF_INST_FG_COLOR = $03 ; cyan
 
-.segment "BSS"
-tracker_x_position: .res 1 ; which tracker column (voice) are we in
-tracker_y_position: .res 1 ; which tracker row are we in
-tracker_cursor_position: .res 1 ; within the column (voice) where is the cursor?
+.segment "CODE"
+
+
 tracker_frame_x_offset: .res 1 ; in the frame editor, what voice (column) are we in
 tracker_frame_y_offset: .res 1 ; in the frame editor, what row are we in?
 tracker_frame_mix: .res 1 ; in the frame editor, what mix's patterns are we showing?
 tracker_songno: .res 1 ; what song are we showing?
 tracker_global_frame_length: .res 1 ; frame length for frames that don't end early.
 
-XF_PATTERN_PAGE = 16
-XF_BASE_PAGE = 1
-
-
-.segment "CODE"
-
+XF_PATTERN_BANK = 16
+XF_BASE_BANK = 1
 
 main:
     jsr xf_set_charset
@@ -87,9 +83,10 @@ main:
     jsr xf_irq::setup
     jsr concerto_synth::initialize
 
+    jsr Keyboard::setup_handler
 
 @mainloop:
-    jsr xf_draw_tracker_grid
+    jsr Grid::draw
     wai
 
     VERA_SET_ADDR ($0000+$1B000),2
@@ -103,12 +100,22 @@ main:
     :
 
     VERA_SET_ADDR ($0010+$1B000),2
-    lda tracker_cursor_position
+    lda Grid::cursor_position
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
 
-    lda tracker_x_position
+    lda Grid::x_position
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
+
+    lda Keyboard::scancode
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
+
+    lda Keyboard::scancode+1
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
@@ -117,28 +124,28 @@ main:
     pla
     cmp #$11 ; down
     bne :++
-    ldy tracker_y_position
+    ldy Grid::y_position
     cpy tracker_global_frame_length
     bcc :+
-    stz tracker_y_position
+    stz Grid::y_position
     bra :++
     :
-    inc tracker_y_position
+    inc Grid::y_position
     :
     cmp #$91 ; up
     bne :++
-    ldy tracker_y_position
+    ldy Grid::y_position
     bne :+
     ldy tracker_global_frame_length
-    sty tracker_y_position
+    sty Grid::y_position
     bra :++
 
     :
-    dec tracker_y_position
+    dec Grid::y_position
     :
     cmp #$9D ; left
     bne @endleft
-    ldx tracker_cursor_position
+    ldx Grid::cursor_position
     dex
     cpx #1
     bne :+
@@ -147,18 +154,18 @@ main:
     cpx #8
     bcc :+
     ldx #7
-    dec tracker_x_position
-    ldy tracker_x_position
+    dec Grid::x_position
+    ldy Grid::x_position
     cpy #8
     bcc :+
-    stx tracker_x_position
+    stx Grid::x_position
     :
-    stx tracker_cursor_position
+    stx Grid::cursor_position
 
     @endleft:
     cmp #$1D ; right
     bne @endright
-    ldx tracker_cursor_position
+    ldx Grid::cursor_position
     inx
     cpx #1
     bne :+
@@ -167,13 +174,13 @@ main:
     cpx #8
     bcc :+
     ldx #0
-    inc tracker_x_position
-    ldy tracker_x_position
+    inc Grid::x_position
+    ldy Grid::x_position
     cpy #8
     bcc :+
-    stz tracker_x_position
+    stz Grid::x_position
     :
-    stx tracker_cursor_position
+    stx Grid::cursor_position
 
     @endright:
 
@@ -181,7 +188,7 @@ main:
     bne :+
     ldy #1
     sty concerto_synth::note_channel
-    ldy tracker_y_position
+    ldy Grid::y_position
     sty concerto_synth::note_timbre
     ldy #50
     sty concerto_synth::note_pitch
