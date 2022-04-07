@@ -66,6 +66,19 @@ tracker_frame_mix: .res 1 ; in the frame editor, what mix's patterns are we show
 tracker_songno: .res 1 ; what song are we showing?
 tracker_global_frame_length: .res 1 ; frame length for frames that don't end early.
 
+xf_state: .res 1
+
+XF_STATE_NEW_DIALOG = 1
+XF_STATE_SAVE_DIALOG = 2
+XF_STATE_LOAD_DIALOG = 3
+XF_STATE_PATTERN_EDITOR_AUDITION = 4
+XF_STATE_PATTERN_EDITOR_ENTRY = 5
+XF_STATE_MIX_EDITOR = 6
+XF_STATE_INSTRUMENT_PSG = 7
+XF_STATE_INSTRUMENT_FM = 8
+XF_STATE_INSTRUMENT_PCM = 9
+
+
 XF_PATTERN_BANK = 16
 XF_BASE_BANK = 1
 
@@ -76,6 +89,8 @@ main:
 
     jsr xf_install_custom_chars
 
+    lda #XF_STATE_NEW_DIALOG
+    sta xf_state
 
     lda #$3F
     sta tracker_global_frame_length

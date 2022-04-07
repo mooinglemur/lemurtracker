@@ -4,10 +4,9 @@
 .PC02
 
 .scope xf_irq
-.segment "BSS"
+.segment "CODE"
 previous_handler: .res 2
 
-.segment "CODE"
 setup:
     sei
     lda $0314

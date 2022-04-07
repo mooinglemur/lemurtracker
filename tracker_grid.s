@@ -1,8 +1,8 @@
 .scope Grid
 
-x_position: .res 1 ; which tracker column (voice) are we in
+x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in
-cursor_position: .res 1 ; within the column (voice) where is the cursor?
+cursor_position: .res 1 ; within the column (channel) where is the cursor?
 
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
