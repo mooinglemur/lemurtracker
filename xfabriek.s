@@ -36,14 +36,16 @@ xf_tmp3: .res 1
 
 ;.include "cx16-concerto/concerto_synth/x16.asm"
 .include "x16.inc"
+.include "tracker_grid.s"
+.include "function.s"
 .include "customchars.s"
 concerto_use_timbres_from_file = 1
 .define CONCERTO_TIMBRES_PATH "cx16-concerto/FACTORY.COB"
 .include "cx16-concerto/concerto_synth/concerto_synth.asm"
 .include "util.s"
 .include "irq.s"
-.include "tracker_grid.s"
 .include "keyboard.s"
+
 
 
 XF_BASE_BG_COLOR = $00 ; black
@@ -63,11 +65,11 @@ XF_INST_FG_COLOR = $03 ; cyan
 tracker_frame_x_offset: .res 1 ; in the frame editor, what voice (column) are we in
 tracker_frame_y_offset: .res 1 ; in the frame editor, what row are we in?
 tracker_frame_mix: .res 1 ; in the frame editor, what mix's patterns are we showing?
-tracker_songno: .res 1 ; what song are we showing?
-tracker_global_frame_length: .res 1 ; frame length for frames that don't end early.
+tracker_songno: .res 1 ; what song are we showing/playing
 
 xf_state: .res 1
 
+XF_STATE_DUMP = 0 ; we end up here when we need to dump memory state to SD
 XF_STATE_NEW_DIALOG = 1
 XF_STATE_SAVE_DIALOG = 2
 XF_STATE_LOAD_DIALOG = 3
@@ -77,10 +79,7 @@ XF_STATE_MIX_EDITOR = 6
 XF_STATE_INSTRUMENT_PSG = 7
 XF_STATE_INSTRUMENT_FM = 8
 XF_STATE_INSTRUMENT_PCM = 9
-
-
-XF_PATTERN_BANK = 16
-XF_BASE_BANK = 1
+XF_STATE_PLAYBACK = 10
 
 main:
     jsr xf_set_charset
@@ -89,11 +88,11 @@ main:
 
     jsr xf_install_custom_chars
 
-    lda #XF_STATE_NEW_DIALOG
+    lda #XF_STATE_PATTERN_EDITOR_AUDITION
     sta xf_state
 
     lda #$3F
-    sta tracker_global_frame_length
+    sta Grid::global_frame_length
 
     jsr xf_irq::setup
     jsr concerto_synth::initialize
@@ -137,67 +136,9 @@ main:
 
 
     pla
-    cmp #$11 ; down
-    bne :++
-    ldy Grid::y_position
-    cpy tracker_global_frame_length
-    bcc :+
-    stz Grid::y_position
-    bra :++
-    :
-    inc Grid::y_position
-    :
-    cmp #$91 ; up
-    bne :++
-    ldy Grid::y_position
-    bne :+
-    ldy tracker_global_frame_length
-    sty Grid::y_position
-    bra :++
 
-    :
-    dec Grid::y_position
-    :
-    cmp #$9D ; left
-    bne @endleft
-    ldx Grid::cursor_position
-    dex
-    cpx #1
-    bne :+
-    dex
-    :
-    cpx #8
-    bcc :+
-    ldx #7
-    dec Grid::x_position
-    ldy Grid::x_position
-    cpy #8
-    bcc :+
-    stx Grid::x_position
-    :
-    stx Grid::cursor_position
 
-    @endleft:
-    cmp #$1D ; right
-    bne @endright
-    ldx Grid::cursor_position
-    inx
-    cpx #1
-    bne :+
-    inx
-    :
-    cpx #8
-    bcc :+
-    ldx #0
-    inc Grid::x_position
-    ldy Grid::x_position
-    cpy #8
-    bcc :+
-    stz Grid::x_position
-    :
-    stx Grid::cursor_position
 
-    @endright:
 
     cmp #$51 ; Q
     bne :+

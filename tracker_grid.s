@@ -3,6 +3,10 @@
 x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in
 cursor_position: .res 1 ; within the column (channel) where is the cursor?
+global_frame_length: .res 1 ; set on file create/file load
+base_bank: .res 1 ; where does tracker data start
+
+NUM_CHANNELS = 8
 
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
@@ -12,7 +16,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ;lda #$A3
     ;sta VERA_data0
 
-    ldx #8
+    ldx #NUM_CHANNELS
     :
         lda #$A1
         sta Vera::Reg::Data0
@@ -69,7 +73,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     :
 
     ldy xf_tmp2
-    cpy tracker_global_frame_length
+    cpy global_frame_length
     bne :+
         inc xf_tmp3
     :
@@ -110,7 +114,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
 
 @got_color:
-    ldx #8
+    ldx #NUM_CHANNELS
     :
         lda #$A4
         sta Vera::Reg::Data0
@@ -146,7 +150,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
 
-    ldx #8
+    ldx #NUM_CHANNELS
     :
         lda #$A3
         sta Vera::Reg::Data0

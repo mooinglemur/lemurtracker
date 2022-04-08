@@ -5,6 +5,10 @@
 ; storage
 old_vec: .res 2
 scancode: .res 2
+modkeys: .res 1
+
+tmp1: .res 2
+tmp2: .res 2
 
 setup_handler:
     sei
@@ -38,13 +42,21 @@ handler:
     pha
     phx
 
-    bcs @keyup
-@keydown:
     sta scancode
     stx scancode+1
 
+    bcs @keyup
+@keydown:
+    ldy #0
+    jsr set_modkeys
+
+    jsr dohandler
+
     bra @exit
 @keyup:
+    ldy #1
+    jsr set_modkeys
+
     stz scancode
     stz scancode+1
 @exit:
@@ -52,5 +64,144 @@ handler:
     pla
     plp
     jmp (old_vec)
+    ; ^^ we're outta here
+
+set_modkeys:
+    ; sets or clears bits in the modkeys variable
+    ; bit 0 - $12 - left shift
+    ; bit 1 - $59 - right shift
+    ; bit 2 - $14 - left ctrl
+    ; bit 3 - $E0 $14 - right ctrl
+    ; bit 4 - $11 - left alt
+    ; bit 5 - $E0 $11 - right alt/altgr
+
+    ldx scancode
+    cpx #$12
+    bne @not_lshift
+    lda #1
+    bra @end
+@not_lshift:
+    cpx #$59
+    bne @not_rshift
+    lda #2
+    bra @end
+@not_rshift:
+    cpx #$14
+    bne @not_ctrl
+    lda #4
+    ldx scancode+1
+    cpx #$E0
+    bne @end
+    lda #8
+    bra @end
+@not_ctrl:
+    cpx #$11
+    bne @not_alt
+    lda #16
+    ldx scancode+1
+    cpx #$E0
+    bne @end
+    lda #32
+@not_alt:
+@end:
+    cpy #0
+    beq @keydown
+@keyup:
+    eor #$ff
+    and modkeys
+    sta modkeys
+    bra @exit
+@keydown:
+    ora modkeys
+    sta modkeys
+@exit:
+    rts
+
+dohandler:
+    lda xf_state
+    asl
+    tax
+    lda handlertbl,x
+    sta tmp1
+    lda handlertbl+1,x
+    sta tmp1+1
+    jmp (tmp1)
+;   ^^ we're outta here
+
+handlertbl:
+    .word handler0,handler1,handler2,handler3
+    .word handler4,handler5,handler6,handler7
+    .word handler8,handler9,handler10,handler11
+    .word handler12,handler13,handler14,handler15
+
+handler0:
+handler1:
+handler2:
+handler3:
+    rts
+
+; handler for states 4 and 5 are in the grid editor, which are different
+; for the input events but not most of the navigation events
+handler4:
+handler5:
+    ldy #(@ktblh-@ktbl)
+@loop:
+    lda scancode
+    cmp @ktbl-1,y
+    beq @checkh
+@loop_cont:
+    dey
+    bne @loop
+    bra @nomatch
+@checkh:
+    lda scancode+1
+    cmp @ktblh-1,y
+    beq @match
+    bra @loop_cont
+@match:
+    dey
+    tya
+    asl
+    tay
+    lda @fntbl,y
+    sta tmp1
+    lda @fntbl+1,y
+    sta tmp1+1
+    jmp (tmp1)
+@nomatch:
+    rts
+@ktbl:
+    ; this is the static keymapping
+    ;     up  dn  lt  rt  hm  end
+    .byte $75,$72,$6B,$74,$6C,$69
+@ktblh:
+    .byte $E0,$E0,$E0,$E0,$E0,$E0
+@fntbl:
+    .word Function::decrement_grid_y ;up
+    .word Function::increment_grid_y ;dn
+    .word Function::decrement_grid_cursor ;lt
+    .word Function::increment_grid_cursor ;rt
+    .word @key_home
+    .word @key_end
+@key_home:
+    lda #0
+    jmp Function::set_grid_y
+@key_end:
+    lda Grid::global_frame_length
+    jmp Function::set_grid_y
+
+
+handler6:
+handler7:
+handler8:
+handler9:
+handler10:
+handler11:
+handler12:
+handler13:
+handler14:
+handler15:
+    rts
+
 
 .endscope
