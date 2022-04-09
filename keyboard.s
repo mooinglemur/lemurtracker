@@ -10,6 +10,7 @@ modkeys: .res 1
 tmp1: .res 2
 tmp2: .res 2
 
+
 setup_handler:
     sei
 
@@ -66,6 +67,13 @@ handler:
     jmp (old_vec)
     ; ^^ we're outta here
 
+MOD_LSHIFT = 1
+MOD_RSHIFT = 2
+MOD_LCTRL = 4
+MOD_RCTRL = 8
+MOD_LALT = 16
+MOD_RALT = 32
+
 set_modkeys:
     ; sets or clears bits in the modkeys variable
     ; bit 0 - $12 - left shift
@@ -75,6 +83,7 @@ set_modkeys:
     ; bit 4 - $11 - left alt
     ; bit 5 - $E0 $11 - right alt/altgr
 
+    lda #0
     ldx scancode
     cpx #$12
     bne @not_lshift
@@ -172,17 +181,33 @@ handler5:
     rts
 @ktbl:
     ; this is the static keymapping
-    ;     up  dn  lt  rt  hm  end
-    .byte $75,$72,$6B,$74,$6C,$69
+    ;     up  dn  lt  rt  hm  end pgu pgd
+    .byte $75,$72,$6B,$74,$6C,$69,$7D,$7A
 @ktblh:
-    .byte $E0,$E0,$E0,$E0,$E0,$E0
+    .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0
 @fntbl:
     .word Function::decrement_grid_y ;up
     .word Function::increment_grid_y ;dn
-    .word Function::decrement_grid_cursor ;lt
-    .word Function::increment_grid_cursor ;rt
+    .word @key_left
+    .word @key_right
     .word @key_home
     .word @key_end
+    .word Function::mass_decrement_grid_y
+    .word Function::mass_increment_grid_y
+@key_left:
+    lda modkeys
+    and #(MOD_LCTRL|MOD_RCTRL)
+    beq :+
+        jmp Function::decrement_grid_x
+    :
+    jmp Function::decrement_grid_cursor
+@key_right:
+    lda modkeys
+    and #(MOD_LCTRL|MOD_RCTRL)
+    beq :+
+        jmp Function::increment_grid_x
+    :
+    jmp Function::increment_grid_cursor
 @key_home:
     lda #0
     jmp Function::set_grid_y

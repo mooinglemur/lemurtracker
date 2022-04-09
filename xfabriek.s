@@ -134,6 +134,12 @@ main:
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
 
+    lda Keyboard::modkeys
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
+    
+
 
     pla
 

@@ -27,6 +27,17 @@ decrement_grid_cursor:
 @end:
     rts
 
+decrement_grid_x:
+    ldy Grid::x_position
+    bne :+
+        ldy #(Grid::NUM_CHANNELS - 1)
+        sty Grid::x_position
+        bra @exit
+    :
+    dec Grid::x_position
+@exit:
+    rts
+
 decrement_grid_y:
     ldy Grid::y_position
     bne :+
@@ -37,6 +48,7 @@ decrement_grid_y:
     dec Grid::y_position
 @exit:
     rts
+
 
 
 
@@ -60,6 +72,18 @@ increment_grid_cursor:
 
     rts
 
+increment_grid_x:
+    ldy Grid::x_position
+    cpy #(Grid::NUM_CHANNELS - 1)
+    bcc :+
+        stz Grid::x_position
+        bra @exit
+    :
+    inc Grid::x_position
+@exit:
+    rts
+
+
 increment_grid_y:
     ldy Grid::y_position
     cpy Grid::global_frame_length
@@ -69,6 +93,32 @@ increment_grid_y:
     :
     inc Grid::y_position
 @exit:
+    rts
+
+
+mass_decrement_grid_y:
+    lda Grid::y_position
+    sec
+    sbc #8
+    bcs :+
+        lda #0
+    :
+    sta Grid::y_position
+    rts
+
+mass_increment_grid_y:
+    lda Grid::y_position
+    clc
+    adc #8
+    bcs @clamp
+
+    cmp Grid::global_frame_length
+    bcc @end
+
+@clamp:
+    lda Grid::global_frame_length
+@end:
+    sta Grid::y_position
     rts
 
 
