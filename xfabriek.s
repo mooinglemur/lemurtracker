@@ -36,10 +36,10 @@ xf_tmp3: .res 1
 
 ;.include "cx16-concerto/concerto_synth/x16.asm"
 .include "x16.inc"
+.include "customchars.s"
 .include "tracker_grid.s"
 .include "sequencer.s"
 .include "function.s"
-.include "customchars.s"
 concerto_use_timbres_from_file = 1
 .define CONCERTO_TIMBRES_PATH "cx16-concerto/FACTORY.COB"
 .include "cx16-concerto/concerto_synth/concerto_synth.asm"
@@ -87,7 +87,7 @@ main:
 
     jsr xf_clear_screen
 
-    jsr xf_install_custom_chars
+    jsr CustomChars::install
 
     lda #XF_STATE_PATTERN_EDITOR_AUDITION
     sta xf_state

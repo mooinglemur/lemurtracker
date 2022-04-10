@@ -6,6 +6,11 @@ cursor_position: .res 1 ; within the column (channel) where is the cursor?
 global_frame_length: .res 1 ; set on file create/file load
 base_bank: .res 1 ; where does tracker data start
 
+; entry vars
+octave: .res 1
+step: .res 1
+
+
 NUM_CHANNELS = 8
 
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
@@ -18,9 +23,9 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     ldx #NUM_CHANNELS
     :
-        lda #$88
+        lda #CustomChars::GRID_TOP_LEFT
         sta Vera::Reg::Data0
-        lda #$87
+        lda #CustomChars::GRID_TOP
         sta Vera::Reg::Data0
         sta Vera::Reg::Data0
         sta Vera::Reg::Data0
@@ -31,7 +36,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         sta Vera::Reg::Data0
         dex
         bne :-
-    lda #$89
+    lda #CustomChars::GRID_TOP_RIGHT
     sta Vera::Reg::Data0
 
 
@@ -117,7 +122,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 @got_color:
     ldx #NUM_CHANNELS
     :
-        lda #$8B
+        lda #CustomChars::NOTE_DOT
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
         lda #'.'
@@ -139,7 +144,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         sty Vera::Reg::Data0
         dex
         bne :-
-    lda #$8A
+    lda #CustomChars::GRID_RIGHT
     sta Vera::Reg::Data0
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
     sty Vera::Reg::Data0
@@ -155,7 +160,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     ldx #NUM_CHANNELS
     :
-        lda #$8A
+        lda #CustomChars::GRID_LEFT
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
         lda #' '
@@ -177,7 +182,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         sty Vera::Reg::Data0
         dex
         bne :-
-    lda #$8A
+    lda #CustomChars::GRID_RIGHT
     sta Vera::Reg::Data0
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
     sty Vera::Reg::Data0
