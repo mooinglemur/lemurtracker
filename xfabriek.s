@@ -37,6 +37,7 @@ xf_tmp3: .res 1
 ;.include "cx16-concerto/concerto_synth/x16.asm"
 .include "x16.inc"
 .include "tracker_grid.s"
+.include "sequencer.s"
 .include "function.s"
 .include "customchars.s"
 concerto_use_timbres_from_file = 1
@@ -99,8 +100,14 @@ main:
 
     jsr Keyboard::setup_handler
 
+    sec
+    jsr x16::Kernal::SCREEN_MODE ; get current screen size (in 8px) into .X and .Y
+    lda #1
+    JSR x16::Kernal::MOUSE_CONFIG ; show the default mouse pointer
+
 @mainloop:
     jsr Grid::draw
+    jsr Sequencer::draw
     wai
 
     VERA_SET_ADDR ($0000+$1B000),2
@@ -138,7 +145,7 @@ main:
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
-    
+
 
 
     pla

@@ -130,11 +130,7 @@ dohandler:
     lda xf_state
     asl
     tax
-    lda handlertbl,x
-    sta tmp1
-    lda handlertbl+1,x
-    sta tmp1+1
-    jmp (tmp1)
+    jmp (handlertbl,x)
 ;   ^^ we're outta here
 
 handlertbl:

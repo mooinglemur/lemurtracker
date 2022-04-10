@@ -99,7 +99,7 @@ increment_grid_y:
 mass_decrement_grid_y:
     lda Grid::y_position
     sec
-    sbc #8
+    sbc #16
     bcs :+
         lda #0
     :
@@ -109,7 +109,7 @@ mass_decrement_grid_y:
 mass_increment_grid_y:
     lda Grid::y_position
     clc
-    adc #8
+    adc #16
     bcs @clamp
 
     cmp Grid::global_frame_length
