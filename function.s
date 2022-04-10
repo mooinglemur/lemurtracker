@@ -10,21 +10,23 @@ play_note:
 decrement_grid_cursor:
     ldx Grid::cursor_position
     dex
-    cpx #1
+    cpx #2
     bne :+
         dex
+        dex
     :
-    cpx #8
-    bcc :+
-    ldx #7
+    cpx #9
+    bcc @end
     dec Grid::x_position
     ldy Grid::x_position
-    cpy #8
+    cpy #Grid::NUM_CHANNELS
     bcc :+
-        stx Grid::x_position
+        ldy #(Grid::NUM_CHANNELS-1)
+        sty Grid::x_position
     :
-    stx Grid::cursor_position
+    ldx #8
 @end:
+    stx Grid::cursor_position
     rts
 
 decrement_grid_x:
@@ -58,13 +60,14 @@ increment_grid_cursor:
     cpx #1
     bne :+
         inx
+        inx
     :
-    cpx #8
+    cpx #9
     bcc :+
     ldx #0
     inc Grid::x_position
     ldy Grid::x_position
-    cpy #8
+    cpy #Grid::NUM_CHANNELS
     bcc :+
         stz Grid::x_position
     :

@@ -18,9 +18,10 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     ldx #NUM_CHANNELS
     :
-        lda #$A1
+        lda #$88
         sta Vera::Reg::Data0
-        lda #$A0
+        lda #$87
+        sta Vera::Reg::Data0
         sta Vera::Reg::Data0
         sta Vera::Reg::Data0
         sta Vera::Reg::Data0
@@ -30,7 +31,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         sta Vera::Reg::Data0
         dex
         bne :-
-    lda #$A2
+    lda #$89
     sta Vera::Reg::Data0
 
 
@@ -49,8 +50,8 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sta $9F22
 
     lda xf_tmp1 ; row number
-  clc
-  adc #$b0
+    clc
+    adc #$b0
     sta $9F21
 
     lda #2 ; one character over
@@ -116,7 +117,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 @got_color:
     ldx #NUM_CHANNELS
     :
-        lda #$A4
+        lda #$8B
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
         lda #'.'
@@ -134,9 +135,11 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         sty Vera::Reg::Data0
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
+        sta Vera::Reg::Data0
+        sty Vera::Reg::Data0
         dex
         bne :-
-    lda #$A3
+    lda #$8A
     sta Vera::Reg::Data0
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
     sty Vera::Reg::Data0
@@ -152,7 +155,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     ldx #NUM_CHANNELS
     :
-        lda #$A3
+        lda #$8A
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
         lda #' '
@@ -170,9 +173,11 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         sty Vera::Reg::Data0
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
+        sta Vera::Reg::Data0
+        sty Vera::Reg::Data0
         dex
         bne :-
-    lda #$A3
+    lda #$8A
     sta Vera::Reg::Data0
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
     sty Vera::Reg::Data0
@@ -204,6 +209,8 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     asl
     asl
     asl
+    clc
+    adc x_position
 
     clc
     adc cursor_position
@@ -218,6 +225,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     ldy cursor_position
     bne :+
+        sta Vera::Reg::Data0
         sta Vera::Reg::Data0
     :
 

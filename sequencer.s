@@ -18,21 +18,22 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ;lda #$A3
     ;sta VERA_data0
 
-    ldx #NUM_CHANNELS
+    lda #$70
+    sta Vera::Reg::Data0
+    ldx #(NUM_CHANNELS-1)
     :
-        lda #$A1
-        sta Vera::Reg::Data0
-        lda #$A0
+        lda #$40
         sta Vera::Reg::Data0
         sta Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sta Vera::Reg::Data0
+        lda #$72
         sta Vera::Reg::Data0
         dex
         bne :-
-    lda #$A2
+    lda #$40
+    sta Vera::Reg::Data0
+    sta Vera::Reg::Data0
+
+    lda #$6E
     sta Vera::Reg::Data0
 
 
@@ -42,7 +43,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sta xf_tmp1
     lda y_position
     sec
-    sbc #20
+    sbc #4
     sta xf_tmp2
     stz xf_tmp3
 
@@ -65,7 +66,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     lda xf_tmp2
     ldy xf_tmp1
-    cpy #23
+    cpy #(SEQUENCER_LOCATION_Y+(SEQUENCER_GRID_ROWS/2)+1)
     bcs :++
         cmp y_position
         bcc :+
@@ -94,7 +95,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 @got_color:
     ldx #NUM_CHANNELS
     :
-        lda #$A4
+        lda #$5D
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
         lda #'.'
@@ -102,19 +103,9 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         sty Vera::Reg::Data0
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
         dex
         bne :-
-    lda #$A3
+    lda #$5D
     sta Vera::Reg::Data0
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
     sty Vera::Reg::Data0
@@ -129,31 +120,20 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sty Vera::Reg::Data0
 
     ldx #NUM_CHANNELS
+    lda #$5D
+    sta Vera::Reg::Data0
+    sty Vera::Reg::Data0
     :
-        lda #$A3
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
         lda #' '
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
+        lda #$5D
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
         dex
         bne :-
-    lda #$A3
-    sta Vera::Reg::Data0
-    ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
-    sty Vera::Reg::Data0
 
 @endofrow:
     lda xf_tmp3
@@ -173,19 +153,17 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     lda #(1 | $20) ; high page, stride = 2
     sta $9F22
 
-    lda #(SEQUENCER_LOCATION_Y+SEQUENCER_GRID_ROWS+1)
+    lda #(SEQUENCER_LOCATION_Y+SEQUENCER_GRID_ROWS/2+1)
     clc
     adc #$b0
     sta $9F21
 
-    lda x_position
+    lda Grid::x_position
     asl
-    asl
-    asl
-
     clc
-    adc Grid::cursor_position
-    adc #3
+    adc Grid::x_position
+
+    adc #4
     asl
     ina
 
@@ -193,11 +171,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     lda #(XF_CURSOR_BG_COLOR | XF_BASE_FG_COLOR)
     sta Vera::Reg::Data0
-
-    ldy Grid::cursor_position
-    bne :+
-        sta Vera::Reg::Data0
-    :
+    sta Vera::Reg::Data0
 
 
 
