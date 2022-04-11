@@ -39,10 +39,11 @@ xf_tmp3: .res 1
 .include "customchars.s"
 .include "tracker_grid.s"
 .include "sequencer.s"
+.include "instruments.s"
 .include "function.s"
-concerto_use_timbres_from_file = 1
-.define CONCERTO_TIMBRES_PATH "cx16-concerto/FACTORY.COB"
-.include "cx16-concerto/concerto_synth/concerto_synth.asm"
+;concerto_use_timbres_from_file = 1
+;.define CONCERTO_TIMBRES_PATH "cx16-concerto/FACTORY.COB"
+;.include "cx16-concerto/concerto_synth/concerto_synth.asm"
 .include "util.s"
 .include "irq.s"
 .include "keyboard.s"
@@ -92,11 +93,11 @@ main:
     lda #XF_STATE_PATTERN_EDITOR_AUDITION
     sta xf_state
 
-    lda #$3F
+    lda #$7F
     sta Grid::global_frame_length
 
     jsr xf_irq::setup
-    jsr concerto_synth::initialize
+;    jsr concerto_synth::initialize
 
     jsr Keyboard::setup_handler
 
@@ -105,9 +106,12 @@ main:
     lda #1
     JSR x16::Kernal::MOUSE_CONFIG ; show the default mouse pointer
 
+    lda #5
+    sta Grid::base_bank
 @mainloop:
     jsr Grid::draw
     jsr Sequencer::draw
+    jsr Instruments::draw
     wai
 
     VERA_SET_ADDR ($0000+$1B000),2
@@ -156,14 +160,14 @@ main:
     cmp #$51 ; Q
     bne :+
     ldy #1
-    sty concerto_synth::note_channel
+;    sty concerto_synth::note_channel
     ldy Grid::y_position
-    sty concerto_synth::note_timbre
+;    sty concerto_synth::note_timbre
     ldy #50
-    sty concerto_synth::note_pitch
+;    sty concerto_synth::note_pitch
     lda #63
 
-    jsr concerto_synth::play_note
+;    jsr concerto_synth::play_note
     :
     jmp @mainloop
 @exit:

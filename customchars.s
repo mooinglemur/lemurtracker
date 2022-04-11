@@ -17,14 +17,14 @@ GRID_LEFT         = $8A
 GRID_RIGHT        = GRID_LEFT
 NOTE_DOT          = $8B
 NOTE_CUT_LEFT     = $8C
-NOTE_CUT_MIDDLE   = $8C
-NOTE_CUT_RIGHT    = $8D
-NOTE_REL_LEFT     = $8E
-NOTE_REL_MIDDLE   = $8F
-NOTE_REL_RIGHT    = $90
-GRID_BOTTOM       = $91
+NOTE_CUT_MIDDLE   = $8D
+NOTE_CUT_RIGHT    = $8E
+NOTE_REL_LEFT     = $8F
+NOTE_REL_MIDDLE   = $90
+NOTE_REL_RIGHT    = $91
+GRID_BOTTOM       = $92
 GRID_BOTTOM_LEFT  = GRID_BOTTOM
-GRID_BOTTOM_RIGHT = $92
+GRID_BOTTOM_RIGHT = $93
 
 
 
@@ -43,7 +43,7 @@ install:
     lda graphic_chars,x
     sta Vera::Reg::Data0
     inx
-    cpx #(8*5)
+    cpx #(8*13)
     bne :-
 
     rts

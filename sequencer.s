@@ -149,6 +149,33 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         jmp @rowstart
     :
 
+;   Bottom of grid
+    VERA_SET_ADDR (((SEQUENCER_LOCATION_Y+SEQUENCER_GRID_ROWS+1) * 256)+((SEQUENCER_LOCATION_X+2)*2)+Vera::VRAM_text),2
+
+    ;lda #$A3
+    ;sta VERA_data0
+
+    lda #$6D
+    sta Vera::Reg::Data0
+    ldx #(NUM_CHANNELS-1)
+    :
+        lda #$40
+        sta Vera::Reg::Data0
+        sta Vera::Reg::Data0
+        lda #$71
+        sta Vera::Reg::Data0
+        dex
+        bne :-
+    lda #$40
+    sta Vera::Reg::Data0
+    sta Vera::Reg::Data0
+
+    lda #$7D
+    sta Vera::Reg::Data0
+
+
+
+
 ; now put the cursor where it belongs
     lda #(1 | $20) ; high page, stride = 2
     sta $9F22
@@ -174,30 +201,5 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sta Vera::Reg::Data0
 
 
-
-;    lda #$81
-;    sta VERA_data0
-;    lda #$91
-;    sta VERA_data0
-
-
-
-;@colorcursorline:
-;    lda #(0 | $20) ; low page, stride = 2
-;    sta $9F22
-;
-;    lda #23; row number
-;    sta $9F21
-;
-;    lda #7 ; address color memory inside grid
-;    sta $9F20
-;
-;    ldx #70
-;    lda #%00100001
-;    :
-;        sta VERA_data0
-;        dex
-;        bne :-
-;
     rts
 .endscope

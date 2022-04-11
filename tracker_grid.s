@@ -1,17 +1,30 @@
 .scope Grid
 
+NUM_CHANNELS = 8
+
+; vars that keep state
 x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in
 cursor_position: .res 1 ; within the column (channel) where is the cursor?
 global_frame_length: .res 1 ; set on file create/file load
 base_bank: .res 1 ; where does tracker data start
+channel_to_pattern: .res NUM_CHANNELS ; which pattern is referenced in each channel
+notedata: .res 9*NUM_CHANNELS ; temp storage for characters based on pattern data
+iterator: .res 1
 
-; entry vars
+.pushseg
+.segment "ZEROPAGE"
+lookup_addr: .res 2 ; storage for offset in banked ram
+.popseg
+
+; vars that affect entry
 octave: .res 1
 step: .res 1
 
 
-NUM_CHANNELS = 8
+
+
+
 
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
@@ -94,6 +107,54 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     stx Vera::Reg::Data0
     sty Vera::Reg::Data0
 
+    ; fetch note data from hiram. we can clobber registers here
+    stz iterator
+
+@fetch_notedata_loop:
+    ldx iterator
+    lda channel_to_pattern,x ; which pattern are we loading
+    ; for simplicity, we're doing one bank per multitrack pattern
+    clc
+    adc #base_bank
+    sta x16::Reg::RAMBank
+    lda xf_tmp2 ; the row we're drawing
+    sta lookup_addr
+    stz lookup_addr+1
+    ; multiply by 64 (8 channels, 8 bytes per entry)
+    rol lookup_addr
+    rol lookup_addr+1
+    rol lookup_addr
+    rol lookup_addr+1
+    rol lookup_addr
+    rol lookup_addr+1
+    rol lookup_addr
+    rol lookup_addr+1
+    rol lookup_addr
+    rol lookup_addr+1
+    rol lookup_addr
+    rol lookup_addr+1
+    ; column/channel, multiply by 8
+    txa
+    asl
+    asl
+    asl
+    clc
+    adc lookup_addr
+    sta lookup_addr
+    adc #0 ; not sure if...
+    sta lookup_addr+1 ; ...these are needed since we shouldn't wrap
+
+    ldy #0
+    lda (lookup_addr),y
+    ; note
+
+
+
+
+
+
+
+
     ; color current row
     lda xf_tmp2
     cmp y_position
@@ -118,9 +179,8 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         bra @got_color
     :
 
-
 @got_color:
-    ldx #NUM_CHANNELS
+    ldx #0
     :
         lda #CustomChars::NOTE_DOT
         sta Vera::Reg::Data0
@@ -142,8 +202,9 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         sty Vera::Reg::Data0
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
-        dex
-        bne :-
+        inx
+        cpx #NUM_CHANNELS
+        bcc :-
     lda #CustomChars::GRID_RIGHT
     sta Vera::Reg::Data0
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
@@ -200,6 +261,30 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     bcs :+
         jmp @rowstart
     :
+; bottom of grid
+
+
+    VERA_SET_ADDR ($2B06+$1B000),2
+    ldx #NUM_CHANNELS
+    :
+        lda #CustomChars::GRID_BOTTOM_LEFT
+        sta Vera::Reg::Data0
+        lda #CustomChars::GRID_BOTTOM
+        sta Vera::Reg::Data0
+        sta Vera::Reg::Data0
+        sta Vera::Reg::Data0
+        sta Vera::Reg::Data0
+        sta Vera::Reg::Data0
+        sta Vera::Reg::Data0
+        sta Vera::Reg::Data0
+        sta Vera::Reg::Data0
+        dex
+        bne :-
+    lda #CustomChars::GRID_BOTTOM_RIGHT
+    sta Vera::Reg::Data0
+
+
+
 
 ; now put the cursor where it belongs
     lda #(1 | $20) ; high page, stride = 2
@@ -221,7 +306,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     adc cursor_position
     adc #3
     asl
-    ina
+    inc
 
     sta $9F20
 
@@ -261,4 +346,10 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 ;        bne :-
 ;
     rts
+
+
+note_val:    .byte 1
+note_sharp:  .byte 1
+note_octave: .byte $30,$31,$32,$33,$34,$35,$36,$37
+
 .endscope
