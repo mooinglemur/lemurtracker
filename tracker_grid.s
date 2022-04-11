@@ -115,7 +115,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     lda channel_to_pattern,x ; which pattern are we loading
     ; for simplicity, we're doing one bank per multitrack pattern
     clc
-    adc #base_bank
+    adc base_bank
     sta x16::Reg::RAMBank
     lda xf_tmp2 ; the row we're drawing
     sta lookup_addr

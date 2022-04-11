@@ -6,6 +6,7 @@ max_instrument: .res 1 ; the last instrument
 INSTRUMENTS_LOCATION_X = 29
 INSTRUMENTS_LOCATION_Y = 44
 INSTRUMENTS_GRID_ROWS = 9
+NUM_CHANNELS = 8
 
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
