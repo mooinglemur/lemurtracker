@@ -9,7 +9,7 @@ cursor_position: .res 1 ; within the column (channel) where is the cursor?
 global_frame_length: .res 1 ; set on file create/file load
 base_bank: .res 1 ; where does tracker data start
 channel_to_pattern: .res NUM_CHANNELS ; which pattern is referenced in each channel
-notedata: .res 9*NUM_CHANNELS ; temp storage for characters based on pattern data
+notechardata: .res 9*NUM_CHANNELS ; temp storage for characters based on pattern data
 iterator: .res 1
 
 .pushseg
@@ -141,17 +141,52 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     clc
     adc lookup_addr
     sta lookup_addr
-    adc #0 ; not sure if...
-    sta lookup_addr+1 ; ...these are needed since we shouldn't wrap
+    lda lookup_addr+1
+    adc #$A0 ; high ram start page
+    sta lookup_addr+1
+
+    txa
+    asl
+    asl
+    asl
+    clc
+    adc iterator
+    tax
 
     ldy #0
     lda (lookup_addr),y
     ; note
+    bne @note_exists
+
+    lda #NOTE_DOT
+    sta notechardata,x
+    inx
+    lda #"."
+    sta notechardata,x
+    inx
+    lda #"."
+    sta notechardata,x
+    bra @end_notedata_loop
+
+@note_exists:
+
+
+    pha
+    and #$0f
+    dec
+    tay
+    lda note_val,y
+    sta note_da 
 
 
 
+    pla
 
-
+@end_notedata_loop:
+    inc iterator
+    lda iterator
+    cmp #NUM_CHANNELS
+    bcc @fetch_notedata_loop
 
 
 
@@ -348,8 +383,11 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     rts
 
 
-note_val:    .byte 1
-note_sharp:  .byte 1
+note_val:    .byte CustomChars::NOTE_C,CustomChars::NOTE_C,CustomChars::NOTE_D
+             .byte CustomChars::NOTE_D,CustomChars::NOTE_E,CustomChars::NOTE_F
+             .byte CustomChars::NOTE_F,CustomChars::NOTE_G,CustomChars::NOTE_G
+             .byte CustomChars::NOTE_A,CustomChars::NOTE_A,CustomChars::NOTE_B
+note_sharp:  .byte '-','#','-','#','-','-','#','-','#','-','#','-'
 note_octave: .byte $30,$31,$32,$33,$34,$35,$36,$37
 
 .endscope
