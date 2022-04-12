@@ -57,7 +57,7 @@ install:
 note_chars:
     ; A
     .byte %10001100
-    .byte %10110011
+    .byte %10011110
     .byte %10110011
     .byte %10111111
     .byte %10110011
@@ -66,13 +66,13 @@ note_chars:
     .byte %10000000
 
     ; B
-    .byte %10111100
-    .byte %10110010
+    .byte %10111110
+    .byte %10110011
     .byte %10110011
     .byte %10111110
     .byte %10110011
-    .byte %10110010
-    .byte %10111100
+    .byte %10110011
+    .byte %10111110
     .byte %10000000
 
     ; C
