@@ -27,6 +27,7 @@ decrement_grid_cursor:
     ldx #8
 @end:
     stx Grid::cursor_position
+    inc redraw
     rts
 
 decrement_grid_x:
@@ -38,6 +39,7 @@ decrement_grid_x:
     :
     dec Grid::x_position
 @exit:
+    inc redraw
     rts
 
 decrement_grid_y:
@@ -49,6 +51,7 @@ decrement_grid_y:
     :
     dec Grid::y_position
 @exit:
+    inc redraw
     rts
 
 
@@ -73,6 +76,7 @@ increment_grid_cursor:
     :
     stx Grid::cursor_position
 
+    inc redraw
     rts
 
 increment_grid_x:
@@ -84,6 +88,7 @@ increment_grid_x:
     :
     inc Grid::x_position
 @exit:
+    inc redraw
     rts
 
 
@@ -96,6 +101,7 @@ increment_grid_y:
     :
     inc Grid::y_position
 @exit:
+    inc redraw
     rts
 
 
@@ -107,6 +113,7 @@ mass_decrement_grid_y:
         lda #0
     :
     sta Grid::y_position
+    inc redraw
     rts
 
 mass_increment_grid_y:
@@ -122,11 +129,13 @@ mass_increment_grid_y:
     lda Grid::global_frame_length
 @end:
     sta Grid::y_position
+    inc redraw
     rts
 
 
 set_grid_y:
     sta Grid::y_position
+    inc redraw
     rts
 
 

@@ -121,6 +121,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sta lookup_addr
     stz lookup_addr+1
     ; multiply by 64 (8 channels, 8 bytes per entry)
+    ; .C will be clear here
     rol lookup_addr
     rol lookup_addr+1
     rol lookup_addr
@@ -158,37 +159,97 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ; note
     bne @note_exists
 
-    lda #NOTE_DOT
+    lda #CustomChars::NOTE_DOT
     sta notechardata,x
-    inx
-    lda #"."
-    sta notechardata,x
-    inx
-    lda #"."
-    sta notechardata,x
-    bra @end_notedata_loop
+    lda #'.'
+    sta notechardata+1,x
+    sta notechardata+2,x
+    sta notechardata+3,x
+    sta notechardata+4,x
+    bra @get_effect
 
 @note_exists:
-
-
-    pha
-    and #$0f
-    dec
+    ldy #0
+    sec
+@note_and_octave_loop: ; after this loop, A will contain the note and Y will contain the octave
+    cmp #24
+    bcc @found_octave
+    iny
+    sbc #12
+    bra @note_and_octave_loop
+@found_octave:
+    phy
+    sec
+    sbc #12
     tay
     lda note_val,y
-    sta note_da 
+    sta notechardata,x
+    lda note_sharp,y
+    sta notechardata+1,x
+    ply
+    lda note_octave,y
+    sta notechardata+2,x
 
+@get_instrument_number:
 
-
+    ldy #1
+    lda (lookup_addr),y
+    phx
+    jsr xf_byte_to_hex
+    ply
+    phx
+    phy
+    plx
+    sta notechardata+3,x
     pla
+    sta notechardata+4,x
+@get_volume: ; byte should be 1-16 and displayed value should be shifted down one
+    lda #'.'
+    sta notechardata+5,x
+    ldy #2
+    lda (lookup_addr),y
+    beq :+
+        phx
+        dec
+        jsr xf_byte_to_hex
+        txa
+        plx
+        sta notechardata+5,x
+    :
+@get_effect:
+    ldy #3
+    lda (lookup_addr),y
+    bne :+
+        lda #'.'
+        sta notechardata+6,x
+        sta notechardata+7,x
+        sta notechardata+8,x
+        bra @end_column
+    :
+    sta notechardata+6,x
+@get_effect_arg:
+    ldy #4
+    lda (lookup_addr),y
+    phx
+    jsr xf_byte_to_hex
+    ply
+    phx
+    phy
+    plx
+    sta notechardata+7,x
+    pla
+    sta notechardata+8,x
 
-@end_notedata_loop:
+
+@end_column:
     inc iterator
     lda iterator
     cmp #NUM_CHANNELS
-    bcc @fetch_notedata_loop
+    bcs :+
+        jmp @fetch_notedata_loop
+    :
 
-
+    ldy #(XF_BASE_BG_COLOR | XF_BASE_FG_COLOR)
 
     ; color current row
     lda xf_tmp2
@@ -215,31 +276,18 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     :
 
 @got_color:
+
     ldx #0
     :
-        lda #CustomChars::NOTE_DOT
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        lda #'.'
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
+        lda notechardata,x
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
         inx
-        cpx #NUM_CHANNELS
+        cpx #NUM_CHANNELS*9
         bcc :-
+
+
+
     lda #CustomChars::GRID_RIGHT
     sta Vera::Reg::Data0
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
@@ -387,7 +435,7 @@ note_val:    .byte CustomChars::NOTE_C,CustomChars::NOTE_C,CustomChars::NOTE_D
              .byte CustomChars::NOTE_D,CustomChars::NOTE_E,CustomChars::NOTE_F
              .byte CustomChars::NOTE_F,CustomChars::NOTE_G,CustomChars::NOTE_G
              .byte CustomChars::NOTE_A,CustomChars::NOTE_A,CustomChars::NOTE_B
-note_sharp:  .byte '-','#','-','#','-','-','#','-','#','-','#','-'
-note_octave: .byte $30,$31,$32,$33,$34,$35,$36,$37
+note_sharp:  .byte "-#-#--#-#-#-"
+note_octave: .byte "0123456789"
 
 .endscope

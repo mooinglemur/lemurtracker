@@ -68,7 +68,7 @@ tracker_frame_x_offset: .res 1 ; in the frame editor, what voice (column) are we
 tracker_frame_y_offset: .res 1 ; in the frame editor, what row are we in?
 tracker_frame_mix: .res 1 ; in the frame editor, what mix's patterns are we showing?
 tracker_songno: .res 1 ; what song are we showing/playing
-
+redraw: .res 1 ; flag on when a redraw is necessary
 xf_state: .res 1
 
 XF_STATE_DUMP = 0 ; we end up here when we need to dump memory state to SD
@@ -108,21 +108,49 @@ main:
 
     lda #5
     sta Grid::base_bank
-@mainloop:
-    jsr Grid::draw
-    jsr Sequencer::draw
-    jsr Instruments::draw
-    wai
 
-    VERA_SET_ADDR ($0000+$1B000),2
-    jsr x16::Kernal::GETIN
-    pha
+    inc redraw
 
-    beq :+
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
+; temp fill data
+    lda Grid::base_bank
+    sta x16::Reg::RAMBank
+
+    stz xf_tmp1
+    lda #$A0
+    sta xf_tmp2
+    ldy #12
+    ldx #8
     :
+        tya
+        sta (xf_tmp1)
+        lda xf_tmp1
+        clc
+        adc #8
+        sta xf_tmp1
+        lda xf_tmp2
+        adc #0
+        sta xf_tmp2
+
+        iny
+        cpy #128
+        bcc :-
+
+        ldy #12
+        dex
+        bne :-
+
+
+
+
+@mainloop:
+    lda redraw
+    beq :+
+        stz redraw
+        jsr Grid::draw
+        jsr Sequencer::draw
+        jsr Instruments::draw
+    :
+    wai
 
     VERA_SET_ADDR ($0010+$1B000),2
     lda Grid::cursor_position
@@ -150,25 +178,6 @@ main:
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
 
-
-
-    pla
-
-
-
-
-    cmp #$51 ; Q
-    bne :+
-    ldy #1
-;    sty concerto_synth::note_channel
-    ldy Grid::y_position
-;    sty concerto_synth::note_timbre
-    ldy #50
-;    sty concerto_synth::note_pitch
-    lda #63
-
-;    jsr concerto_synth::play_note
-    :
     jmp @mainloop
 @exit:
 ;	DO THIS WHEN WE'RE EXITING FOR REAL
