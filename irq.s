@@ -40,41 +40,7 @@ handler:
     and #$01
     beq @after_handler
 
-;    ; we're pulling this out of the concerto isr.  We're using the vblank instead of AFLOW so we can't use that code directly
-;    ; backup shared variables (shared means: both main program and ISR can use them)
-;    lda concerto_synth::mzpba
-;    pha
-;    lda concerto_synth::mzpbe
-;    pha
-;    lda concerto_synth::mzpbf
-;    pha
-;    lda concerto_synth::mzpbg
-;    pha
-;    lda Vera::Reg::AddrL
-;    pha
-;    lda Vera::Reg::AddrM
-;    pha
-;    lda Vera::Reg::AddrH
-;    pha
-;    ; call playback routine
-;    jsr concerto_synth::concerto_playback_routine
-;    ; do synth tick updates
-;    jsr concerto_synth::synth_engine::synth_tick
-;    ; restore shared variables
-;    pla
-;    sta Vera::Reg::AddrH
-;    pla
-;    sta Vera::Reg::AddrM
-;    pla
-;    sta Vera::Reg::AddrL
-;    pla
-;    sta concerto_synth::mzpbg
-;    pla
-;    sta concerto_synth::mzpbf
-;    pla
-;    sta concerto_synth::mzpbe
-;    pla
-;    sta concerto_synth::mzpba
+
 
 @after_handler:
 
