@@ -157,7 +157,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ldy #0
     lda (lookup_addr),y
     ; note
-    bne @note_exists
+    bne @check_for_special_note
 
     lda #CustomChars::NOTE_DOT
     sta notechardata,x
@@ -166,7 +166,35 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sta notechardata+2,x
     sta notechardata+3,x
     sta notechardata+4,x
-    bra @get_effect
+    jmp @get_volume
+@check_for_special_note:
+    cmp #1
+    beq @note_cut
+    cmp #2
+    beq @note_release
+    bra @note_exists
+@note_cut:
+    lda #CustomChars::NOTE_CUT_LEFT
+    sta notechardata,x
+    lda #CustomChars::NOTE_CUT_MIDDLE
+    sta notechardata+1,x
+    lda #CustomChars::NOTE_CUT_RIGHT
+    sta notechardata+2,x
+    lda #'.'
+    sta notechardata+3,x
+    sta notechardata+4,x
+    bra @get_volume
+@note_release:
+    lda #CustomChars::NOTE_REL_LEFT
+    sta notechardata,x
+    lda #CustomChars::NOTE_REL_MIDDLE
+    sta notechardata+1,x
+    lda #CustomChars::NOTE_REL_RIGHT
+    sta notechardata+2,x
+    lda #'.'
+    sta notechardata+3,x
+    sta notechardata+4,x
+    bra @get_volume
 
 @note_exists:
     ldy #0

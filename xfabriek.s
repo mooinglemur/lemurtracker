@@ -106,7 +106,7 @@ main:
     lda #1
     JSR x16::Kernal::MOUSE_CONFIG ; show the default mouse pointer
 
-    lda #5
+    lda #6
     sta Grid::base_bank
 
     inc redraw
@@ -118,7 +118,7 @@ main:
     stz xf_tmp1
     lda #$A0
     sta xf_tmp2
-    ldy #12
+    ldy #1
     ldx #8
     :
         tya
