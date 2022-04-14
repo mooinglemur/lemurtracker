@@ -145,10 +145,7 @@ handler2:
 handler3:
     rts
 
-; handler for states 4 and 5 are in the grid editor, which are different
-; for the input events but not most of the navigation events
-handler4:
-handler5:
+handler4: ; XF_STATE_PATTERN_EDITOR
     ldy #(@ktblh-@ktbl)
 @loop:
     lda scancode
@@ -177,10 +174,10 @@ handler5:
     rts
 @ktbl:
     ; this is the static keymapping
-    ;     up  dn  lt  rt  hm  end pgu pgd
-    .byte $75,$72,$6B,$74,$6C,$69,$7D,$7A
+    ;     up  dn  lt  rt  hm  end pgu pgd spc tab
+    .byte $75,$72,$6B,$74,$6C,$69,$7D,$7A,$29,$0D
 @ktblh:
-    .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0
+    .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$00,$00
 @fntbl:
     .word Function::decrement_grid_y ;up
     .word Function::increment_grid_y ;dn
@@ -190,6 +187,8 @@ handler5:
     .word @key_end
     .word Function::mass_decrement_grid_y
     .word Function::mass_increment_grid_y
+    .word @key_space
+    .word @key_tab
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL)
@@ -210,9 +209,90 @@ handler5:
 @key_end:
     lda Grid::global_frame_length
     jmp Function::set_grid_y
+@key_space:
+    ; Flip state of audition/entry flag
+    lda Grid::entrymode
+    eor #$01
+    sta Grid::entrymode
+    inc redraw
+    rts
+@key_tab:
+    lda #XF_STATE_MIX_EDITOR
+    sta xf_state
+    inc redraw
+    rts
+
+handler5:
+    rts
 
 
-handler6:
+handler6: ; XF_STATE_MIX_EDITOR
+    ldy #(@ktblh-@ktbl)
+@loop:
+    lda scancode
+    cmp @ktbl-1,y
+    beq @checkh
+@loop_cont:
+    dey
+    bne @loop
+    bra @nomatch
+@checkh:
+    lda scancode+1
+    cmp @ktblh-1,y
+    beq @match
+    bra @loop_cont
+@match:
+    dey
+    tya
+    asl
+    tay
+    lda @fntbl,y
+    sta tmp1
+    lda @fntbl+1,y
+    sta tmp1+1
+    jmp (tmp1)
+@nomatch:
+    rts
+@ktbl:
+    ; this is the static keymapping
+    ;     up  dn  lt  rt  hm  end pgu pgd spc tab
+    .byte $75,$72,$6B,$74,$6C,$69,$7D,$7A,$29,$0D
+@ktblh:
+    .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$00,$00
+@fntbl:
+    .word Function::decrement_sequencer_y ;up
+    .word Function::increment_sequencer_y ;dn
+    .word @key_left
+    .word @key_right
+    .word @key_home
+    .word @key_end
+    .word Function::mass_decrement_sequencer_y
+    .word Function::mass_increment_sequencer_y
+    .word @key_space
+    .word @key_tab
+@key_left: ; grid_x is also used for the positioning in the sequence table
+    jmp Function::decrement_grid_x
+@key_right:
+    jmp Function::increment_grid_x
+@key_home:
+    lda #0
+    jmp Function::set_sequencer_y
+@key_end:
+    lda Sequencer::max_frame
+    jmp Function::set_sequencer_y
+@key_space:
+    ; Flip state of audition/entry flag
+    lda Grid::entrymode
+    eor #$01
+    sta Grid::entrymode
+    inc redraw
+    rts
+@key_tab:
+    lda #XF_STATE_PATTERN_EDITOR
+    sta xf_state
+    inc redraw
+    rts
+
 handler7:
 handler8:
 handler9:

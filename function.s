@@ -47,6 +47,7 @@ decrement_grid_y:
     bne :+
         ldy Grid::global_frame_length
         sty Grid::y_position
+        jsr decrement_sequencer_y
         bra @exit
     :
     dec Grid::y_position
@@ -55,6 +56,17 @@ decrement_grid_y:
     rts
 
 
+decrement_sequencer_y:
+    ldy Sequencer::y_position
+    bne :+
+        ldy Sequencer::max_frame
+        sty Sequencer::y_position
+        bra @exit
+    :
+    dec Sequencer::y_position
+@exit:
+    inc redraw
+    rts
 
 
 increment_grid_cursor:
@@ -97,6 +109,7 @@ increment_grid_y:
     cpy Grid::global_frame_length
     bcc :+
         stz Grid::y_position
+        jsr increment_sequencer_y
         bra @exit
     :
     inc Grid::y_position
@@ -104,6 +117,17 @@ increment_grid_y:
     inc redraw
     rts
 
+increment_sequencer_y:
+    ldy Sequencer::y_position
+    cpy Sequencer::max_frame
+    bcc :+
+        stz Sequencer::y_position
+        bra @exit
+    :
+    inc Sequencer::y_position
+@exit:
+    inc redraw
+    rts
 
 mass_decrement_grid_y:
     lda Grid::y_position
@@ -113,6 +137,17 @@ mass_decrement_grid_y:
         lda #0
     :
     sta Grid::y_position
+    inc redraw
+    rts
+
+mass_decrement_sequencer_y:
+    lda Sequencer::y_position
+    sec
+    sbc #4
+    bcs :+
+        lda #0
+    :
+    sta Sequencer::y_position
     inc redraw
     rts
 
@@ -132,12 +167,31 @@ mass_increment_grid_y:
     inc redraw
     rts
 
+mass_increment_sequencer_y:
+    lda Sequencer::y_position
+    clc
+    adc #4
+    bcs @clamp
+
+    cmp Sequencer::max_frame
+    bcc @end
+
+@clamp:
+    lda Sequencer::max_frame
+@end:
+    sta Sequencer::y_position
+    inc redraw
+    rts
 
 set_grid_y:
     sta Grid::y_position
     inc redraw
     rts
 
+set_sequencer_y:
+    sta Sequencer::y_position
+    inc redraw
+    rts
 
 
 

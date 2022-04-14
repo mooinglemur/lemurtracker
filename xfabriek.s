@@ -75,8 +75,8 @@ XF_STATE_DUMP = 0 ; we end up here when we need to dump memory state to SD
 XF_STATE_NEW_DIALOG = 1
 XF_STATE_SAVE_DIALOG = 2
 XF_STATE_LOAD_DIALOG = 3
-XF_STATE_PATTERN_EDITOR_AUDITION = 4
-XF_STATE_PATTERN_EDITOR_ENTRY = 5
+XF_STATE_PATTERN_EDITOR = 4
+;XF_STATE_PATTERN_EDITOR_ENTRY = 5
 XF_STATE_MIX_EDITOR = 6
 XF_STATE_INSTRUMENT_PSG = 7
 XF_STATE_INSTRUMENT_FM = 8
@@ -90,7 +90,7 @@ main:
 
     jsr CustomChars::install
 
-    lda #XF_STATE_PATTERN_EDITOR_AUDITION
+    lda #XF_STATE_PATTERN_EDITOR
     sta xf_state
 
     lda #$7F
@@ -108,6 +108,9 @@ main:
 
     lda #6
     sta Grid::base_bank
+
+    lda #127
+    sta Sequencer::max_frame 
 
     inc redraw
 

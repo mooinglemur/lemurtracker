@@ -11,6 +11,7 @@ base_bank: .res 1 ; where does tracker data start
 channel_to_pattern: .res NUM_CHANNELS ; which pattern is referenced in each channel
 notechardata: .res 9*NUM_CHANNELS ; temp storage for characters based on pattern data
 iterator: .res 1
+entrymode: .res 1
 
 .pushseg
 .segment "ZEROPAGE"
@@ -20,6 +21,7 @@ lookup_addr: .res 2 ; storage for offset in banked ram
 ; vars that affect entry
 octave: .res 1
 step: .res 1
+
 
 
 
@@ -282,10 +284,18 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ; color current row
     lda xf_tmp2
     cmp y_position
-    bne :+
+    bne @not_current_row
+        lda xf_state
+        cmp #XF_STATE_PATTERN_EDITOR
+        bne @not_current_row ; If we're not editing the pattern, don't hilight the current row
         ldy #(XF_AUDITION_BG_COLOR | XF_BASE_FG_COLOR)
+        lda entrymode
+        beq :+
+            ldy #(XF_NOTE_ENTRY_BG_COLOR | XF_BASE_FG_COLOR)
+        :
+
         bra @got_color
-    :
+@not_current_row:
     ; color every 16 rows
     lda xf_tmp2
     and #%11110000
@@ -396,6 +406,9 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
 
 
+    lda xf_state
+    cmp #XF_STATE_PATTERN_EDITOR
+    bne @end_cursor
 
 ; now put the cursor where it belongs
     lda #(1 | $20) ; high page, stride = 2
@@ -430,6 +443,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         sta Vera::Reg::Data0
     :
 
+@end_cursor:
 
 
 ;    lda #$81
