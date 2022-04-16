@@ -30,6 +30,7 @@ step: .res 1
 
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
+
     ; Top of grid
     VERA_SET_ADDR ($0206+$1B000),2
 

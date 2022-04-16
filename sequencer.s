@@ -3,11 +3,19 @@
 x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in
 max_frame: .res 1 ; the last frame in the sequencer
+mix: .res 1 ; which mix we're displaying
+base_bank: .res 1 ; what bank are we going to use for the seq table
+iterator: .res 1
 
 NUM_CHANNELS = 8
 SEQUENCER_LOCATION_X = 1
 SEQUENCER_LOCATION_Y = 44
 SEQUENCER_GRID_ROWS = 9
+
+.pushseg
+.segment "ZEROPAGE"
+lookup_addr: .res 2 ; storage for offset in banked ram
+.popseg
 
 
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
@@ -85,26 +93,65 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
 @filledrow:
     jsr xf_byte_to_hex
-    ldy #(XF_BASE_BG_COLOR | XF_BASE_FG_COLOR)
+    ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
     stx Vera::Reg::Data0
     sty Vera::Reg::Data0
 
+    lda base_bank
+    sta x16::Reg::RAMBank
+
+    ; fetch note data from hiram. we can clobber registers here
+    stz iterator
+    stz lookup_addr+1
+
+    lda xf_tmp2 ; the row we're drawing
+    asl
+    rol lookup_addr+1
+    asl
+    rol lookup_addr+1
+    asl
+    rol lookup_addr+1
+    sta lookup_addr
+
+    lda mix
+    asl
+    asl
+    clc
+    adc #$A0
+    adc lookup_addr+1
+    sta lookup_addr+1
+
 
 @got_color:
-    ldx #NUM_CHANNELS
+    ldx #0
     :
+        phx
+
         lda #$5D
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
-        lda #'.'
+        phy
+        phx
+        ply
+        lda (lookup_addr),y
+        ldx xf_tmp2
+        cpx y_position
+        bne :+
+            sta Grid::channel_to_pattern,y
+        :
+        jsr xf_byte_to_hex
+        ply
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
+        stx Vera::Reg::Data0
         sty Vera::Reg::Data0
-        dex
-        bne :-
+
+        plx
+        inx
+        cpx #NUM_CHANNELS
+        bne :--
     lda #$5D
     sta Vera::Reg::Data0
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)

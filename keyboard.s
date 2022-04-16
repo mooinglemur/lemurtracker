@@ -146,6 +146,7 @@ handler3:
     rts
 
 handler4: ; XF_STATE_PATTERN_EDITOR
+    jsr generic_hotkeys
     ldy #(@ktblh-@ktbl)
 @loop:
     lda scancode
@@ -164,20 +165,16 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     dey
     tya
     asl
-    tay
-    lda @fntbl,y
-    sta tmp1
-    lda @fntbl+1,y
-    sta tmp1+1
-    jmp (tmp1)
+    tax
+    jmp (@fntbl,x)
 @nomatch:
     rts
 @ktbl:
     ; this is the static keymapping
-    ;     up  dn  lt  rt  hm  end pgu pgd spc tab
-    .byte $75,$72,$6B,$74,$6C,$69,$7D,$7A,$29,$0D
+    ;     up  dn  lt  rt  hm  end pgu pgd tab
+    .byte $75,$72,$6B,$74,$6C,$69,$7D,$7A,$0D
 @ktblh:
-    .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$00,$00
+    .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$00
 @fntbl:
     .word Function::decrement_grid_y ;up
     .word Function::increment_grid_y ;dn
@@ -187,7 +184,6 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     .word @key_end
     .word Function::mass_decrement_grid_y
     .word Function::mass_increment_grid_y
-    .word @key_space
     .word @key_tab
 @key_left:
     lda modkeys
@@ -227,6 +223,7 @@ handler5:
 
 
 handler6: ; XF_STATE_MIX_EDITOR
+    jsr generic_hotkeys
     ldy #(@ktblh-@ktbl)
 @loop:
     lda scancode
@@ -245,20 +242,16 @@ handler6: ; XF_STATE_MIX_EDITOR
     dey
     tya
     asl
-    tay
-    lda @fntbl,y
-    sta tmp1
-    lda @fntbl+1,y
-    sta tmp1+1
-    jmp (tmp1)
+    tax
+    jmp (@fntbl,x)
 @nomatch:
     rts
 @ktbl:
     ; this is the static keymapping
-    ;     up  dn  lt  rt  hm  end pgu pgd spc tab
-    .byte $75,$72,$6B,$74,$6C,$69,$7D,$7A,$29,$0D
+    ;     up  dn  lt  rt  hm  end pgu pgd tab
+    .byte $75,$72,$6B,$74,$6C,$69,$7D,$7A,$0D
 @ktblh:
-    .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$00,$00
+    .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$00
 @fntbl:
     .word Function::decrement_sequencer_y ;up
     .word Function::increment_sequencer_y ;dn
@@ -268,7 +261,6 @@ handler6: ; XF_STATE_MIX_EDITOR
     .word @key_end
     .word Function::mass_decrement_sequencer_y
     .word Function::mass_increment_sequencer_y
-    .word @key_space
     .word @key_tab
 @key_left: ; grid_x is also used for the positioning in the sequence table
     jmp Function::decrement_grid_x
@@ -304,5 +296,98 @@ handler14:
 handler15:
     rts
 
+generic_hotkeys:
+    ldy #(@ktblh-@ktbl)
+@loop:
+    lda scancode
+    cmp @ktbl-1,y
+    beq @checkh
+@loop_cont:
+    dey
+    bne @loop
+    bra @nomatch
+@checkh:
+    lda scancode+1
+    cmp @ktblh-1,y
+    beq @match
+    bra @loop_cont
+@match:
+    dey
+    tya
+    asl
+    tax
+    jmp (@fntbl,x)
+@nomatch:
+    rts
+@ktbl:
+    ; this is the static keymapping
+    ;     spc
+    .byte $29
+    ;     n1  1   n2  2   n3  3   n4  4   n5  5   n6  6   n7  7   n8  8   n9  9
+    .byte $69,$16,$72,$1E,$7A,$26,$6B,$25,$73,$2E,$74,$36,$6C,$3D,$75,$3E,$7D,$46
+@ktblh:
+    .byte $00
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+@fntbl:
+    .word @key_space
+    .word @key_1
+    .word @key_1
+    .word @key_2
+    .word @key_2
+    .word @key_3
+    .word @key_3
+    .word @key_4
+    .word @key_4
+    .word @key_5
+    .word @key_5
+    .word @key_6
+    .word @key_6
+    .word @key_7
+    .word @key_7
+    .word @key_8
+    .word @key_8
+    .word @key_9
+    .word @key_9
+@key_space:
+    ; Flip state of audition/entry flag
+    lda Grid::entrymode
+    eor #$01
+    sta Grid::entrymode
+    inc redraw
+    rts
+@key_1:
+    ldx #1
+    jmp @key_1to9
+@key_2:
+    ldx #2
+    jmp @key_1to9
+@key_3:
+    ldx #3
+    jmp @key_1to9
+@key_4:
+    ldx #4
+    jmp @key_1to9
+@key_5:
+    ldx #5
+    jmp @key_1to9
+@key_6:
+    ldx #6
+    jmp @key_1to9
+@key_7:
+    ldx #7
+    jmp @key_1to9
+@key_8:
+    ldx #8
+    jmp @key_1to9
+@key_9:
+    ldx #9
+    jmp @key_1to9
+@key_1to9:
+    lda modkeys
+    and #%00110000
+    beq :+
+        ;jsr Function::set_step_size
+    :
+    rts
 
 .endscope

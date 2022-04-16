@@ -106,11 +106,14 @@ main:
     lda #1
     JSR x16::Kernal::MOUSE_CONFIG ; show the default mouse pointer
 
+    lda #1
+    sta Sequencer::base_bank
+
     lda #6
     sta Grid::base_bank
 
     lda #127
-    sta Sequencer::max_frame 
+    sta Sequencer::max_frame
 
     inc redraw
 
@@ -126,6 +129,12 @@ main:
     :
         tya
         sta (xf_tmp1)
+        phy
+        ldy #3
+        sta (xf_tmp1),y
+        iny
+        sta (xf_tmp1),y
+        ply
         lda xf_tmp1
         clc
         adc #8
@@ -143,15 +152,27 @@ main:
         bne :-
 
 
+    lda Sequencer::base_bank
+    sta x16::Reg::RAMBank
+
+    lda #9
+    sta xf_tmp1
+    lda #$A0
+    sta xf_tmp2
+    lda #1
+    sta (xf_tmp1)
+
+
+
 
 
 @mainloop:
     lda redraw
     beq :+
         stz redraw
-        jsr Grid::draw
         jsr Sequencer::draw
         jsr Instruments::draw
+        jsr Grid::draw
     :
     wai
 
