@@ -117,41 +117,6 @@ main:
 
     inc redraw
 
-; temp fill data
-    lda Grid::base_bank
-    sta x16::Reg::RAMBank
-
-    stz xf_tmp1
-    lda #$A0
-    sta xf_tmp2
-    ldy #1
-    ldx #8
-    :
-        tya
-        sta (xf_tmp1)
-        phy
-        ldy #3
-        sta (xf_tmp1),y
-        iny
-        sta (xf_tmp1),y
-        ply
-        lda xf_tmp1
-        clc
-        adc #8
-        sta xf_tmp1
-        lda xf_tmp2
-        adc #0
-        sta xf_tmp2
-
-        iny
-        cpy #128
-        bcc :-
-
-        ldy #12
-        dex
-        bne :-
-
-
     lda Sequencer::base_bank
     sta x16::Reg::RAMBank
 
@@ -167,6 +132,7 @@ main:
 
 
 @mainloop:
+
     lda redraw
     beq :+
         stz redraw
@@ -175,6 +141,13 @@ main:
         jsr Grid::draw
     :
     wai
+
+    ; if we have a pending note entry to do
+    lda Function::note_entry_dispatch_value
+    cmp #$ff
+    beq :+
+        jsr Function::note_entry
+    :
 
     VERA_SET_ADDR ($0010+$1B000),2
     lda Grid::cursor_position

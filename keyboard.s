@@ -6,6 +6,8 @@
 old_vec: .res 2
 scancode: .res 2
 modkeys: .res 1
+keycode: .res 1
+notecode: .res 1
 
 tmp1: .res 2
 tmp2: .res 2
@@ -60,6 +62,8 @@ handler:
 
     stz scancode
     stz scancode+1
+    stz notecode
+    stz keycode
 @exit:
     plx
     pla
@@ -146,21 +150,15 @@ handler3:
     rts
 
 handler4: ; XF_STATE_PATTERN_EDITOR
-    jsr generic_hotkeys
-    ldy #(@ktblh-@ktbl)
+    jsr decode_scancode
+    ldy #(@fntbl-@ktbl)
 @loop:
-    lda scancode
+    lda keycode
     cmp @ktbl-1,y
-    beq @checkh
-@loop_cont:
+    beq @match
     dey
     bne @loop
     bra @nomatch
-@checkh:
-    lda scancode+1
-    cmp @ktblh-1,y
-    beq @match
-    bra @loop_cont
 @match:
     dey
     tya
@@ -168,13 +166,25 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     tax
     jmp (@fntbl,x)
 @nomatch:
+    lda Grid::entrymode
+    beq @noentry
+
+    lda Grid::cursor_position ; are we in the note column?
+    beq @notecolumn
+    ; XXX entry for other columns besides the note column
+
+    bra @end
+@notecolumn:
+    ; XXX handle non note functions here that affect the notes
+    lda notecode ; if we don't have a valid notecode, skip dispatch
+    beq @end
+    jsr Function::dispatch_note_entry
+@noentry:
+@end:
     rts
 @ktbl:
-    ; this is the static keymapping
-    ;     up  dn  lt  rt  hm  end pgu pgd tab
-    .byte $75,$72,$6B,$74,$6C,$69,$7D,$7A,$0D
-@ktblh:
-    .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$00
+    ;     up  dn  lt  rt  hm  end pgu pgd tab spc
+    .byte $80,$81,$82,$83,$84,$85,$86,$87,$08,$20
 @fntbl:
     .word Function::decrement_grid_y ;up
     .word Function::increment_grid_y ;dn
@@ -185,6 +195,7 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     .word Function::mass_decrement_grid_y
     .word Function::mass_increment_grid_y
     .word @key_tab
+    .word @key_space
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL)
@@ -223,21 +234,15 @@ handler5:
 
 
 handler6: ; XF_STATE_MIX_EDITOR
-    jsr generic_hotkeys
-    ldy #(@ktblh-@ktbl)
+    jsr decode_scancode
+    ldy #(@fntbl-@ktbl)
 @loop:
-    lda scancode
+    lda keycode
     cmp @ktbl-1,y
-    beq @checkh
-@loop_cont:
+    beq @match
     dey
     bne @loop
     bra @nomatch
-@checkh:
-    lda scancode+1
-    cmp @ktblh-1,y
-    beq @match
-    bra @loop_cont
 @match:
     dey
     tya
@@ -248,10 +253,8 @@ handler6: ; XF_STATE_MIX_EDITOR
     rts
 @ktbl:
     ; this is the static keymapping
-    ;     up  dn  lt  rt  hm  end pgu pgd tab
-    .byte $75,$72,$6B,$74,$6C,$69,$7D,$7A,$0D
-@ktblh:
-    .byte $E0,$E0,$E0,$E0,$E0,$E0,$E0,$E0,$00
+    ;     up  dn  lt  rt  hm  end pgu pgd tab spc
+    .byte $80,$81,$82,$83,$84,$85,$86,$87,$08,$20
 @fntbl:
     .word Function::decrement_sequencer_y ;up
     .word Function::increment_sequencer_y ;dn
@@ -262,6 +265,7 @@ handler6: ; XF_STATE_MIX_EDITOR
     .word Function::mass_decrement_sequencer_y
     .word Function::mass_increment_sequencer_y
     .word @key_tab
+    .word @key_space
 @key_left: ; grid_x is also used for the positioning in the sequence table
     jmp Function::decrement_grid_x
 @key_right:
@@ -296,11 +300,12 @@ handler14:
 handler15:
     rts
 
-generic_hotkeys:
-    ldy #(@ktblh-@ktbl)
+
+decode_scancode:
+    ldy #(@scancodeh-@scancodel)
 @loop:
     lda scancode
-    cmp @ktbl-1,y
+    cmp @scancodel-1,y
     beq @checkh
 @loop_cont:
     dey
@@ -308,86 +313,75 @@ generic_hotkeys:
     bra @nomatch
 @checkh:
     lda scancode+1
-    cmp @ktblh-1,y
+    cmp @scancodeh-1,y
     beq @match
     bra @loop_cont
 @match:
-    dey
-    tya
-    asl
-    tax
-    jmp (@fntbl,x)
+    lda @keycode-1,y
+    sta keycode
+    lda @notecode-1,y
+    sta notecode
 @nomatch:
     rts
-@ktbl:
-    ; this is the static keymapping
-    ;     spc
-    .byte $29
-    ;     n1  1   n2  2   n3  3   n4  4   n5  5   n6  6   n7  7   n8  8   n9  9
-    .byte $69,$16,$72,$1E,$7A,$26,$6B,$25,$73,$2E,$74,$36,$6C,$3D,$75,$3E,$7D,$46
-@ktblh:
-    .byte $00
-    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-@fntbl:
-    .word @key_space
-    .word @key_1
-    .word @key_1
-    .word @key_2
-    .word @key_2
-    .word @key_3
-    .word @key_3
-    .word @key_4
-    .word @key_4
-    .word @key_5
-    .word @key_5
-    .word @key_6
-    .word @key_6
-    .word @key_7
-    .word @key_7
-    .word @key_8
-    .word @key_8
-    .word @key_9
-    .word @key_9
-@key_space:
-    ; Flip state of audition/entry flag
-    lda Grid::entrymode
-    eor #$01
-    sta Grid::entrymode
-    inc redraw
-    rts
-@key_1:
-    ldx #1
-    jmp @key_1to9
-@key_2:
-    ldx #2
-    jmp @key_1to9
-@key_3:
-    ldx #3
-    jmp @key_1to9
-@key_4:
-    ldx #4
-    jmp @key_1to9
-@key_5:
-    ldx #5
-    jmp @key_1to9
-@key_6:
-    ldx #6
-    jmp @key_1to9
-@key_7:
-    ldx #7
-    jmp @key_1to9
-@key_8:
-    ldx #8
-    jmp @key_1to9
-@key_9:
-    ldx #9
-    jmp @key_1to9
-@key_1to9:
-    lda modkeys
-    and #%00110000
-    beq :+
-        ;jsr Function::set_step_size
-    :
-    rts
-
+@scancodel:
+    ;     spc cr  ncr up  dn  lt  rt  tab bsp \
+    .byte $29,$5A,$5A,$75,$72,$6B,$74,$0D,$66,$5D
+    ;     n0  n1  n2  n3  n4  n5  n6  n7  n8  n9
+    .byte $70,$69,$72,$7A,$6B,$73,$74,$6C,$75,$7D
+    ;     0   1   2   3   4   5   6   7   8   9
+    .byte $45,$16,$1E,$26,$25,$2E,$36,$3D,$3E,$46
+    ;     A   B   C   D   E   F   G   H   I   J
+    .byte $1C,$32,$21,$23,$24,$2B,$34,$33,$43,$3B
+    ;     K   L   M   N   O   P   Q   R   S   T
+    .byte $42,$4B,$3A,$31,$44,$4D,$15,$2D,$1B,$2C
+    ;     U   V   W   X   Y   Z   n+  n-  =   -
+    .byte $3C,$2A,$1D,$22,$35,$1A,$79,$7B,$55,$4E
+    ;     hm  end pgu pgd ins del ,   .   /   ;
+    .byte $6C,$69,$7D,$7A,$70,$71,$41,$49,$4A,$4C
+@scancodeh:
+    ;     spc cr  ncr up  dn  lt  rt  tab bsp \
+    .byte $00,$00,$E0,$E0,$E0,$E0,$E0,$00,$00,$00
+    ;     n0  n1  n2  n3  n4  n5  n6  n7  n8  n9
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+    ;     0   1   2   3   4   5   6   7   8   9
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+    ;     A   B   C   D   E   F   G   H   I   J
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+    ;     K   L   M   N   O   P   Q   R   S   T
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+    ;     U   V   W   X   Y   Z   n+  n-  =   -
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+    ;     hm  end pgu pgd ins del ,   .   /   ;
+    .byte $E0,$E0,$E0,$E0,$E0,$E0,$00,$00,$00,$00
+@keycode:
+    ;     spc cr  ncr up  dn  lt  rt  tab bsp \
+    .byte $20,$0D,$0D,$80,$81,$82,$83,$08,$00,$5C
+    ;     n0  n1  n2  n3  n4  n5  n6  n7  n8  n9
+    .byte $30,$31,$32,$33,$34,$35,$36,$37,$38,$39
+    ;     0   1   2   3   4   5   6   7   8   9
+    .byte $30,$31,$32,$33,$34,$35,$36,$37,$38,$39
+    ;     A   B   C   D   E   F   G   H   I   J
+    .byte $41,$42,$43,$44,$45,$46,$47,$48,$49,$4A
+    ;     K   L   M   N   O   P   Q   R   S   T
+    .byte $4B,$4C,$4D,$4E,$4F,$50,$51,$52,$53,$54
+    ;     U   V   W   X   Y   Z   n+  n-  =   -
+    .byte $55,$56,$57,$58,$59,$5A,$2B,$2D,$3D,$2D
+    ;     hm  end pgu pgd ins del ,   .   /   ;
+    .byte $84,$85,$86,$87,$88,$89,$2C,$2E,$2F,$3B
+@notecode: ; NULL/no action = $00, C in current octave = $01
+           ; note delete = $FF, note cut = $FE, note release = $FD
+    ;     spc cr  ncr up  dn  lt  rt  tab bsp \
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$FD
+    ;     n0  n1  n2  n3  n4  n5  n6  n7  n8  n9
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+    ;     0   1   2   3   4   5   6   7   8   9
+    .byte $1C,$FE,$0E,$10,$00,$13,$15,$17,$00,$1A
+    ;     A   B   C   D   E   F   G   H   I   J
+    .byte $00,$08,$05,$04,$11,$00,$07,$09,$19,$0B
+    ;     K   L   M   N   O   P   Q   R   S   T
+    .byte $00,$0E,$0C,$0A,$1B,$1D,$0D,$12,$02,$14
+    ;     U   V   W   X   Y   Z   n+  n-  =   -
+    .byte $18,$06,$0F,$03,$16,$01,$00,$00,$00,$00
+    ;     hm  end pgu pgd ins del ,   .   /   ;
+    .byte $00,$00,$00,$00,$00,$FF,$0D,$0F,$11,$10
 .endscope

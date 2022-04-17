@@ -4,8 +4,7 @@
 
 .scope Function
 
-play_note:
-    rts
+note_entry_dispatch_value: .byte $ff
 
 decrement_grid_cursor:
     ldx Grid::cursor_position
@@ -66,6 +65,45 @@ decrement_sequencer_y:
     dec Sequencer::y_position
 @exit:
     inc redraw
+    rts
+
+
+dispatch_note_entry: ; make note entry happen outside of IRQ
+    ; .A = notecode, we need convert to note value (MIDI number)
+    cmp #$ff ; note delete
+    beq @note_delete
+    cmp #$fe ; note cut
+    beq @note_cut
+    cmp #$fd ; note release
+    beq @note_release
+
+    dec
+    sta note_entry_dispatch_value
+    ; note stored is 0 for C0, we need to add the octave+1 so that 12 is C0
+    clc
+    lda #0
+    ldy Grid::octave
+    iny
+@octave_loop:
+    adc #12
+    dey
+    bne @octave_loop
+    adc note_entry_dispatch_value
+    bra @end
+@note_delete:
+    lda #0
+    bra @end
+@note_cut:
+    lda #1
+    bra @end
+@note_release:
+    lda #2
+@end:
+    cmp #$80 ; clamp to 0-127 here
+    bcc :+
+        lda #0
+    :
+    sta note_entry_dispatch_value
     rts
 
 
@@ -182,6 +220,25 @@ mass_increment_sequencer_y:
     sta Sequencer::y_position
     inc redraw
     rts
+
+
+note_entry:
+    ldx Grid::x_position
+    ldy Grid::y_position
+    jsr Grid::set_lookup_addr ; set the grid lookup_addr value to the beginning
+                              ; of the note data for the current row/column
+                              ; this affects RAM bank as well
+    lda note_entry_dispatch_value
+    sta (Grid::lookup_addr) ; zero offset, this is the note column
+    lda #$ff
+    sta note_entry_dispatch_value
+
+    inc redraw
+
+    rts
+play_note:
+    rts
+
 
 set_grid_y:
     sta Grid::y_position
