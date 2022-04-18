@@ -1,6 +1,8 @@
 .scope Grid
 
 NUM_CHANNELS = 8
+MAX_OCTAVE = 9
+MAX_STEP = 9
 
 ; vars that keep state
 x_position: .res 1 ; which tracker column (channel) are we in

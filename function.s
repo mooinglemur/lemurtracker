@@ -29,6 +29,29 @@ decrement_grid_cursor:
     inc redraw
     rts
 
+decrement_grid_octave:
+    ldy Grid::octave
+    bne :+
+        bra @exit
+    :
+    dec Grid::octave
+@exit:
+    inc redraw
+    rts
+
+decrement_grid_step:
+    ldy Grid::step
+    bne :+
+        bra @exit
+    :
+    dec Grid::step
+@exit:
+    inc redraw
+    rts
+
+
+
+
 decrement_grid_x:
     ldy Grid::x_position
     bne :+
@@ -140,6 +163,29 @@ increment_grid_x:
 @exit:
     inc redraw
     rts
+
+increment_grid_octave:
+    ldy Grid::octave
+    cpy #Grid::MAX_OCTAVE
+    bcc :+
+        bra @exit
+    :
+    inc Grid::octave
+@exit:
+    inc redraw
+    rts
+
+increment_grid_step:
+    ldy Grid::step
+    cpy #Grid::MAX_STEP
+    bcc :+
+        bra @exit
+    :
+    inc Grid::step
+@exit:
+    inc redraw
+    rts
+
 
 
 increment_grid_y:

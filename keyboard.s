@@ -183,8 +183,8 @@ handler4: ; XF_STATE_PATTERN_EDITOR
 @end:
     rts
 @ktbl:
-    ;     up  dn  lt  rt  hm  end pgu pgd tab spc
-    .byte $80,$81,$82,$83,$84,$85,$86,$87,$08,$20
+    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]
+    .byte $80,$81,$82,$83,$84,$85,$86,$87,$08,$20,$5B,$5D
 @fntbl:
     .word Function::decrement_grid_y ;up
     .word Function::increment_grid_y ;dn
@@ -196,6 +196,8 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     .word Function::mass_increment_grid_y
     .word @key_tab
     .word @key_space
+    .word @key_leftbracket
+    .word @key_rightbracket
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL)
@@ -231,6 +233,22 @@ handler4: ; XF_STATE_PATTERN_EDITOR
         jmp Function::decrement_grid_x
     :
     jmp Function::increment_grid_x
+@key_leftbracket:
+    lda modkeys
+    and #(MOD_LSHIFT|MOD_RSHIFT)
+    beq :+
+        jmp Function::decrement_grid_step
+    :
+    jmp Function::decrement_grid_octave
+@key_rightbracket:
+    lda modkeys
+    and #(MOD_LSHIFT|MOD_RSHIFT)
+    beq :+
+        jmp Function::increment_grid_step
+    :
+    jmp Function::increment_grid_octave
+
+
 
 handler5:
     rts
@@ -341,6 +359,8 @@ decode_scancode:
     .byte $3C,$2A,$1D,$22,$35,$1A,$79,$7B,$55,$4E
     ;     hm  end pgu pgd ins del ,   .   /   ;
     .byte $6C,$69,$7D,$7A,$70,$71,$41,$49,$4A,$4C
+    ;     [   ]
+    .byte $54,$5B
 @scancodeh:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $00,$00,$E0,$E0,$E0,$E0,$E0,$00,$00,$00
@@ -356,6 +376,8 @@ decode_scancode:
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
     ;     hm  end pgu pgd ins del ,   .   /   ;
     .byte $E0,$E0,$E0,$E0,$E0,$E0,$00,$00,$00,$00
+    ;     [   ]
+    .byte $00,$00
 @keycode:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $20,$0D,$0D,$80,$81,$82,$83,$08,$00,$5C
@@ -371,6 +393,8 @@ decode_scancode:
     .byte $55,$56,$57,$58,$59,$5A,$2B,$2D,$3D,$2D
     ;     hm  end pgu pgd ins del ,   .   /   ;
     .byte $84,$85,$86,$87,$88,$89,$2C,$2E,$2F,$3B
+    ;     [   ]
+    .byte $5B,$5D
 @notecode: ; NULL/no action = $00, C in current octave = $01
            ; note delete = $FF, note cut = $FE, note release = $FD
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
@@ -387,4 +411,6 @@ decode_scancode:
     .byte $18,$06,$0F,$03,$16,$01,$00,$00,$00,$00
     ;     hm  end pgu pgd ins del ,   .   /   ;
     .byte $00,$00,$00,$00,$00,$FF,$0D,$0F,$11,$10
+    ;     [   ]
+    .byte $00,$00
 .endscope
