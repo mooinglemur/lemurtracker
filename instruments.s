@@ -1,7 +1,8 @@
 .scope Instruments
 
-y_position: .res 1 ; which tracker row are we in
+y_position: .res 1 ; which instrument row are we in
 max_instrument: .res 1 ; the last instrument
+base_bank: .res 1
 
 INSTRUMENTS_LOCATION_X = 29
 INSTRUMENTS_LOCATION_Y = 44
@@ -170,7 +171,6 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     lda #$7D
     sta Vera::Reg::Data0
-
 
 
 

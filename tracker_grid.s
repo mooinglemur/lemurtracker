@@ -115,39 +115,8 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
 @fetch_notedata_loop:
     ldx iterator
-    lda channel_to_pattern,x ; which pattern are we loading
-    ; for simplicity, we're doing one bank per multitrack pattern
-    clc
-    adc base_bank
-    sta x16::Reg::RAMBank
-    lda xf_tmp2 ; the row we're drawing
-    sta lookup_addr
-    stz lookup_addr+1
-    ; multiply by 64 (8 channels, 8 bytes per entry)
-    ; .C will be clear here
-    rol lookup_addr
-    rol lookup_addr+1
-    rol lookup_addr
-    rol lookup_addr+1
-    rol lookup_addr
-    rol lookup_addr+1
-    rol lookup_addr
-    rol lookup_addr+1
-    rol lookup_addr
-    rol lookup_addr+1
-    rol lookup_addr
-    rol lookup_addr+1
-    ; column/channel, multiply by 8
-    txa
-    asl
-    asl
-    asl
-    clc
-    adc lookup_addr
-    sta lookup_addr
-    lda lookup_addr+1
-    adc #$A0 ; high ram start page
-    sta lookup_addr+1
+    ldy xf_tmp2 ; the row we're drawing
+    jsr set_lookup_addr
 
     txa
     asl

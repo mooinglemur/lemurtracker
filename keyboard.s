@@ -224,10 +224,13 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     inc redraw
     rts
 @key_tab:
-    lda #XF_STATE_MIX_EDITOR
-    sta xf_state
-    inc redraw
-    rts
+    stz Grid::cursor_position
+    lda modkeys
+    and #(MOD_LSHIFT|MOD_RSHIFT)
+    beq :+
+        jmp Function::decrement_grid_x
+    :
+    jmp Function::increment_grid_x
 
 handler5:
     rts

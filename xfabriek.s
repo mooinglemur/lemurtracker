@@ -34,16 +34,12 @@ xf_tmp2: .res 1
 xf_tmp3: .res 1
 .popseg
 
-;.include "cx16-concerto/concerto_synth/x16.asm"
 .include "x16.inc"
 .include "customchars.s"
 .include "tracker_grid.s"
 .include "sequencer.s"
 .include "instruments.s"
 .include "function.s"
-;concerto_use_timbres_from_file = 1
-;.define CONCERTO_TIMBRES_PATH "cx16-concerto/FACTORY.COB"
-;.include "cx16-concerto/concerto_synth/concerto_synth.asm"
 .include "util.s"
 .include "irq.s"
 .include "keyboard.s"
@@ -97,7 +93,6 @@ main:
     sta Grid::global_frame_length
 
     jsr xf_irq::setup
-;    jsr concerto_synth::initialize
 
     jsr Keyboard::setup_handler
 
@@ -109,6 +104,9 @@ main:
     lda #1
     sta Sequencer::base_bank
 
+    lda #2
+    sta Instruments::base_bank
+
     lda #6
     sta Grid::base_bank
 
@@ -117,6 +115,11 @@ main:
 
     inc redraw
 
+    lda #4
+    sta Grid::step
+
+
+;;;;; temp vvv
     lda Sequencer::base_bank
     sta x16::Reg::RAMBank
 
@@ -126,7 +129,7 @@ main:
     sta xf_tmp2
     lda #1
     sta (xf_tmp1)
-
+;;;;; temp ^^^
 
 
 

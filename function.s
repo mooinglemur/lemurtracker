@@ -230,13 +230,34 @@ note_entry:
                               ; this affects RAM bank as well
     lda note_entry_dispatch_value
     sta (Grid::lookup_addr) ; zero offset, this is the note column
+    pha
+
+    ldy #1
+    lda Instruments::y_position ; currently selected instrument
+    sta (Grid::lookup_addr),y ; #1 offset, this is the instrument number
+    tay
     lda #$ff
     sta note_entry_dispatch_value
 
+    pla
+    ldx Grid::x_position
+    jsr play_note ; .A = note, .X = column, .Y = instrument
+
     inc redraw
 
+    ldy Grid::step
+    beq @end
+@advance_step:
+    phy
+    jsr increment_grid_y
+    ply
+    dey
+    bne @advance_step
+@end:
     rts
-play_note:
+
+
+play_note: ;.A = note, .X = column, .Y = instrument
     rts
 
 
