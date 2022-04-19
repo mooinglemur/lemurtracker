@@ -1,8 +1,8 @@
 .scope Grid
 
 NUM_CHANNELS = 8
-MAX_OCTAVE = 9
-MAX_STEP = 9
+MAX_OCTAVE = 8
+MAX_STEP = 15
 
 ; vars that keep state
 x_position: .res 1 ; which tracker column (channel) are we in
@@ -14,6 +14,11 @@ channel_to_pattern: .res NUM_CHANNELS ; which pattern is referenced in each chan
 notechardata: .res 9*NUM_CHANNELS ; temp storage for characters based on pattern data
 iterator: .res 1
 entrymode: .res 1
+selection_active: .res 1
+selection_top_y: .res 1
+selection_left_x: .res 1
+selection_bottom_y: .res 1
+selection_right_x: .res 1
 
 .pushseg
 .segment "ZEROPAGE"
@@ -24,8 +29,10 @@ lookup_addr: .res 2 ; storage for offset in banked ram
 octave: .res 1
 step: .res 1
 
-
-
+; temp vars
+tmp1: .res 1
+tmp2: .res 1
+tmp3: .res 1
 
 
 
@@ -287,16 +294,55 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
 @got_color:
 
+    sty tmp1 ; store background color here temp
+    sty tmp2 ; store it here too, but switch this one to the selection color if appropriate
     ldx #0
+    stz tmp3 ; channel column
+@cell_loop_outer:
+    ldy #9
+    lda selection_active
+    beq @cell_loop_inner
+    lda xf_tmp2 ; current row
+
+    cmp selection_top_y
+    bcc @selection_off
+
+    cmp selection_bottom_y
+    beq :+
+        bcs @selection_off
     :
-        lda notechardata,x
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        inx
-        cpx #NUM_CHANNELS*9
-        bcc :-
 
+    lda tmp3
+    cmp selection_left_x
+    bcc @selection_off
 
+    cmp selection_right_x
+    beq :+
+        bcs @selection_off
+    :
+
+    lda #(XF_SELECTION_BG_COLOR|XF_BASE_FG_COLOR)
+    sta tmp2
+    bra @cell_loop_inner
+
+@selection_off:
+    lda tmp1
+    sta tmp2
+@cell_loop_inner:
+    lda notechardata,x
+    sta Vera::Reg::Data0
+    lda tmp2
+    sta Vera::Reg::Data0
+    inx
+    dey
+    bne @cell_loop_inner
+
+    inc tmp3
+    cpx #NUM_CHANNELS*9
+    bcc @cell_loop_outer
+
+    ; restore color into the y register
+    ldy tmp1
 
     lda #CustomChars::GRID_RIGHT
     sta Vera::Reg::Data0
@@ -382,6 +428,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     cmp #XF_STATE_PATTERN_EDITOR
     bne @end_cursor
 
+
 ; now put the cursor where it belongs
     lda #(1 | $20) ; high page, stride = 2
     sta $9F22
@@ -416,32 +463,6 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     :
 
 @end_cursor:
-
-
-;    lda #$81
-;    sta VERA_data0
-;    lda #$91
-;    sta VERA_data0
-
-
-
-;@colorcursorline:
-;    lda #(0 | $20) ; low page, stride = 2
-;    sta $9F22
-;
-;    lda #23; row number
-;    sta $9F21
-;
-;    lda #7 ; address color memory inside grid
-;    sta $9F20
-;
-;    ldx #70
-;    lda #%00100001
-;    :
-;        sta VERA_data0
-;        dex
-;        bne :-
-;
     rts
 
 set_lookup_addr: ; takes in .X, .Y for tracker position, affects .A, lookup_addr

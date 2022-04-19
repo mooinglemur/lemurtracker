@@ -178,7 +178,7 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     ; XXX handle non note functions here that affect the notes
     lda notecode ; if we don't have a valid notecode, skip dispatch
     beq @end
-    jsr Function::dispatch_note_entry
+    jsr Function::dispatch_note_entry ;.A = notecode
 @noentry:
 @end:
     rts
@@ -186,14 +186,14 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]
     .byte $80,$81,$82,$83,$84,$85,$86,$87,$08,$20,$5B,$5D
 @fntbl:
-    .word Function::decrement_grid_y ;up
-    .word Function::increment_grid_y ;dn
+    .word Function::decrement_grid_y_steps ;up
+    .word Function::increment_grid_y_steps ;dn
     .word @key_left
     .word @key_right
     .word @key_home
     .word @key_end
-    .word Function::mass_decrement_grid_y
-    .word Function::mass_increment_grid_y
+    .word Function::decrement_grid_y_page
+    .word Function::increment_grid_y_page
     .word @key_tab
     .word @key_space
     .word @key_leftbracket
@@ -283,8 +283,8 @@ handler6: ; XF_STATE_MIX_EDITOR
     .word @key_right
     .word @key_home
     .word @key_end
-    .word Function::mass_decrement_sequencer_y
-    .word Function::mass_increment_sequencer_y
+    .word Function::decrement_sequencer_y_page
+    .word Function::increment_sequencer_y_page
     .word @key_tab
     .word @key_space
 @key_left: ; grid_x is also used for the positioning in the sequence table
@@ -359,8 +359,8 @@ decode_scancode:
     .byte $3C,$2A,$1D,$22,$35,$1A,$79,$7B,$55,$4E
     ;     hm  end pgu pgd ins del ,   .   /   ;
     .byte $6C,$69,$7D,$7A,$70,$71,$41,$49,$4A,$4C
-    ;     [   ]
-    .byte $54,$5B
+    ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
+    .byte $54,$5B,$05,$06,$04,$0C,$03,$0B,$83,$0A
 @scancodeh:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $00,$00,$E0,$E0,$E0,$E0,$E0,$00,$00,$00
@@ -376,8 +376,8 @@ decode_scancode:
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
     ;     hm  end pgu pgd ins del ,   .   /   ;
     .byte $E0,$E0,$E0,$E0,$E0,$E0,$00,$00,$00,$00
-    ;     [   ]
-    .byte $00,$00
+    ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 @keycode:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $20,$0D,$0D,$80,$81,$82,$83,$08,$00,$5C
@@ -393,8 +393,8 @@ decode_scancode:
     .byte $55,$56,$57,$58,$59,$5A,$2B,$2D,$3D,$2D
     ;     hm  end pgu pgd ins del ,   .   /   ;
     .byte $84,$85,$86,$87,$88,$89,$2C,$2E,$2F,$3B
-    ;     [   ]
-    .byte $5B,$5D
+    ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
+    .byte $5B,$5D,$8A,$8B,$8C,$8D,$8E,$8F,$90,$91
 @notecode: ; NULL/no action = $00, C in current octave = $01
            ; note delete = $FF, note cut = $FE, note release = $FD
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
@@ -411,6 +411,6 @@ decode_scancode:
     .byte $18,$06,$0F,$03,$16,$01,$00,$00,$00,$00
     ;     hm  end pgu pgd ins del ,   .   /   ;
     .byte $00,$00,$00,$00,$00,$FF,$0D,$0F,$11,$10
-    ;     [   ]
-    .byte $00,$00
+    ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
 .endscope

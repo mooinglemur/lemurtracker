@@ -52,9 +52,10 @@ XF_NOTE_ENTRY_BG_COLOR = $20 ; red
 XF_CURSOR_BG_COLOR = $F0 ; light grey
 XF_HILIGHT_BG_COLOR_1 = $B0 ; dark grey
 XF_HILIGHT_BG_COLOR_2 = $C0 ; grey
+XF_SELECTION_BG_COLOR = $50 ; green
 
 XF_BASE_FG_COLOR = $01 ; white
-XF_NOTE_FG_COLOR = $05 ; green
+XF_NOTE_FG_COLOR = $0D ; green
 XF_INST_FG_COLOR = $03 ; cyan
 
 .segment "CODE"
@@ -129,6 +130,19 @@ main:
     sta xf_tmp2
     lda #1
     sta (xf_tmp1)
+
+    lda #1
+    sta Grid::selection_active
+    lda #$3f
+    sta Grid::selection_bottom_y
+    lda #5
+    sta Grid::selection_right_x
+    lda #3
+    sta Grid::selection_left_x
+    lda #$10
+    sta Grid::selection_top_y
+
+
 ;;;;; temp ^^^
 
 

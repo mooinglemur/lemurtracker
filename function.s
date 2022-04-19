@@ -77,6 +77,31 @@ decrement_grid_y:
     inc redraw
     rts
 
+decrement_grid_y_page:
+    lda Grid::y_position
+    sec
+    sbc #16
+    bcs :+
+        lda #0
+    :
+    sta Grid::y_position
+    inc redraw
+    rts
+
+decrement_grid_y_steps:
+    ldy Grid::step
+    bne @advance_step
+    iny
+@advance_step:
+    phy
+    jsr decrement_grid_y
+    ply
+    dey
+    bne @advance_step
+@end:
+    rts
+
+
 
 decrement_sequencer_y:
     ldy Sequencer::y_position
@@ -87,6 +112,18 @@ decrement_sequencer_y:
     :
     dec Sequencer::y_position
 @exit:
+    inc redraw
+    rts
+
+
+decrement_sequencer_y_page:
+    lda Sequencer::y_position
+    sec
+    sbc #4
+    bcs :+
+        lda #0
+    :
+    sta Sequencer::y_position
     inc redraw
     rts
 
@@ -122,9 +159,9 @@ dispatch_note_entry: ; make note entry happen outside of IRQ
 @note_release:
     lda #2
 @end:
-    cmp #$80 ; clamp to 0-127 here
+    cmp #$80 ; clamp to 0-127 here, cancel entry if >= 128
     bcc :+
-        lda #0
+        lda #$ff
     :
     sta note_entry_dispatch_value
     rts
@@ -201,41 +238,7 @@ increment_grid_y:
     inc redraw
     rts
 
-increment_sequencer_y:
-    ldy Sequencer::y_position
-    cpy Sequencer::max_frame
-    bcc :+
-        stz Sequencer::y_position
-        bra @exit
-    :
-    inc Sequencer::y_position
-@exit:
-    inc redraw
-    rts
-
-mass_decrement_grid_y:
-    lda Grid::y_position
-    sec
-    sbc #16
-    bcs :+
-        lda #0
-    :
-    sta Grid::y_position
-    inc redraw
-    rts
-
-mass_decrement_sequencer_y:
-    lda Sequencer::y_position
-    sec
-    sbc #4
-    bcs :+
-        lda #0
-    :
-    sta Sequencer::y_position
-    inc redraw
-    rts
-
-mass_increment_grid_y:
+increment_grid_y_page:
     lda Grid::y_position
     clc
     adc #16
@@ -251,7 +254,33 @@ mass_increment_grid_y:
     inc redraw
     rts
 
-mass_increment_sequencer_y:
+
+increment_grid_y_steps:
+    ldy Grid::step
+    bne @advance_step
+    iny
+@advance_step:
+    phy
+    jsr increment_grid_y
+    ply
+    dey
+    bne @advance_step
+@end:
+    rts
+
+increment_sequencer_y:
+    ldy Sequencer::y_position
+    cpy Sequencer::max_frame
+    bcc :+
+        stz Sequencer::y_position
+        bra @exit
+    :
+    inc Sequencer::y_position
+@exit:
+    inc redraw
+    rts
+
+increment_sequencer_y_page:
     lda Sequencer::y_position
     clc
     adc #4
@@ -266,6 +295,9 @@ mass_increment_sequencer_y:
     sta Sequencer::y_position
     inc redraw
     rts
+
+
+
 
 
 note_entry:
