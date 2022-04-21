@@ -5,13 +5,20 @@
 ; storage
 old_vec: .res 2
 scancode: .res 2
-modkeys: .res 1
+modkeys := GKeyboard::modkeys
 keycode: .res 1
 notecode: .res 1
 
 tmp1: .res 2
 tmp2: .res 2
 
+
+MOD_LSHIFT = 1
+MOD_RSHIFT = 2
+MOD_LCTRL = 4
+MOD_RCTRL = 8
+MOD_LALT = 16
+MOD_RALT = 32
 
 setup_handler:
     sei
@@ -71,12 +78,7 @@ handler:
     jmp (old_vec)
     ; ^^ we're outta here
 
-MOD_LSHIFT = 1
-MOD_RSHIFT = 2
-MOD_LCTRL = 4
-MOD_RCTRL = 8
-MOD_LALT = 16
-MOD_RALT = 32
+
 
 set_modkeys:
     ; sets or clears bits in the modkeys variable
@@ -166,6 +168,21 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     tax
     jmp (@fntbl,x)
 @nomatch:
+    ; handle Ctrl+A / Ctrl+Shift+A
+    lda keycode
+    cmp #$41
+    bne :++
+        lda modkeys
+        and #(MOD_LCTRL|MOD_RCTRL)
+        beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            jmp Function::grid_select_none
+        :
+        jmp Function::grid_select_all
+    :
+
     lda Grid::entrymode
     beq @noentry
 

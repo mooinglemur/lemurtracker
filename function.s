@@ -16,13 +16,7 @@ decrement_grid_cursor:
     :
     cpx #9
     bcc @end
-    dec Grid::x_position
-    ldy Grid::x_position
-    cpy #Grid::NUM_CHANNELS
-    bcc :+
-        ldy #(Grid::NUM_CHANNELS-1)
-        sty Grid::x_position
-    :
+    jsr decrement_grid_x
     ldx #8
 @end:
     stx Grid::cursor_position
@@ -50,9 +44,8 @@ decrement_grid_step:
     rts
 
 
-
-
 decrement_grid_x:
+    jsr grid_selection_start
     ldy Grid::x_position
     bne :+
         ldy #(Grid::NUM_CHANNELS - 1)
@@ -61,10 +54,12 @@ decrement_grid_x:
     :
     dec Grid::x_position
 @exit:
+    jsr grid_selection_continue
     inc redraw
     rts
 
 decrement_grid_y:
+    jsr grid_selection_start
     ldy Grid::y_position
     bne :+
         ldy Grid::global_frame_length
@@ -74,10 +69,12 @@ decrement_grid_y:
     :
     dec Grid::y_position
 @exit:
+    jsr grid_selection_continue
     inc redraw
     rts
 
 decrement_grid_y_page:
+    jsr grid_selection_start
     lda Grid::y_position
     sec
     sbc #16
@@ -85,6 +82,7 @@ decrement_grid_y_page:
         lda #0
     :
     sta Grid::y_position
+    jsr grid_selection_continue
     inc redraw
     rts
 
@@ -100,7 +98,6 @@ decrement_grid_y_steps:
     bne @advance_step
 @end:
     rts
-
 
 
 decrement_sequencer_y:
@@ -166,6 +163,64 @@ dispatch_note_entry: ; make note entry happen outside of IRQ
     sta note_entry_dispatch_value
     rts
 
+grid_select_all:
+    lda #2
+    sta Grid::selection_active
+    lda Grid::global_frame_length
+    sta Grid::selection_bottom_y
+    lda #Grid::NUM_CHANNELS
+    sta Grid::selection_right_x
+    stz Grid::selection_left_x
+    stz Grid::selection_top_y
+    inc redraw
+    rts
+
+grid_select_none:
+    stz Grid::selection_active
+    inc redraw
+    rts
+
+grid_selection_start:
+    lda GKeyboard::modkeys
+    and #(GKeyboard::MOD_LSHIFT|GKeyboard::MOD_RSHIFT)
+    beq @end
+
+    lda Grid::selection_active
+    bne :+
+        lda Grid::x_position
+        sta Grid::selection_left_x
+        sta Grid::selection_right_x
+        lda Grid::y_position
+        sta Grid::selection_top_y
+        sta Grid::selection_bottom_y
+        lda #1
+        sta Grid::selection_active
+        bra @end
+    :
+    and #3
+    cmp #2
+    bne :+
+        stz Grid::selection_active
+        jmp grid_selection_start ; starting a new selection
+    :
+@end:
+    rts
+
+grid_selection_continue:
+    lda GKeyboard::modkeys
+    and #(GKeyboard::MOD_LSHIFT|GKeyboard::MOD_RSHIFT)
+    beq @noshift
+
+    bra @end
+@noshift:
+    lda Grid::selection_active
+    and #3
+    cmp #1
+    bne @end
+    lda #2
+    sta Grid::selection_active
+@end:
+    rts
 
 increment_grid_cursor:
     ldx Grid::cursor_position
@@ -177,19 +232,15 @@ increment_grid_cursor:
     :
     cpx #9
     bcc :+
-    ldx #0
-    inc Grid::x_position
-    ldy Grid::x_position
-    cpy #Grid::NUM_CHANNELS
-    bcc :+
-        stz Grid::x_position
+        jsr increment_grid_x
+        ldx #0
     :
     stx Grid::cursor_position
-
     inc redraw
     rts
 
 increment_grid_x:
+    jsr grid_selection_start
     ldy Grid::x_position
     cpy #(Grid::NUM_CHANNELS - 1)
     bcc :+
@@ -198,6 +249,7 @@ increment_grid_x:
     :
     inc Grid::x_position
 @exit:
+    jsr grid_selection_continue
     inc redraw
     rts
 
@@ -226,6 +278,7 @@ increment_grid_step:
 
 
 increment_grid_y:
+    jsr grid_selection_start
     ldy Grid::y_position
     cpy Grid::global_frame_length
     bcc :+
@@ -235,10 +288,12 @@ increment_grid_y:
     :
     inc Grid::y_position
 @exit:
+    jsr grid_selection_continue
     inc redraw
     rts
 
 increment_grid_y_page:
+    jsr grid_selection_start
     lda Grid::y_position
     clc
     adc #16
@@ -251,6 +306,7 @@ increment_grid_y_page:
     lda Grid::global_frame_length
 @end:
     sta Grid::y_position
+    jsr grid_selection_continue
     inc redraw
     rts
 
@@ -339,8 +395,14 @@ play_note: ;.A = note, .X = column, .Y = instrument
     rts
 
 
+
+
 set_grid_y:
+    pha
+    jsr grid_selection_start
+    pla
     sta Grid::y_position
+    jsr grid_selection_continue
     inc redraw
     rts
 

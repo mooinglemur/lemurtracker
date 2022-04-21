@@ -34,7 +34,9 @@ xf_tmp2: .res 1
 xf_tmp3: .res 1
 .popseg
 
+
 .include "x16.inc"
+.include "vars.s"
 .include "customchars.s"
 .include "tracker_grid.s"
 .include "sequencer.s"
@@ -131,20 +133,14 @@ main:
     lda #1
     sta (xf_tmp1)
 
-    lda #1
-    sta Grid::selection_active
-    lda #$3f
-    sta Grid::selection_bottom_y
-    lda #5
-    sta Grid::selection_right_x
-    lda #3
-    sta Grid::selection_left_x
-    lda #$10
-    sta Grid::selection_top_y
+
 
 
 ;;;;; temp ^^^
 
+    ; toggle emulator keys off
+    lda #1
+    sta $9FB7
 
 
 

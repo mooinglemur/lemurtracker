@@ -14,6 +14,14 @@ channel_to_pattern: .res NUM_CHANNELS ; which pattern is referenced in each chan
 notechardata: .res 9*NUM_CHANNELS ; temp storage for characters based on pattern data
 iterator: .res 1
 entrymode: .res 1
+
+; selection_active = 0 for no selection
+; bitfield
+;     0 - selecting
+;     1 - selection done
+;     2 - 0 = selecting downward, 1 = selecting upward
+;     3 - 0 = selecting rightward, 1 = selecting leftward
+
 selection_active: .res 1
 selection_top_y: .res 1
 selection_left_x: .res 1
