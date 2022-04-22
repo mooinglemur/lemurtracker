@@ -217,14 +217,14 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     .word @key_rightbracket
 @key_left:
     lda modkeys
-    and #(MOD_LCTRL|MOD_RCTRL)
+    and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
     beq :+
         jmp Function::decrement_grid_x
     :
     jmp Function::decrement_grid_cursor
 @key_right:
     lda modkeys
-    and #(MOD_LCTRL|MOD_RCTRL)
+    and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
     beq :+
         jmp Function::increment_grid_x
     :
@@ -247,7 +247,7 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     lda modkeys
     and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::decrement_grid_x
+        jmp Function::decrement_grid_x_without_starting_selection
     :
     jmp Function::increment_grid_x
 @key_leftbracket:

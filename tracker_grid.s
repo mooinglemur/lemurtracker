@@ -22,7 +22,10 @@ entrymode: .res 1
 ;     2 - 0 = selecting downward, 1 = selecting upward
 ;     3 - 0 = selecting rightward, 1 = selecting leftward
 
+.pushseg
+.segment "ZEROPAGE"
 selection_active: .res 1
+.popseg
 selection_top_y: .res 1
 selection_left_x: .res 1
 selection_bottom_y: .res 1
