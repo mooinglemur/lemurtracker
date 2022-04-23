@@ -200,8 +200,8 @@ handler4: ; XF_STATE_PATTERN_EDITOR
 @end:
     rts
 @ktbl:
-    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]
-    .byte $80,$81,$82,$83,$84,$85,$86,$87,$08,$20,$5B,$5D
+    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2
+    .byte $80,$81,$82,$83,$84,$85,$86,$87,$08,$20,$5B,$5D,$8B
 @fntbl:
     .word Function::decrement_grid_y_steps ;up
     .word Function::increment_grid_y_steps ;dn
@@ -215,6 +215,7 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     .word @key_space
     .word @key_leftbracket
     .word @key_rightbracket
+    .word @key_F2
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
@@ -264,6 +265,11 @@ handler4: ; XF_STATE_PATTERN_EDITOR
         jmp Function::increment_grid_step
     :
     jmp Function::increment_grid_octave
+@key_F2:
+    lda #XF_STATE_MIX_EDITOR
+    sta xf_state
+    inc redraw
+    rts
 
 
 
@@ -291,8 +297,8 @@ handler6: ; XF_STATE_MIX_EDITOR
     rts
 @ktbl:
     ; this is the static keymapping
-    ;     up  dn  lt  rt  hm  end pgu pgd tab spc
-    .byte $80,$81,$82,$83,$84,$85,$86,$87,$08,$20
+    ;     up  dn  lt  rt  hm  end pgu pgd F1  spc
+    .byte $80,$81,$82,$83,$84,$85,$86,$87,$8A,$20
 @fntbl:
     .word Function::decrement_sequencer_y ;up
     .word Function::increment_sequencer_y ;dn
@@ -302,7 +308,7 @@ handler6: ; XF_STATE_MIX_EDITOR
     .word @key_end
     .word Function::decrement_sequencer_y_page
     .word Function::increment_sequencer_y_page
-    .word @key_tab
+    .word @key_F1
     .word @key_space
 @key_left: ; grid_x is also used for the positioning in the sequence table
     jmp Function::decrement_grid_x
@@ -321,7 +327,7 @@ handler6: ; XF_STATE_MIX_EDITOR
     sta Grid::entrymode
     inc redraw
     rts
-@key_tab:
+@key_F1:
     lda #XF_STATE_PATTERN_EDITOR
     sta xf_state
     inc redraw
@@ -378,6 +384,8 @@ decode_scancode:
     .byte $6C,$69,$7D,$7A,$70,$71,$41,$49,$4A,$4C
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $54,$5B,$05,$06,$04,$0C,$03,$0B,$83,$0A
+    ;     F9  F10 F11 F12
+    .byte $01,$10,$78,$70
 @scancodeh:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $00,$00,$E0,$E0,$E0,$E0,$E0,$00,$00,$00
@@ -395,6 +403,8 @@ decode_scancode:
     .byte $E0,$E0,$E0,$E0,$E0,$E0,$00,$00,$00,$00
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+    ;     F9  F10 F11 F12
+    .byte $00,$00,$00,$00
 @keycode:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $20,$0D,$0D,$80,$81,$82,$83,$08,$00,$5C
@@ -412,6 +422,8 @@ decode_scancode:
     .byte $84,$85,$86,$87,$88,$89,$2C,$2E,$2F,$3B
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $5B,$5D,$8A,$8B,$8C,$8D,$8E,$8F,$90,$91
+    ;     F9  F10 F11 F12
+    .byte $92,$93,$94,$95
 @notecode: ; NULL/no action = $00, C in current octave = $01
            ; note delete = $FF, note cut = $FE, note release = $FD
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
@@ -430,4 +442,6 @@ decode_scancode:
     .byte $00,$00,$00,$00,$00,$FF,$0D,$0F,$11,$10
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+    ;     F9  F10 F11 F12
+    .byte $00,$00,$00,$00
 .endscope

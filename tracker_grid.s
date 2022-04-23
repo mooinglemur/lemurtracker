@@ -269,7 +269,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         jmp @fetch_notedata_loop
     :
 
-    ldy #(XF_BASE_BG_COLOR | XF_BASE_FG_COLOR)
+    ldy #(XF_BASE_BG_COLOR)
 
     ; color current row
     lda xf_tmp2
@@ -278,10 +278,10 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         lda xf_state
         cmp #XF_STATE_PATTERN_EDITOR
         bne @not_current_row ; If we're not editing the pattern, don't hilight the current row
-        ldy #(XF_AUDITION_BG_COLOR | XF_BASE_FG_COLOR)
+        ldy #(XF_AUDITION_BG_COLOR)
         lda entrymode
         beq :+
-            ldy #(XF_NOTE_ENTRY_BG_COLOR | XF_BASE_FG_COLOR)
+            ldy #(XF_NOTE_ENTRY_BG_COLOR)
         :
 
         bra @got_color
@@ -291,7 +291,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     and #%11110000
     cmp xf_tmp2
     bne :+
-        ldy #(XF_HILIGHT_BG_COLOR_2 | XF_BASE_FG_COLOR)
+        ldy #(XF_HILIGHT_BG_COLOR_2)
         bra @got_color
     :
     ; color every 4 rows
@@ -299,7 +299,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     and #%11111100
     cmp xf_tmp2
     bne :+
-        ldy #(XF_HILIGHT_BG_COLOR_1 | XF_BASE_FG_COLOR)
+        ldy #(XF_HILIGHT_BG_COLOR_1)
         bra @got_color
     :
 
@@ -310,9 +310,13 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ldx #0
     stz tmp3 ; channel column
 @cell_loop_outer:
-    ldy #9
+    ldy #0
     lda selection_active
     beq @cell_loop_inner
+    lda xf_state
+    cmp #XF_STATE_PATTERN_EDITOR
+    bne @cell_loop_inner
+
     lda xf_tmp2 ; current row
 
     cmp selection_top_y
@@ -332,7 +336,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         bcs @selection_off
     :
 
-    lda #(XF_SELECTION_BG_COLOR|XF_BASE_FG_COLOR)
+    lda #(XF_SELECTION_BG_COLOR)
     sta tmp2
     bra @cell_loop_inner
 
@@ -342,11 +346,13 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 @cell_loop_inner:
     lda notechardata,x
     sta Vera::Reg::Data0
-    lda tmp2
+    lda column_fg_color,y
+    ora tmp2
     sta Vera::Reg::Data0
     inx
-    dey
-    bne @cell_loop_inner
+    iny
+    cpy #9
+    bcc @cell_loop_inner
 
     inc tmp3
     cpx #NUM_CHANNELS*9
@@ -521,4 +527,8 @@ note_val:    .byte CustomChars::NOTE_C,CustomChars::NOTE_C,CustomChars::NOTE_D
 note_sharp:  .byte "-#-#--#-#-#-"
 note_octave: .byte "0123456789"
 
+
+column_fg_color: .byte XF_BASE_FG_COLOR,XF_BASE_FG_COLOR,XF_BASE_FG_COLOR
+                 .byte XF_INST_FG_COLOR,XF_INST_FG_COLOR,XF_VOL_FG_COLOR
+                 .byte XF_EFFECT_FG_COLOR,XF_EFFECT_FG_COLOR,XF_EFFECT_FG_COLOR,XF_BASE_FG_COLOR,XF_BASE_FG_COLOR
 .endscope

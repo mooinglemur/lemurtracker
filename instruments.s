@@ -173,6 +173,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sta Vera::Reg::Data0
 
 
+rts
 
 ; now put the cursor where it belongs
     lda #(1 | $20) ; high page, stride = 2

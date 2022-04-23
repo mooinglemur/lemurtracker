@@ -2,6 +2,7 @@
 ; predominantly originating through keystrokes, but also mouse actions
 ; and perhaps other inputs in the future
 
+
 .scope Function
 
 note_entry_dispatch_value: .byte $ff
@@ -58,6 +59,7 @@ decrement_grid_x_without_starting_selection:
     jsr grid_selection_continue
     inc redraw
     rts
+
 
 decrement_grid_y:
     jsr grid_selection_start
@@ -207,6 +209,9 @@ grid_selection_start:
 @end:
     rts
 
+
+
+
 grid_selection_continue:
     lda GKeyboard::modkeys
     and #(GKeyboard::MOD_LSHIFT|GKeyboard::MOD_RSHIFT)
@@ -317,6 +322,8 @@ grid_selection_continue:
     sta Grid::selection_active
 @end:
     rts
+
+
 
 increment_grid_cursor:
     ldx Grid::cursor_position

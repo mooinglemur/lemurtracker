@@ -124,7 +124,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sta lookup_addr+1
 
 
-@got_color:
+; draw row
     ldx #0
     :
         phx
@@ -138,9 +138,28 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         lda (lookup_addr),y
         ldx xf_tmp2
         cpx y_position
-        bne :+
-            sta Grid::channel_to_pattern,y
-        :
+        bne @not_current_row
+
+        ; current drawing == eq current row
+        sta Grid::channel_to_pattern,y
+        ply
+        pha
+
+        lda xf_state
+        cmp #XF_STATE_MIX_EDITOR
+        bne @got_color
+
+        lda Grid::entrymode
+        bne @entry_mode
+
+        ldy #(XF_AUDITION_BG_COLOR|XF_BASE_FG_COLOR)
+        bra @got_color
+@entry_mode:
+        ldy #(XF_NOTE_ENTRY_BG_COLOR|XF_BASE_FG_COLOR)
+@got_color:
+        pla
+        phy
+@not_current_row:
         jsr xf_byte_to_hex
         ply
         sta Vera::Reg::Data0
@@ -151,7 +170,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         plx
         inx
         cpx #NUM_CHANNELS
-        bne :--
+        bne :-
     lda #$5D
     sta Vera::Reg::Data0
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
@@ -239,13 +258,15 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     adc #4
     asl
-    ina
+    inc
 
     sta $9F20
 
-    lda #(XF_CURSOR_BG_COLOR | XF_BASE_FG_COLOR)
-    sta Vera::Reg::Data0
-    sta Vera::Reg::Data0
+
+    ldy #(XF_CURSOR_BG_COLOR|XF_BASE_FG_COLOR)
+
+    sty Vera::Reg::Data0
+    sty Vera::Reg::Data0
 
 
     rts

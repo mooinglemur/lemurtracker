@@ -57,8 +57,9 @@ XF_HILIGHT_BG_COLOR_2 = $C0 ; grey
 XF_SELECTION_BG_COLOR = $50 ; green
 
 XF_BASE_FG_COLOR = $01 ; white
-XF_NOTE_FG_COLOR = $0D ; green
-XF_INST_FG_COLOR = $03 ; cyan
+XF_INST_FG_COLOR = $0D ; green
+XF_VOL_FG_COLOR = $03 ; cyan
+XF_EFFECT_FG_COLOR = $0E ; light blue
 
 .segment "CODE"
 
