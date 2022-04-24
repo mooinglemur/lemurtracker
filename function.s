@@ -6,6 +6,7 @@
 .scope Function
 
 note_entry_dispatch_value: .byte $ff
+undo_redo_dispatch_flag: .byte $00
 
 decrement_grid_cursor:
     ldx Grid::cursor_position
@@ -65,7 +66,8 @@ decrement_grid_y:
     jsr grid_selection_start
     ldy Grid::y_position
     bne :+
-        ldy Grid::global_frame_length
+        ldy Grid::global_pattern_length
+        dey
         sty Grid::y_position
         jsr decrement_sequencer_y
         bra @exit
@@ -166,10 +168,24 @@ dispatch_note_entry: ; make note entry happen outside of IRQ
     sta note_entry_dispatch_value
     rts
 
+dispatch_redo:
+    lda #2
+    sta undo_redo_dispatch_flag
+    rts
+
+dispatch_undo:
+    lda #1
+    sta undo_redo_dispatch_flag
+    rts
+
+
+
+
 grid_select_all:
     lda #2
     sta Grid::selection_active
-    lda Grid::global_frame_length
+    lda Grid::global_pattern_length
+    dec
     sta Grid::selection_bottom_y
     lda #Grid::NUM_CHANNELS
     sta Grid::selection_right_x
@@ -382,14 +398,14 @@ increment_grid_step:
 
 increment_grid_y:
     jsr grid_selection_start
+    inc Grid::y_position
     ldy Grid::y_position
-    cpy Grid::global_frame_length
+    cpy Grid::global_pattern_length
     bcc :+
         stz Grid::y_position
         jsr increment_sequencer_y
         bra @exit
     :
-    inc Grid::y_position
 @exit:
     jsr grid_selection_continue
     inc redraw
@@ -402,11 +418,12 @@ increment_grid_y_page:
     adc #16
     bcs @clamp
 
-    cmp Grid::global_frame_length
+    cmp Grid::global_pattern_length
     bcc @end
 
 @clamp:
-    lda Grid::global_frame_length
+    lda Grid::global_pattern_length
+    dec
 @end:
     sta Grid::y_position
     jsr grid_selection_continue
@@ -460,8 +477,16 @@ increment_sequencer_y_page:
 
 
 note_entry:
+    ; first put the old value on the undo stack
     ldx Grid::x_position
     ldy Grid::y_position
+    jsr Undo::store_pattern_cell
+    jsr Undo::mark_checkpoint
+
+    ; now actually apply the note
+    ldx Grid::x_position
+    ldy Grid::y_position
+
     jsr Grid::set_lookup_addr ; set the grid lookup_addr value to the beginning
                               ; of the note data for the current row/column
                               ; this affects RAM bank as well

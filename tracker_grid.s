@@ -8,12 +8,14 @@ MAX_STEP = 15
 x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in
 cursor_position: .res 1 ; within the column (channel) where is the cursor?
-global_frame_length: .res 1 ; set on file create/file load
+global_pattern_length: .res 1 ; set on file create/file load
 base_bank: .res 1 ; where does tracker data start
 channel_to_pattern: .res NUM_CHANNELS ; which pattern is referenced in each channel
 notechardata: .res 9*NUM_CHANNELS ; temp storage for characters based on pattern data
 iterator: .res 1
 entrymode: .res 1
+short_hilight_interval: .res 1
+long_hilight_interval: .res 1
 
 ; selection_active = 0 for no selection
 ; bitfield
@@ -115,8 +117,9 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     :
 
     ldy xf_tmp2
-    cpy global_frame_length
-    bne :+
+    iny
+    cpy global_pattern_length
+    bcc :+
         inc xf_tmp3
     :
     cmp y_position
@@ -269,7 +272,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         jmp @fetch_notedata_loop
     :
 
-    ldy #(XF_BASE_BG_COLOR)
+    ldy #XF_BASE_BG_COLOR
 
     ; color current row
     lda xf_tmp2
@@ -278,31 +281,40 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         lda xf_state
         cmp #XF_STATE_PATTERN_EDITOR
         bne @not_current_row ; If we're not editing the pattern, don't hilight the current row
-        ldy #(XF_AUDITION_BG_COLOR)
+        ldy #XF_AUDITION_BG_COLOR
         lda entrymode
         beq :+
-            ldy #(XF_NOTE_ENTRY_BG_COLOR)
+            ldy #XF_NOTE_ENTRY_BG_COLOR
         :
 
         bra @got_color
 @not_current_row:
-    ; color every 16 rows
-    lda xf_tmp2
-    and #%11110000
-    cmp xf_tmp2
-    bne :+
-        ldy #(XF_HILIGHT_BG_COLOR_2)
-        bra @got_color
-    :
-    ; color every 4 rows
-    lda xf_tmp2
-    and #%11111100
-    cmp xf_tmp2
-    bne :+
-        ldy #(XF_HILIGHT_BG_COLOR_1)
-        bra @got_color
-    :
 
+@long_hilight:
+    ; color every 16 (or whatever) rows
+    lda xf_tmp2
+    sec
+@long_hilight_loop:
+    beq @do_long_hilight
+    sbc long_hilight_interval
+    bcc @short_hilight
+    bra @long_hilight_loop
+@do_long_hilight:
+    ldy #XF_HILIGHT_BG_COLOR_2
+    bra @got_color
+@short_hilight:
+    ; color every 4 (or whatever) rows
+    lda xf_tmp2
+    sec
+@short_hilight_loop:
+    beq @do_short_hilight
+    sbc short_hilight_interval
+    bcc @no_hilight
+    bra @short_hilight_loop
+@do_short_hilight:
+    ldy #XF_HILIGHT_BG_COLOR_1
+    bra @got_color
+@no_hilight:
 @got_color:
 
     sty tmp1 ; store background color here temp
@@ -483,27 +495,42 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     rts
 
 set_lookup_addr: ; takes in .X, .Y for tracker position, affects .A, lookup_addr
+    stz lookup_addr
+    stz lookup_addr+1
+    ; for global_pattern_length > 64 we're doing one bank per multitrack pattern
+    ; otherwise we do two patterns per bank
+    lda global_pattern_length
+    cmp #$41
+    bcs @big_patterns
+@small_patterns:
     lda channel_to_pattern,x ; which pattern are we loading
-    ; for simplicity, we're doing one bank per multitrack pattern
+    lsr
+    ror lookup_addr
+    lsr lookup_addr
+    bra @add_base_bank
+@big_patterns:
+    lda channel_to_pattern,x ; which pattern are we loading
+@add_base_bank:
     clc
     adc base_bank
     sta x16::Reg::RAMBank
     tya
+    clc
+    adc lookup_addr
     sta lookup_addr
-    stz lookup_addr+1
+
     ; multiply by 64 (8 channels, 8 bytes per entry)
-    ; .C will be clear here
-    rol lookup_addr
+    asl lookup_addr
     rol lookup_addr+1
-    rol lookup_addr
+    asl lookup_addr
     rol lookup_addr+1
-    rol lookup_addr
+    asl lookup_addr
     rol lookup_addr+1
-    rol lookup_addr
+    asl lookup_addr
     rol lookup_addr+1
-    rol lookup_addr
+    asl lookup_addr
     rol lookup_addr+1
-    rol lookup_addr
+    asl lookup_addr
     rol lookup_addr+1
     ; column/channel, multiply by 8
     txa
@@ -530,5 +557,5 @@ note_octave: .byte "0123456789"
 
 column_fg_color: .byte XF_BASE_FG_COLOR,XF_BASE_FG_COLOR,XF_BASE_FG_COLOR
                  .byte XF_INST_FG_COLOR,XF_INST_FG_COLOR,XF_VOL_FG_COLOR
-                 .byte XF_EFFECT_FG_COLOR,XF_EFFECT_FG_COLOR,XF_EFFECT_FG_COLOR,XF_BASE_FG_COLOR,XF_BASE_FG_COLOR
+                 .byte XF_EFFECT_FG_COLOR,XF_EFFECT_FG_COLOR,XF_EFFECT_FG_COLOR
 .endscope

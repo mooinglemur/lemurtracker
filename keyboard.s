@@ -182,6 +182,22 @@ handler4: ; XF_STATE_PATTERN_EDITOR
         :
         jmp Function::grid_select_all
     :
+    ; handle Ctrl+Z / Ctrl+Shift+Z
+    lda keycode
+    cmp #$5A
+    bne :++
+        lda modkeys
+        and #(MOD_LCTRL|MOD_RCTRL)
+        beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            jmp Function::dispatch_redo
+        :
+        jmp Function::dispatch_undo
+    :
+
+
 
     lda Grid::entrymode
     beq @noentry
@@ -200,8 +216,8 @@ handler4: ; XF_STATE_PATTERN_EDITOR
 @end:
     rts
 @ktbl:
-    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2
-    .byte $80,$81,$82,$83,$84,$85,$86,$87,$08,$20,$5B,$5D,$8B
+    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2  bsp
+    .byte $80,$81,$82,$83,$84,$85,$86,$87,$09,$20,$5B,$5D,$8B,$08
 @fntbl:
     .word Function::decrement_grid_y_steps ;up
     .word Function::increment_grid_y_steps ;dn
@@ -216,6 +232,7 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     .word @key_leftbracket
     .word @key_rightbracket
     .word @key_F2
+    .word @key_backspace
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
@@ -234,7 +251,8 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     lda #0
     jmp Function::set_grid_y
 @key_end:
-    lda Grid::global_frame_length
+    lda Grid::global_pattern_length
+    dec
     jmp Function::set_grid_y
 @key_space:
     ; Flip state of audition/entry flag
@@ -270,7 +288,9 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     sta xf_state
     inc redraw
     rts
+@key_backspace:
 
+    rts
 
 
 handler5:
@@ -407,7 +427,7 @@ decode_scancode:
     .byte $00,$00,$00,$00
 @keycode:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
-    .byte $20,$0D,$0D,$80,$81,$82,$83,$08,$00,$5C
+    .byte $20,$0D,$0D,$80,$81,$82,$83,$09,$08,$5C
     ;     n0  n1  n2  n3  n4  n5  n6  n7  n8  n9
     .byte $30,$31,$32,$33,$34,$35,$36,$37,$38,$39
     ;     0   1   2   3   4   5   6   7   8   9

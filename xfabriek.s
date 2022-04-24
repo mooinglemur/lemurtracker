@@ -41,6 +41,7 @@ xf_tmp3: .res 1
 .include "tracker_grid.s"
 .include "sequencer.s"
 .include "instruments.s"
+.include "undo.s"
 .include "function.s"
 .include "util.s"
 .include "irq.s"
@@ -93,8 +94,13 @@ main:
     lda #XF_STATE_PATTERN_EDITOR
     sta xf_state
 
-    lda #$7F
-    sta Grid::global_frame_length
+    lda #64
+    sta Grid::global_pattern_length
+
+    lda #16
+    sta Grid::long_hilight_interval
+    lda #2
+    sta Grid::short_hilight_interval
 
     jsr xf_irq::setup
 
@@ -112,15 +118,25 @@ main:
     sta Instruments::base_bank
 
     lda #6
+    sta Undo::base_bank
+
+
+    lda #8
     sta Grid::base_bank
 
-    lda #127
+    lda #3
     sta Sequencer::max_frame
 
     inc redraw
 
-    lda #4
+    lda #1
     sta Grid::step
+
+    lda #$00
+    sta Undo::lookup_addr
+    lda #$A0
+    sta Undo::lookup_addr+1
+
 
 
 ;;;;; temp vvv
@@ -163,6 +179,21 @@ main:
         jsr Function::note_entry
     :
 
+    lda Function::undo_redo_dispatch_flag
+    cmp #1
+    bne :+
+        jsr Undo::undo
+        stz Function::undo_redo_dispatch_flag
+    :
+
+    lda Function::undo_redo_dispatch_flag
+    cmp #2
+    bne :+
+        jsr Undo::redo
+        stz Function::undo_redo_dispatch_flag
+    :
+
+
     VERA_SET_ADDR ($0010+$1B000),2
     lda Grid::cursor_position
     jsr xf_byte_to_hex
@@ -202,6 +233,42 @@ main:
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
+
+    lda #' '
+    sta Vera::Reg::Data0
+    lda Undo::undo_size+1
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
+    lda Undo::undo_size
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
+
+
+    lda #' '
+    sta Vera::Reg::Data0
+    lda Undo::redo_size+1
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
+    lda Undo::redo_size
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
+
+
+    lda #' '
+    sta Vera::Reg::Data0
+    lda Undo::lookup_addr+1
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
+    lda Undo::lookup_addr
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
+
 
     jmp @mainloop
 @exit:

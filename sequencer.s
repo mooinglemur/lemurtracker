@@ -1,6 +1,7 @@
 .scope Sequencer
 
-x_position: .res 1 ; which tracker column (channel) are we in
+; We don't use x_position here.  We use Grid::x_position instead
+;x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in
 max_frame: .res 1 ; the last frame in the sequencer
 mix: .res 1 ; which mix we're displaying
@@ -141,6 +142,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         bne @not_current_row
 
         ; current drawing == eq current row
+        ; set the grid state to reflect the sequencer, it's important
         sta Grid::channel_to_pattern,y
         ply
         pha
