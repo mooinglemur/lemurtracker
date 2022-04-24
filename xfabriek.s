@@ -121,7 +121,7 @@ main:
     sta Undo::base_bank
 
 
-    lda #8
+    lda #$10
     sta Grid::base_bank
 
     lda #3
@@ -274,6 +274,10 @@ main:
 
     lda #' '
     sta Vera::Reg::Data0
+    lda Undo::current_bank_offset
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0    
     lda Undo::lookup_addr+1
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0

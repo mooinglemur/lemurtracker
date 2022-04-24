@@ -1,6 +1,7 @@
 .scope Undo
 
 base_bank: .res 1
+current_bank_offset: .res 1
 ; undo/redo stack sizes, this can be > 8 bits if we end up being super generous
 undo_size: .res 2
 redo_size: .res 2
@@ -8,12 +9,22 @@ redo_size: .res 2
 ; see below for "undo group" markers
 checkpoint: .byte $01
 
+NUM_BANKS = 4
+
 ; temp space
 tmp_undo_buffer: .res 16
 .pushseg
 .segment "ZEROPAGE"
 lookup_addr: .res 2
 .popseg
+
+set_ram_bank:
+    lda base_bank
+    clc
+    adc current_bank_offset
+    sta x16::Reg::RAMBank
+    rts
+
 
 store_pattern_cell: ; takes in .X = channel column, .Y = row, affects all registers
     lda #1
@@ -43,9 +54,7 @@ store_pattern_cell: ; takes in .X = channel column, .Y = row, affects all regist
         cpy #8
         bcc :-
 
-    lda base_bank
-    sta x16::Reg::RAMBank
-
+    jsr set_ram_bank
 ; we need to invalidate the entire redo stack upon storing a new undo event
 ; let's do that first
     jsr invalidate_redo_stack
@@ -72,6 +81,8 @@ invalidate_redo_stack:
     lda lookup_addr
     pha
     lda lookup_addr+1
+    pha
+    lda current_bank_offset
     pha
 
 @loop:
@@ -100,6 +111,8 @@ invalidate_redo_stack:
     bra @loop
 @end:
     pla
+    sta current_bank_offset
+    pla
     sta lookup_addr+1
     pla
     sta lookup_addr
@@ -125,11 +138,6 @@ mark_redo_stop: ; affects .A, .Y
     ; this does nothing but ensure the next event slot is marked as a stop point
     ; so that redo stops at the right point
 
-    ; store current lookup addr on stack
-    lda lookup_addr
-    pha
-    lda lookup_addr+1
-    pha
 
     ; temporarily advance the pointer
     jsr advance_undo_pointer
@@ -157,10 +165,7 @@ mark_redo_stop: ; affects .A, .Y
     sta (lookup_addr),y
 
     ; restore the old pointer
-    pla
-    sta lookup_addr+1
-    pla
-    sta lookup_addr
+    jsr reverse_undo_pointer
 
     rts
 
@@ -177,6 +182,11 @@ advance_undo_pointer: ; affects .A
     stz lookup_addr
     lda #$A0
     sta lookup_addr+1
+    inc current_bank_offset
+    lda current_bank_offset
+    cmp #NUM_BANKS
+    bcc @ptr_advanced
+    stz current_bank_offset
     bra @ptr_advanced
 @no_wrap:
     lda lookup_addr
@@ -187,6 +197,7 @@ advance_undo_pointer: ; affects .A
     adc #0
     sta lookup_addr+1
 @ptr_advanced:
+    jsr set_ram_bank
     rts
 
 reverse_undo_pointer: ; affects .A, we run this after applying an undo event
@@ -201,6 +212,10 @@ reverse_undo_pointer: ; affects .A, we run this after applying an undo event
     sta lookup_addr
     lda #$BF
     sta lookup_addr+1
+    dec current_bank_offset
+    bpl @ptr_advanced
+    lda #(NUM_BANKS-1)
+    sta current_bank_offset
     bra @ptr_advanced
 @no_wrap:
     lda lookup_addr
@@ -211,6 +226,7 @@ reverse_undo_pointer: ; affects .A, we run this after applying an undo event
     sbc #0
     sta lookup_addr+1
 @ptr_advanced:
+    jsr set_ram_bank
     rts
 
 
@@ -218,8 +234,7 @@ handle_undo_redo_pattern_cell:
     ; the operation here is the same whether we're undoing or redoing
     ; we swap the data in the undo buffer with that in grid memory
 
-    lda base_bank
-    sta x16::Reg::RAMBank
+    jsr set_ram_bank
 
     ; first, copy the undo event into temp
     ldy #0
@@ -258,8 +273,7 @@ handle_undo_redo_pattern_cell:
         bcc :-
 
     ; reset the bank to the undo bank
-    lda base_bank
-    sta x16::Reg::RAMBank
+    jsr set_ram_bank
 
     ; now copy the event back into the undo space
     ldy #0
@@ -283,8 +297,7 @@ undo:
 @can_undo:
     ; pointer should be at the most recent undo event
     ; reset the bank to the undo bank
-    lda base_bank
-    sta x16::Reg::RAMBank
+    jsr set_ram_bank
 
     ldy #0
     lda (lookup_addr),y
@@ -344,8 +357,6 @@ redo:
 @can_redo:
     ; pointer should be behind the first redoable event
     ; reset the bank to the undo bank, and advance
-    lda base_bank
-    sta x16::Reg::RAMBank
     jsr advance_undo_pointer
 
     ldy #0
@@ -382,11 +393,16 @@ redo:
     clc
     adc #1
     sta undo_size
+    lda undo_size+1
+    adc #0
+    sta undo_size+1
 
     lda #1
     sta checkpoint
     bra @end
 @continue:
+    ; after checking the end of the redo group, we still need to back up
+    jsr reverse_undo_pointer
     bra @can_redo
 @end:
     inc redraw
