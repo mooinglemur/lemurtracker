@@ -19,11 +19,12 @@ store_pattern_cell: ; takes in .X = channel column, .Y = row, affects all regist
     lda #1
     sta tmp_undo_buffer
     lda checkpoint
-    lda #2
-    sta checkpoint
     sta tmp_undo_buffer+1
     stx tmp_undo_buffer+3
     sty tmp_undo_buffer+4
+
+    lda #2
+    sta checkpoint
 
     jsr Grid::set_lookup_addr ; set lookup while x/y are still untouched
     ; determine the actual pattern by looking up the index in the currently displayed patterns
@@ -85,7 +86,7 @@ invalidate_redo_stack:
     ldy #1
     lda (lookup_addr),y
     cmp #1
-    beq @continue_loop
+    bne @continue_loop
     lda #0
     sta (lookup_addr),y
 
@@ -135,7 +136,7 @@ mark_redo_stop: ; affects .A, .Y
     ; if we're clobbering a start point, we need to decrement our undo stack
     ldy #1
     lda (lookup_addr),y
-    cmp #2
+    cmp #1
     bne :+
     ;; actually, if undo_size does dip below zero, it means we've wrapped around
     ;; and stored more data in one group than can fit in the entire buffer
@@ -301,7 +302,7 @@ undo:
     ldy #1
     lda (lookup_addr),y
     cmp #2
-    bne @continue
+    beq @continue
     ; we just finished an undo group, back it up once more and stop
     jsr reverse_undo_pointer
 
@@ -363,7 +364,7 @@ redo:
     jsr advance_undo_pointer
     ldy #1
     lda (lookup_addr),y
-    cmp #1
+    cmp #2
     beq @continue
     ; we just finished a redo group, back it up once more and stop
     jsr reverse_undo_pointer

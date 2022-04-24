@@ -5,8 +5,18 @@
 
 .scope Function
 
+OP_UNDO = 1
+OP_REDO = 2
+OP_BACKSPACE = 3
+OP_INSERT = 4
+
 note_entry_dispatch_value: .byte $ff
-undo_redo_dispatch_flag: .byte $00
+op_dispatch_flag: .byte $00
+
+tmp1: .res 1
+tmp2: .res 1
+tmp3: .res 1
+
 
 decrement_grid_cursor:
     ldx Grid::cursor_position
@@ -130,6 +140,85 @@ decrement_sequencer_y_page:
     rts
 
 
+delete_cell_above:
+    ; if we're at the top of the grid, we do nothing
+    ldy Grid::y_position
+    beq @end
+    dey
+    sty tmp1
+
+    ; we need to shift everything up in this column from cursor position down
+    ; to the end of the pattern
+@loop:
+    ldy tmp1
+    ldx Grid::x_position
+    jsr Grid::set_lookup_addr
+
+    iny
+    cpy Grid::global_pattern_length
+    dey
+    bcs @empty_cell
+@copy_cell:
+    lda x16::Reg::RAMBank
+    pha
+    jsr Undo::store_pattern_cell
+    pla
+    sta x16::Reg::RAMBank
+
+    ldy #0
+    :
+        phy
+
+        tya
+        clc
+        adc #(8*Grid::NUM_CHANNELS)
+        tay
+        lda (Grid::lookup_addr),y
+        ply
+        sta (Grid::lookup_addr),y
+
+        iny
+        cpy #8
+        bcc :-
+
+    inc tmp1
+    bra @loop
+
+@empty_cell:
+    lda x16::Reg::RAMBank
+    pha
+
+    jsr Undo::store_pattern_cell
+    jsr Undo::mark_checkpoint
+
+    pla
+    sta x16::Reg::RAMBank
+
+
+    lda #0
+    ldy #0
+    :
+        sta (Grid::lookup_addr),y
+        iny
+        cpy #8
+        bcc :-
+@finalize:
+    jsr decrement_grid_y
+@end:
+    rts
+
+
+dispatch_backspace:
+    lda #OP_BACKSPACE
+    sta op_dispatch_flag
+    rts
+
+dispatch_insert:
+    lda #OP_INSERT
+    sta op_dispatch_flag
+    rts
+
+
 dispatch_note_entry: ; make note entry happen outside of IRQ
     ; .A = notecode, we need convert to note value (MIDI number)
     cmp #$ff ; note delete
@@ -169,13 +258,13 @@ dispatch_note_entry: ; make note entry happen outside of IRQ
     rts
 
 dispatch_redo:
-    lda #2
-    sta undo_redo_dispatch_flag
+    lda #OP_REDO
+    sta op_dispatch_flag
     rts
 
 dispatch_undo:
-    lda #1
-    sta undo_redo_dispatch_flag
+    lda #OP_UNDO
+    sta op_dispatch_flag
     rts
 
 
@@ -473,6 +562,80 @@ increment_sequencer_y_page:
     rts
 
 
+insert_cell:
+
+    ldy Grid::global_pattern_length
+    dey
+    dey
+    sty tmp1
+    ; to get us back to the row where we did the insert, we have to
+    ; store an undo event here first
+    ldy Grid::y_position
+    ldx Grid::x_position
+    jsr Undo::store_pattern_cell
+
+    ; we need to shift everything down in this column starting from the end
+    ; of the pattern and going toward the current position
+@copy_cell:
+    ldx Grid::x_position
+    ldy tmp1
+    iny
+    jsr Undo::store_pattern_cell
+
+    ldx Grid::x_position
+    ldy tmp1
+    jsr Grid::set_lookup_addr
+
+
+    ldy #0
+    :
+        phy
+        lda (Grid::lookup_addr),y
+        pha
+
+        tya
+        clc
+        adc #(8*Grid::NUM_CHANNELS)
+        tay
+
+        pla
+        sta (Grid::lookup_addr),y
+
+        ply
+        iny
+        cpy #8
+        bcc :-
+
+    ldy tmp1
+    cpy Grid::y_position
+    beq @empty_cell
+
+    dec tmp1
+    bra @copy_cell
+
+@empty_cell:
+    lda x16::Reg::RAMBank
+    pha
+
+    jsr Undo::store_pattern_cell
+    jsr Undo::mark_checkpoint
+
+    pla
+    sta x16::Reg::RAMBank
+
+
+    lda #0
+    ldy #0
+    :
+        sta (Grid::lookup_addr),y
+        iny
+        cpy #8
+        bcc :-
+
+@finalize:
+    inc redraw
+@end:
+    rts
 
 
 

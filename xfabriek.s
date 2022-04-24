@@ -99,7 +99,7 @@ main:
 
     lda #16
     sta Grid::long_hilight_interval
-    lda #2
+    lda #4
     sta Grid::short_hilight_interval
 
     jsr xf_irq::setup
@@ -179,18 +179,32 @@ main:
         jsr Function::note_entry
     :
 
-    lda Function::undo_redo_dispatch_flag
-    cmp #1
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_UNDO
     bne :+
+        stz Function::op_dispatch_flag
         jsr Undo::undo
-        stz Function::undo_redo_dispatch_flag
     :
 
-    lda Function::undo_redo_dispatch_flag
-    cmp #2
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_REDO
     bne :+
         jsr Undo::redo
-        stz Function::undo_redo_dispatch_flag
+        stz Function::op_dispatch_flag
+    :
+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_BACKSPACE
+    bne :+
+        jsr Function::delete_cell_above
+        stz Function::op_dispatch_flag
+    :
+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_INSERT
+    bne :+
+        jsr Function::insert_cell
+        stz Function::op_dispatch_flag
     :
 
 

@@ -192,8 +192,12 @@ handler4: ; XF_STATE_PATTERN_EDITOR
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
+            lda Grid::entrymode
+            beq :+
             jmp Function::dispatch_redo
         :
+        lda Grid::entrymode
+        beq :+
         jmp Function::dispatch_undo
     :
 
@@ -216,8 +220,8 @@ handler4: ; XF_STATE_PATTERN_EDITOR
 @end:
     rts
 @ktbl:
-    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2  bsp
-    .byte $80,$81,$82,$83,$84,$85,$86,$87,$09,$20,$5B,$5D,$8B,$08
+    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2  bsp ins
+    .byte $80,$81,$82,$83,$84,$85,$86,$87,$09,$20,$5B,$5D,$8B,$08,$88
 @fntbl:
     .word Function::decrement_grid_y_steps ;up
     .word Function::increment_grid_y_steps ;dn
@@ -233,6 +237,7 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     .word @key_rightbracket
     .word @key_F2
     .word @key_backspace
+    .word @key_insert
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
@@ -289,7 +294,16 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     inc redraw
     rts
 @key_backspace:
-
+    lda Grid::entrymode
+    beq :+
+        jsr Function::dispatch_backspace
+    :
+    rts
+@key_insert:
+    lda Grid::entrymode
+    beq :+
+        jsr Function::dispatch_insert
+    :
     rts
 
 
