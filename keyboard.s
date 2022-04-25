@@ -182,7 +182,21 @@ handler4: ; XF_STATE_PATTERN_EDITOR
         :
         jmp Function::grid_select_all
     :
-    ; handle Ctrl+Z / Ctrl+Shift+Z
+    ; handle Ctrl+C / Ctrl+Shift+C
+    lda keycode
+    cmp #$43
+    bne :++
+        lda modkeys
+        and #(MOD_LCTRL|MOD_RCTRL)
+        beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            bra @end ; ignore Ctrl+Shift+C for now
+        :
+        jmp Function::dispatch_copy
+
+    :    ; handle Ctrl+Z / Ctrl+Shift+Z
     lda keycode
     cmp #$5A
     bne :++

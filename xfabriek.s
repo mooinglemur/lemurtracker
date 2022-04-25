@@ -42,6 +42,7 @@ xf_tmp3: .res 1
 .include "sequencer.s"
 .include "instruments.s"
 .include "undo.s"
+.include "clipboard.s"
 .include "function.s"
 .include "util.s"
 .include "irq.s"
@@ -120,6 +121,8 @@ main:
     lda #6
     sta Undo::base_bank
 
+    lda #$0A
+    sta Clipboard::base_bank
 
     lda #$10
     sta Grid::base_bank
@@ -174,8 +177,17 @@ main:
 
     ; if we have a pending note entry to do
     lda Function::note_entry_dispatch_value
-    cmp #$ff
-    beq :+
+    cmp #$ff ; ff is null/no note
+    beq :++
+        cmp #0 ; 00 means delete the note
+        bne :+ ; if we're deleting, check selection status
+            lda Grid::selection_active
+            beq :+                         ; if there's a selection...
+            jsr Function::delete_selection ; don't treat as a note entry
+            lda #$ff
+            sta Function::note_entry_dispatch_value
+            bra :++
+        : ; otherwise it's like a note entry
         jsr Function::note_entry
     :
 
@@ -189,22 +201,30 @@ main:
     lda Function::op_dispatch_flag
     cmp #Function::OP_REDO
     bne :+
-        jsr Undo::redo
         stz Function::op_dispatch_flag
+        jsr Undo::redo
     :
 
     lda Function::op_dispatch_flag
     cmp #Function::OP_BACKSPACE
     bne :+
-        jsr Function::delete_cell_above
         stz Function::op_dispatch_flag
+        jsr Function::delete_cell_above
     :
 
     lda Function::op_dispatch_flag
     cmp #Function::OP_INSERT
     bne :+
-        jsr Function::insert_cell
         stz Function::op_dispatch_flag
+        jsr Function::insert_cell
+    :
+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_COPY
+    bne :+
+        stz Function::op_dispatch_flag
+        jsr Function::copy
+
     :
 
 
@@ -277,7 +297,7 @@ main:
     lda Undo::current_bank_offset
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
-    stx Vera::Reg::Data0    
+    stx Vera::Reg::Data0
     lda Undo::lookup_addr+1
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
