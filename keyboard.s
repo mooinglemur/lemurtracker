@@ -195,8 +195,36 @@ handler4: ; XF_STATE_PATTERN_EDITOR
             bra @end ; ignore Ctrl+Shift+C for now
         :
         jmp Function::dispatch_copy
+    :
+    ; above here are "nondestructive" ops that don't require note_entry to be true
 
-    :    ; handle Ctrl+Z / Ctrl+Shift+Z
+    lda Grid::entrymode
+    beq @noentry
+
+    ; below here are "destructive" ops, note_entry needs to be on for these
+
+    ; handle Ctrl+V / Ctrl+Shift+V
+
+    lda keycode
+    cmp #$56
+    bne :++
+        lda modkeys
+        and #(MOD_LCTRL|MOD_RCTRL)
+        beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            lda #%00011111 ; merge paste all
+            jmp Function::dispatch_paste
+        :
+        lda #%00011110 ; non-merge paste all
+        jmp Function::dispatch_paste
+    :
+
+
+
+    ; handle Ctrl+Z / Ctrl+Shift+Z
+
     lda keycode
     cmp #$5A
     bne :++
@@ -206,19 +234,23 @@ handler4: ; XF_STATE_PATTERN_EDITOR
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
-            lda Grid::entrymode
-            beq :+
             jmp Function::dispatch_redo
         :
-        lda Grid::entrymode
-        beq :+
         jmp Function::dispatch_undo
     :
 
+    ; handle Delete key with selection active
+    lda keycode
+    cmp #$89
+    bne :+
+        lda Grid::selection_active
+        beq :+
+        jmp Function::dispatch_delete_selection
+    :
 
-
-    lda Grid::entrymode
-    beq @noentry
+    ; if we're holding down mod keys, don't process entries
+    lda modkeys
+    bne @end
 
     lda Grid::cursor_position ; are we in the note column?
     beq @notecolumn
@@ -236,6 +268,8 @@ handler4: ; XF_STATE_PATTERN_EDITOR
 @ktbl:
     ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2  bsp ins
     .byte $80,$81,$82,$83,$84,$85,$86,$87,$09,$20,$5B,$5D,$8B,$08,$88
+    ;     n/  n*
+    .byte $96,$97
 @fntbl:
     .word Function::decrement_grid_y_steps ;up
     .word Function::increment_grid_y_steps ;dn
@@ -252,6 +286,8 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     .word @key_F2
     .word @key_backspace
     .word @key_insert
+    .word Function::decrement_grid_octave
+    .word Function::increment_grid_octave
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
@@ -432,8 +468,8 @@ decode_scancode:
     .byte $6C,$69,$7D,$7A,$70,$71,$41,$49,$4A,$4C
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $54,$5B,$05,$06,$04,$0C,$03,$0B,$83,$0A
-    ;     F9  F10 F11 F12
-    .byte $01,$10,$78,$70
+    ;     F9  F10 F11 F12 n/  n*
+    .byte $01,$10,$78,$70,$4A,$7C
 @scancodeh:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $00,$00,$E0,$E0,$E0,$E0,$E0,$00,$00,$00
@@ -451,8 +487,8 @@ decode_scancode:
     .byte $E0,$E0,$E0,$E0,$E0,$E0,$00,$00,$00,$00
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-    ;     F9  F10 F11 F12
-    .byte $00,$00,$00,$00
+    ;     F9  F10 F11 F12 n/  n*
+    .byte $00,$00,$00,$00,$E0,$00
 @keycode:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $20,$0D,$0D,$80,$81,$82,$83,$09,$08,$5C
@@ -470,8 +506,8 @@ decode_scancode:
     .byte $84,$85,$86,$87,$88,$89,$2C,$2E,$2F,$3B
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $5B,$5D,$8A,$8B,$8C,$8D,$8E,$8F,$90,$91
-    ;     F9  F10 F11 F12
-    .byte $92,$93,$94,$95
+    ;     F9  F10 F11 F12 n/  n*
+    .byte $92,$93,$94,$95,$96,$97
 @notecode: ; NULL/no action = $00, C in current octave = $01
            ; note delete = $FF, note cut = $FE, note release = $FD
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
@@ -490,6 +526,6 @@ decode_scancode:
     .byte $00,$00,$00,$00,$00,$FF,$0D,$0F,$11,$10
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-    ;     F9  F10 F11 F12
-    .byte $00,$00,$00,$00
+    ;     F9  F10 F11 F12 n/  n*
+    .byte $00,$00,$00,$00,$00,$00
 .endscope

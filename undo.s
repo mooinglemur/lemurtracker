@@ -250,8 +250,8 @@ handle_undo_redo_pattern_cell:
     sta Sequencer::mix
     lda tmp_undo_buffer+6 ; set row number
     sta Sequencer::y_position
-    ; we need to trigger the sequencer redraw to populate Grid state
-    jsr Sequencer::draw
+    ; we need to trigger the sequencer to populate Grid state
+    jsr Sequencer::update_grid_patterns
     ; now position the Grid memory pointer (changes bank too)
     ldx tmp_undo_buffer+3
     stx Grid::x_position

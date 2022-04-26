@@ -1,7 +1,7 @@
 .scope Grid
 
 NUM_CHANNELS = 8
-MAX_OCTAVE = 8
+MAX_OCTAVE = 8 ; max octave for the editor (Z key is C in that octave)
 MAX_STEP = 15
 
 ; vars that keep state

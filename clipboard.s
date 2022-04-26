@@ -144,8 +144,11 @@ copy_grid_cells:
     ; or cop-eration for short
     lda sel_y_iterator
     sta y_height
+    lda #1
+    sta content_type
 
     rts
+
 
 paste_cells:  ; .A bitfield
               ; 0 merge paste,
@@ -155,9 +158,134 @@ paste_cells:  ; .A bitfield
               ; 4 paste effects
     sta tmp1
 
-    
+    lda content_type
+    cmp #1
+    beq :+
+        jmp @end
+    :
 
+
+    stz clip_x_iterator
+    stz clip_y_iterator
+    lda Grid::x_position
+    sta sel_x_iterator
+    sta Grid::selection_left_x
+    lda Grid::y_position
+    sta sel_y_iterator
+    sta Grid::selection_top_y
+    lda #2
+    sta Grid::selection_active
+
+@loop:
+    ldx clip_x_iterator
+    ldy clip_y_iterator
+    jsr set_lookup_addr
+    ldy #0
+    :
+        lda (lookup_addr),y
+        sta tmp_paste_buffer,y
+        iny
+        cpy #8
+        bcc :-
+
+    ldx sel_x_iterator
+    ldy sel_y_iterator
+    jsr Undo::store_pattern_cell
+
+    ldx sel_x_iterator
+    stx Grid::selection_right_x
+    ldy sel_y_iterator
+    sty Grid::selection_bottom_y
+    jsr Grid::set_lookup_addr
+
+@notes:
+    ; check whether we're pasting notes
+    bbr1 tmp1,@after_notes
+    bbr0 tmp1,@do_notes ; if merge paste, and note is zero, skip
+    lda tmp_paste_buffer+0
+    beq @after_notes
+@do_notes:
+    lda tmp_paste_buffer+0
+    sta (Grid::lookup_addr) ; 0th index
+@after_notes:
+    ; check if pasting instruments
+    bbr2 tmp1,@after_inst
+    ; merge paste is meaningless for this column
+@do_inst:
+    lda tmp_paste_buffer+1
+    ldy #1
+    sta (Grid::lookup_addr),y
+@after_inst:
+    ; check if pasting volume
+    bbr3 tmp1,@after_vol
+
+    bbr0 tmp1,@do_vol ; if merge paste, and vol is zero, skip
+    lda tmp_paste_buffer+2
+    beq @after_vol
+@do_vol:
+    lda tmp_paste_buffer+2
+    ldy #2
+    sta (Grid::lookup_addr),y
+@after_vol:
+    ; check if pasting effects
+    bbr4 tmp1,@after_eff
+
+    bbr0 tmp1,@do_eff ; if merge paste, and vol is zero, skip
+    lda tmp_paste_buffer+3
+    beq @after_eff
+@do_eff:
+
+    lda tmp_paste_buffer+3
+    ldy #3
+    sta (Grid::lookup_addr),y
+    lda tmp_paste_buffer+4
+    iny
+    sta (Grid::lookup_addr),y
+@after_eff:
+
+    ; done pasting this cell
+    inc sel_x_iterator
+    inc clip_x_iterator
+    lda clip_x_iterator
+
+    cmp x_width
+    bcs :+
+        lda sel_x_iterator
+        cmp #Grid::NUM_CHANNELS
+        bcs :+
+        jmp @loop
+    :
+
+    ; reset x and increment y at the right edge of the selection
+    stz clip_x_iterator
+    lda Grid::x_position
+    sta sel_x_iterator
+
+    inc sel_y_iterator
+    inc clip_y_iterator
+
+    ; check y bounds
+    lda clip_y_iterator
+    cmp y_height
+    bcs :+
+        lda sel_y_iterator
+        cmp Grid::global_pattern_length
+        bcs :+
+        jmp @loop
+    :
+
+    ; we've completed the paste operation
+    ; just to make redo put the cursor in the right place, let's resave the
+    ; current grid position
+    ldx Grid::x_position
+    ldy Grid::y_position
+    jsr Undo::store_pattern_cell
+    jsr Undo::mark_checkpoint
+@end:
+    inc redraw
 
     rts
+
+
 
 .endscope

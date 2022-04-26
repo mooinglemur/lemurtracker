@@ -10,9 +10,12 @@ OP_REDO = 2
 OP_BACKSPACE = 3
 OP_INSERT = 4
 OP_COPY = 5
+OP_DELETE = 6
+OP_PASTE = 7
 
 note_entry_dispatch_value: .byte $ff
 op_dispatch_flag: .byte $00
+op_dispatch_operand: .res 1
 
 tmp1: .res 1
 tmp2: .res 1
@@ -274,6 +277,11 @@ dispatch_copy:
     sta op_dispatch_flag
     rts
 
+dispatch_delete_selection:
+    lda #OP_DELETE
+    sta op_dispatch_flag
+    rts
+
 dispatch_insert:
     lda #OP_INSERT
     sta op_dispatch_flag
@@ -316,6 +324,12 @@ dispatch_note_entry: ; make note entry happen outside of IRQ
         lda #$ff
     :
     sta note_entry_dispatch_value
+    rts
+
+dispatch_paste:
+    sta op_dispatch_operand
+    lda #OP_PASTE
+    sta op_dispatch_flag
     rts
 
 dispatch_redo:

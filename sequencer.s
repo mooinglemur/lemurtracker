@@ -100,30 +100,12 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     stx Vera::Reg::Data0
     sty Vera::Reg::Data0
 
-    lda base_bank
-    sta x16::Reg::RAMBank
-
-    ; fetch note data from hiram. we can clobber registers here
     stz iterator
-    stz lookup_addr+1
 
-    lda xf_tmp2 ; the row we're drawing
-    asl
-    rol lookup_addr+1
-    asl
-    rol lookup_addr+1
-    asl
-    rol lookup_addr+1
-    sta lookup_addr
 
-    lda mix
-    asl
-    asl
-    clc
-    adc #$A0
-    adc lookup_addr+1
-    sta lookup_addr+1
-
+    ldy xf_tmp2 ; the row we're drawing
+    jsr set_lookup_addr
+    ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
 
 ; draw row
     ldx #0
@@ -270,6 +252,46 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sty Vera::Reg::Data0
     sty Vera::Reg::Data0
 
+
+    rts
+
+
+update_grid_patterns:
+    ldy y_position
+    jsr set_lookup_addr
+    ldy #0
+    :
+        lda (lookup_addr),y
+        sta Grid::channel_to_pattern,y
+        iny
+        cpy #Grid::NUM_CHANNELS
+        bcc :-
+
+    rts
+        
+
+set_lookup_addr: ; input: .Y = row
+    lda base_bank
+    sta x16::Reg::RAMBank
+
+    stz lookup_addr+1
+
+    tya ; the row we're drawing
+    asl
+    rol lookup_addr+1
+    asl
+    rol lookup_addr+1
+    asl
+    rol lookup_addr+1
+    sta lookup_addr
+
+    lda mix
+    asl
+    asl
+    clc
+    adc #$A0
+    adc lookup_addr+1
+    sta lookup_addr+1
 
     rts
 .endscope

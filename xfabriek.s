@@ -110,7 +110,7 @@ main:
     sec
     jsr x16::Kernal::SCREEN_MODE ; get current screen size (in 8px) into .X and .Y
     lda #1
-    JSR x16::Kernal::MOUSE_CONFIG ; show the default mouse pointer
+    jsr x16::Kernal::MOUSE_CONFIG ; show the default mouse pointer
 
     lda #1
     sta Sequencer::base_bank
@@ -158,6 +158,8 @@ main:
 
 ;;;;; temp ^^^
 
+    ; TODO detect emulator and report if the toggle failed
+
     ; toggle emulator keys off
     lda #1
     sta $9FB7
@@ -178,16 +180,7 @@ main:
     ; if we have a pending note entry to do
     lda Function::note_entry_dispatch_value
     cmp #$ff ; ff is null/no note
-    beq :++
-        cmp #0 ; 00 means delete the note
-        bne :+ ; if we're deleting, check selection status
-            lda Grid::selection_active
-            beq :+                         ; if there's a selection...
-            jsr Function::delete_selection ; don't treat as a note entry
-            lda #$ff
-            sta Function::note_entry_dispatch_value
-            bra :++
-        : ; otherwise it's like a note entry
+    beq :+
         jsr Function::note_entry
     :
 
@@ -225,6 +218,23 @@ main:
         stz Function::op_dispatch_flag
         jsr Function::copy
 
+    :
+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_DELETE
+    bne :+
+        stz Function::op_dispatch_flag
+        jsr Function::delete_selection
+
+    :
+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_PASTE
+    bne :+
+        stz Function::op_dispatch_flag
+        lda Function::op_dispatch_operand
+        stz Function::op_dispatch_operand
+        jsr Clipboard::paste_cells
     :
 
 
