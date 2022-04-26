@@ -1,3 +1,6 @@
+# * WORK IN PROGRESS *
+# Application is in early development :)
+
 # Welcome to xfabriek
 
 xfabriek is a tracker music editor and playback engine for the Commander X16.
