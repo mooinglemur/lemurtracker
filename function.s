@@ -12,8 +12,12 @@ OP_INSERT = 4
 OP_COPY = 5
 OP_DELETE = 6
 OP_PASTE = 7
+OP_NOTE = 8
+OP_CUT = 9
+OP_DEC_SEQ_CELL = 10
+OP_INC_SEQ_CELL = 11
 
-note_entry_dispatch_value: .byte $ff
+
 op_dispatch_flag: .byte $00
 op_dispatch_operand: .res 1
 
@@ -127,6 +131,19 @@ decrement_grid_y_steps:
 @end:
     rts
 
+decrement_sequencer_cell:
+    ldy Sequencer::y_position
+    jsr Sequencer::set_lookup_addr
+
+    ldy Grid::x_position
+    lda (Sequencer::lookup_addr),y
+    beq @exit
+
+    dec
+    sta (Sequencer::lookup_addr),y
+@exit:
+    inc redraw
+    rts
 
 decrement_sequencer_y:
     ldy Sequencer::y_position
@@ -277,9 +294,31 @@ dispatch_copy:
     sta op_dispatch_flag
     rts
 
+dispatch_cut:
+    lda #OP_CUT
+    sta op_dispatch_flag
+    rts
+
+dispatch_decrement_sequencer_cell:
+    lda Grid::entrymode
+    beq @end
+    lda #OP_DEC_SEQ_CELL
+    sta op_dispatch_flag
+@end:
+    rts
+
+
 dispatch_delete_selection:
     lda #OP_DELETE
     sta op_dispatch_flag
+    rts
+
+dispatch_increment_sequencer_cell:
+    lda Grid::entrymode
+    beq @end
+    lda #OP_INC_SEQ_CELL
+    sta op_dispatch_flag
+@end:
     rts
 
 dispatch_insert:
@@ -298,7 +337,7 @@ dispatch_note_entry: ; make note entry happen outside of IRQ
     beq @note_release
 
     dec
-    sta note_entry_dispatch_value
+    sta op_dispatch_operand
     ; note stored is 0 for C0, we need to add the octave+1 so that 12 is C0
     clc
     lda #0
@@ -308,7 +347,7 @@ dispatch_note_entry: ; make note entry happen outside of IRQ
     adc #12
     dey
     bne @octave_loop
-    adc note_entry_dispatch_value
+    adc op_dispatch_operand
     bra @end
 @note_delete:
     lda #0
@@ -323,7 +362,9 @@ dispatch_note_entry: ; make note entry happen outside of IRQ
     bcc :+
         lda #$ff
     :
-    sta note_entry_dispatch_value
+    sta op_dispatch_operand
+    lda #OP_NOTE
+    sta op_dispatch_flag
     rts
 
 dispatch_paste:
@@ -608,6 +649,21 @@ increment_grid_y_steps:
 @end:
     rts
 
+increment_sequencer_cell:
+    ldy Sequencer::y_position
+    jsr Sequencer::set_lookup_addr
+
+    ldy Grid::x_position
+    lda (Sequencer::lookup_addr),y
+    cmp Sequencer::max_pattern
+    bcs @exit
+
+    inc
+    sta (Sequencer::lookup_addr),y
+@exit:
+    inc redraw
+    rts
+
 increment_sequencer_y:
     ldy Sequencer::y_position
     cpy Sequencer::max_frame
@@ -715,6 +771,7 @@ insert_cell:
 
 
 note_entry:
+    pha
     ; first put the old value on the undo stack
     ldx Grid::x_position
     ldy Grid::y_position
@@ -728,7 +785,7 @@ note_entry:
     jsr Grid::set_lookup_addr ; set the grid lookup_addr value to the beginning
                               ; of the note data for the current row/column
                               ; this affects RAM bank as well
-    lda note_entry_dispatch_value
+    pla
     sta (Grid::lookup_addr) ; zero offset, this is the note column
     pha
 
@@ -736,8 +793,6 @@ note_entry:
     lda Instruments::y_position ; currently selected instrument
     sta (Grid::lookup_addr),y ; #1 offset, this is the instrument number
     tay
-    lda #$ff
-    sta note_entry_dispatch_value
 
     pla
     ldx Grid::x_position

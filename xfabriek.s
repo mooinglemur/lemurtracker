@@ -65,11 +65,6 @@ XF_EFFECT_FG_COLOR = $0E ; light blue
 
 .segment "CODE"
 
-
-tracker_frame_x_offset: .res 1 ; in the frame editor, what voice (column) are we in
-tracker_frame_y_offset: .res 1 ; in the frame editor, what row are we in?
-tracker_frame_mix: .res 1 ; in the frame editor, what mix's patterns are we showing?
-tracker_songno: .res 1 ; what song are we showing/playing
 redraw: .res 1 ; flag on when a redraw is necessary
 xf_state: .res 1
 
@@ -130,6 +125,9 @@ main:
     lda #3
     sta Sequencer::max_frame
 
+    lda #47
+    sta Sequencer::max_pattern
+
     inc redraw
 
     lda #1
@@ -142,21 +140,6 @@ main:
 
 
 
-;;;;; temp vvv
-    lda Sequencer::base_bank
-    sta x16::Reg::RAMBank
-
-    lda #9
-    sta xf_tmp1
-    lda #$A0
-    sta xf_tmp2
-    lda #1
-    sta (xf_tmp1)
-
-
-
-
-;;;;; temp ^^^
 
     ; TODO detect emulator and report if the toggle failed
 
@@ -178,9 +161,15 @@ main:
     wai
 
     ; if we have a pending note entry to do
-    lda Function::note_entry_dispatch_value
-    cmp #$ff ; ff is null/no note
-    beq :+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_NOTE
+    bne :+
+        ; clear selection too
+        stz Grid::selection_active
+
+        stz Function::op_dispatch_flag
+        lda Function::op_dispatch_operand
+        stz Function::op_dispatch_operand
         jsr Function::note_entry
     :
 
@@ -201,6 +190,9 @@ main:
     lda Function::op_dispatch_flag
     cmp #Function::OP_BACKSPACE
     bne :+
+        ; clear selection too
+        stz Grid::selection_active
+
         stz Function::op_dispatch_flag
         jsr Function::delete_cell_above
     :
@@ -208,6 +200,9 @@ main:
     lda Function::op_dispatch_flag
     cmp #Function::OP_INSERT
     bne :+
+        ; clear selection too
+        stz Grid::selection_active
+
         stz Function::op_dispatch_flag
         jsr Function::insert_cell
     :
@@ -229,12 +224,34 @@ main:
     :
 
     lda Function::op_dispatch_flag
+    cmp #Function::OP_CUT
+    bne :+
+        stz Function::op_dispatch_flag
+        jsr Function::copy
+        jsr Function::delete_selection
+    :
+
+    lda Function::op_dispatch_flag
     cmp #Function::OP_PASTE
     bne :+
         stz Function::op_dispatch_flag
         lda Function::op_dispatch_operand
         stz Function::op_dispatch_operand
         jsr Clipboard::paste_cells
+    :
+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_DEC_SEQ_CELL
+    bne :+
+        stz Function::op_dispatch_flag
+        jsr Function::decrement_sequencer_cell
+    :
+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_INC_SEQ_CELL
+    bne :+
+        stz Function::op_dispatch_flag
+        jsr Function::increment_sequencer_cell
     :
 
 

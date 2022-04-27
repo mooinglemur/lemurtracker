@@ -4,6 +4,7 @@
 ;x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in
 max_frame: .res 1 ; the last frame in the sequencer
+max_pattern: .res 1; the highest patten number we can fit in ram
 mix: .res 1 ; which mix we're displaying
 base_bank: .res 1 ; what bank are we going to use for the seq table
 iterator: .res 1
@@ -268,7 +269,7 @@ update_grid_patterns:
         bcc :-
 
     rts
-        
+
 
 set_lookup_addr: ; input: .Y = row
     lda base_bank

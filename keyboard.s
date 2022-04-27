@@ -221,6 +221,19 @@ handler4: ; XF_STATE_PATTERN_EDITOR
         jmp Function::dispatch_paste
     :
 
+    ; handle Ctrl+X / Ctrl+Shift+X
+
+    lda keycode
+    cmp #$58
+    bne :+
+        lda modkeys
+        and #(MOD_LCTRL|MOD_RCTRL)
+        beq :+
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        bne :+ ; don't do anything for Ctrl+Shift+X
+        jmp Function::dispatch_cut
+    :
 
 
     ; handle Ctrl+Z / Ctrl+Shift+Z
@@ -268,8 +281,8 @@ handler4: ; XF_STATE_PATTERN_EDITOR
 @ktbl:
     ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2  bsp ins
     .byte $80,$81,$82,$83,$84,$85,$86,$87,$09,$20,$5B,$5D,$8B,$08,$88
-    ;     n/  n*
-    .byte $96,$97
+    ;     n/  n*  -   =
+    .byte $96,$97,$5F,$3D
 @fntbl:
     .word Function::decrement_grid_y_steps ;up
     .word Function::increment_grid_y_steps ;dn
@@ -288,6 +301,8 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     .word @key_insert
     .word Function::decrement_grid_octave
     .word Function::increment_grid_octave
+    .word Function::dispatch_decrement_sequencer_cell
+    .word Function::dispatch_increment_sequencer_cell
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
@@ -501,7 +516,7 @@ decode_scancode:
     ;     K   L   M   N   O   P   Q   R   S   T
     .byte $4B,$4C,$4D,$4E,$4F,$50,$51,$52,$53,$54
     ;     U   V   W   X   Y   Z   n+  n-  =   -
-    .byte $55,$56,$57,$58,$59,$5A,$2B,$2D,$3D,$2D
+    .byte $55,$56,$57,$58,$59,$5A,$2B,$2D,$3D,$5F
     ;     hm  end pgu pgd ins del ,   .   /   ;
     .byte $84,$85,$86,$87,$88,$89,$2C,$2E,$2F,$3B
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
