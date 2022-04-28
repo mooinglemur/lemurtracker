@@ -393,6 +393,23 @@ handler6: ; XF_STATE_MIX_EDITOR
     tax
     jmp (@fntbl,x)
 @nomatch:
+
+    ; handle Ctrl+Z / Ctrl+Shift+Z
+
+    lda keycode
+    cmp #$5A
+    bne :++
+        lda modkeys
+        and #(MOD_LCTRL|MOD_RCTRL)
+        beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            jmp Function::dispatch_redo
+        :
+        jmp Function::dispatch_undo
+    :
+
     rts
 @ktbl:
     ; this is the static keymapping

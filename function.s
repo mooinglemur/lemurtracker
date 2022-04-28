@@ -132,8 +132,14 @@ decrement_grid_y_steps:
     rts
 
 decrement_sequencer_cell:
+    ldx Grid::x_position
+    ldy Sequencer::y_position
+    jsr Undo::store_sequencer_cell
+    jsr Undo::mark_checkpoint
+
     ldy Sequencer::y_position
     jsr Sequencer::set_lookup_addr
+
 
     ldy Grid::x_position
     lda (Sequencer::lookup_addr),y
@@ -650,6 +656,11 @@ increment_grid_y_steps:
     rts
 
 increment_sequencer_cell:
+    ldx Grid::x_position
+    ldy Sequencer::y_position
+    jsr Undo::store_sequencer_cell
+    jsr Undo::mark_checkpoint
+
     ldy Sequencer::y_position
     jsr Sequencer::set_lookup_addr
 

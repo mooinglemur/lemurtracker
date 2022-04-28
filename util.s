@@ -11,10 +11,10 @@ xf_byte_to_hex: ; converts a number to two ASCII/PETSCII hex digits: input A = n
     lsr
     pha
     txa
-    jsr @hexify
+    jsr xf_hexify
     tax
     pla
-@hexify:
+xf_hexify:
     cmp #10
     bcc @nothex
     adc #$66
@@ -22,9 +22,27 @@ xf_byte_to_hex: ; converts a number to two ASCII/PETSCII hex digits: input A = n
     eor #%00110000
     rts
 
+xf_byte_to_hex_in_grid: ; converts a number to two ASCII/PETSCII hex digits: input A = number to convert, output A = most sig nybble, X = least sig nybble, affects A,X
+    pha
+    and #$0f
+
+    tax
+    pla
+    lsr
+    lsr
+    lsr
+    lsr
+    pha
+    txa
+    jsr xf_hexify
+    tax
+    pla
+    rts
+
+
 
 xf_set_charset:
-    lda #3
+    lda #1
     jmp x16::Kernal::SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
 
 xf_reset_charset:

@@ -74,8 +74,61 @@ store_pattern_cell: ; takes in .X = channel column, .Y = row, affects all regist
 ; make sure a redo for this event doesn't go past here until there are more events
     jsr mark_redo_stop
 
+    rts
+
+store_sequencer_cell: ; takes in .X = channel column, .Y = row, affects all registers
+    lda #2
+    sta tmp_undo_buffer
+    lda checkpoint
+    sta tmp_undo_buffer+1
+    lda Sequencer::mix
+    sta tmp_undo_buffer+2
+    stx tmp_undo_buffer+3
+    sty tmp_undo_buffer+4
+
+
+    lda #2
+    sta checkpoint
+
+    jsr Sequencer::set_lookup_addr ; set lookup while y is still untouched
+
+    ; zero out the rest of the buffer
+    ldy #5
+    lda #0
+    :
+        sta tmp_undo_buffer,y
+        iny
+        cpy #16
+        bcc :-
+
+    ldy tmp_undo_buffer+3 ; x offset
+    lda (Sequencer::lookup_addr),y
+    sta tmp_undo_buffer+8
+
+
+    jsr set_ram_bank
+; we need to invalidate the entire redo stack upon storing a new undo event
+; let's do that first
+    jsr invalidate_redo_stack
+; advance the pointer to store our new event
+    jsr advance_undo_pointer
+
+; transfer the tmp_undo_buffer
+    ldy #0
+    :
+        lda tmp_undo_buffer,y
+        sta (lookup_addr),y
+
+        iny
+        cpy #16
+        bcc :-
+
+; make sure a redo for this event doesn't go past here until there are more events
+    jsr mark_redo_stop
 
     rts
+
+
 
 invalidate_redo_stack:
     lda lookup_addr
@@ -234,6 +287,10 @@ handle_undo_redo_pattern_cell:
     ; the operation here is the same whether we're undoing or redoing
     ; we swap the data in the undo buffer with that in grid memory
 
+    lda #XF_STATE_PATTERN_EDITOR
+    sta xf_state
+
+
     jsr set_ram_bank
 
     ; first, copy the undo event into temp
@@ -287,7 +344,60 @@ handle_undo_redo_pattern_cell:
     ; we're done
     rts
 
+handle_undo_redo_sequencer_cell:
+    ; the operation here is the same whether we're undoing or redoing
+    ; we swap the data in the undo buffer with that in grid memory
+    lda #XF_STATE_MIX_EDITOR
+    sta xf_state
+
+    jsr set_ram_bank
+
+    ; first, copy the undo event into temp
+    ldy #0
+    :
+        lda (lookup_addr),y
+        sta tmp_undo_buffer,y
+        iny
+        cpy #16
+        bcc :-
+
+    ; set the state of the sequencer table to that of the event
+    lda tmp_undo_buffer+2 ; set the mix number
+    sta Sequencer::mix
+    ldx tmp_undo_buffer+3
+    stx Grid::x_position
+    ldy tmp_undo_buffer+4 ; set row number
+    sty Sequencer::y_position
+
+    jsr Sequencer::set_lookup_addr
+
+
+    ; now swap the contents (read from seq table first)
+    ldy Grid::x_position
+
+    lda (Sequencer::lookup_addr),y
+    pha
+    lda tmp_undo_buffer+8
+    sta (Sequencer::lookup_addr),y
+    pla
+    sta tmp_undo_buffer+8
+
+    ; reset the bank to the undo bank
+    jsr set_ram_bank
+
+    ; now copy the event back into the undo space
+    ldy #8
+    lda tmp_undo_buffer+8
+    sta (lookup_addr),y
+
+    jsr Sequencer::update_grid_patterns
+
+    ; we're done
+    rts
+
+
 undo:
+
     ; apply one undo group
     lda undo_size
     bne @can_undo
@@ -310,6 +420,7 @@ undo:
     jsr handle_undo_redo_pattern_cell
     bra @check_end_of_undo_group
 @undo_sequencer_cell:
+    jsr handle_undo_redo_sequencer_cell
     bra @check_end_of_undo_group
 @check_end_of_undo_group:
     ldy #1
@@ -370,6 +481,7 @@ redo:
     jsr handle_undo_redo_pattern_cell
     bra @check_end_of_redo_group
 @redo_sequencer_cell:
+    jsr handle_undo_redo_sequencer_cell
     bra @check_end_of_redo_group
 @check_end_of_redo_group:
     jsr advance_undo_pointer

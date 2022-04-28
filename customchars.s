@@ -2,41 +2,63 @@
 
 .scope CustomChars
 
-NOTE_A = $80
-NOTE_B = $81
-NOTE_C = $82
-NOTE_D = $83
-NOTE_E = $84
-NOTE_F = $85
-NOTE_G = $86
+NOTE_A = $0A
+NOTE_B = $0B
+NOTE_C = $0C
+NOTE_D = $0D
+NOTE_E = $0E
+NOTE_F = $0F
+NOTE_G = $10
 
-GRID_TOP          = $87
-GRID_TOP_LEFT     = $88
-GRID_TOP_RIGHT    = $89
-GRID_LEFT         = $8A
+GRID_TOP          = $11
+GRID_TOP_LEFT     = $12
+GRID_TOP_RIGHT    = $13
+GRID_LEFT         = $14
 GRID_RIGHT        = GRID_LEFT
-NOTE_DOT          = $8B
-NOTE_CUT_LEFT     = $8C
-NOTE_CUT_MIDDLE   = $8D
-NOTE_CUT_RIGHT    = $8E
-NOTE_REL_LEFT     = $8F
-NOTE_REL_MIDDLE   = $90
-NOTE_REL_RIGHT    = $91
-GRID_BOTTOM       = $92
+NOTE_DOT          = $15
+NOTE_CUT_LEFT     = $16
+NOTE_CUT_MIDDLE   = $17
+NOTE_CUT_RIGHT    = $18
+NOTE_REL_LEFT     = $19
+NOTE_REL_MIDDLE   = $1A
+NOTE_REL_RIGHT    = $1B
+GRID_BOTTOM       = $1C
 GRID_BOTTOM_LEFT  = GRID_BOTTOM
-GRID_BOTTOM_RIGHT = $93
+GRID_BOTTOM_RIGHT = $1D
 
 
 
 install:
-    VERA_SET_ADDR $1F400, 1 ; second half of tileset
+    ; for the grid letters/numbers, we're going to pull the chars out of the charset
+    ; and shift them all over by one pixel, filling in the left pixel
+    VERA_SET_ADDR $1F000, 1 ; beginning of tileset (Data0)
+    inc Vera::Reg::Ctrl
+    VERA_SET_ADDR $1F180, 1 ; start at the number 0 (Data1)
+
     ldx #0
     :
-    lda note_chars,x
+    lda Vera::Reg::Data1
+    sec
+    ror
+    sta Vera::Reg::Data0
+    inx
+    cpx #(8*10)
+    bne :-
+
+    VERA_SET_ADDR $1F208, 1 ; start at the letter A (Data1)
+    dec Vera::Reg::Ctrl ; make sure the next Addrx is for Data0
+
+    ldx #0
+    :
+    lda Vera::Reg::Data1
+    sec
+    ror
     sta Vera::Reg::Data0
     inx
     cpx #(8*7)
     bne :-
+
+
 
     ldx #0
     :
@@ -48,82 +70,6 @@ install:
 
     rts
 
-
-
-; Custom characters for notes
-
-
-
-note_chars:
-    ; A
-    .byte %10001100
-    .byte %10011110
-    .byte %10110011
-    .byte %10111111
-    .byte %10110011
-    .byte %10110011
-    .byte %10110011
-    .byte %10000000
-
-    ; B
-    .byte %10111110
-    .byte %10110011
-    .byte %10110011
-    .byte %10111110
-    .byte %10110011
-    .byte %10110011
-    .byte %10111110
-    .byte %10000000
-
-    ; C
-    .byte %10011110
-    .byte %10110011
-    .byte %10110000
-    .byte %10110000
-    .byte %10110000
-    .byte %10110011
-    .byte %10011110
-    .byte %10000000
-
-    ; D
-    .byte %10111100
-    .byte %10110110
-    .byte %10110011
-    .byte %10110011
-    .byte %10110011
-    .byte %10110110
-    .byte %10111100
-    .byte %10000000
-
-    ; E
-    .byte %10111111
-    .byte %10110000
-    .byte %10110000
-    .byte %10111100
-    .byte %10110000
-    .byte %10110000
-    .byte %10111111
-    .byte %10000000
-
-    ; F
-    .byte %10111111
-    .byte %10110000
-    .byte %10110000
-    .byte %10111100
-    .byte %10110000
-    .byte %10110000
-    .byte %10110000
-    .byte %10000000
-
-    ; G
-    .byte %10011110
-    .byte %10110011
-    .byte %10110000
-    .byte %10110111
-    .byte %10110011
-    .byte %10110011
-    .byte %10011110
-    .byte %10000000
 
 graphic_chars:
     ; _

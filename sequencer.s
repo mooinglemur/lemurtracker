@@ -28,22 +28,16 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ;lda #$A3
     ;sta VERA_data0
 
-    lda #$70
-    sta Vera::Reg::Data0
-    ldx #(NUM_CHANNELS-1)
+    ldx #NUM_CHANNELS
     :
-        lda #$40
+        lda #CustomChars::GRID_TOP_LEFT
         sta Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        lda #$72
+        lda #CustomChars::GRID_TOP
         sta Vera::Reg::Data0
         dex
         bne :-
-    lda #$40
-    sta Vera::Reg::Data0
-    sta Vera::Reg::Data0
 
-    lda #$6E
+    lda #CustomChars::GRID_TOP_RIGHT
     sta Vera::Reg::Data0
 
 
@@ -113,9 +107,6 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     :
         phx
 
-        lda #$5D
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
         phy
         phx
         ply
@@ -145,7 +136,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         pla
         phy
 @not_current_row:
-        jsr xf_byte_to_hex
+        jsr xf_byte_to_hex_in_grid
         ply
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
@@ -156,10 +147,6 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         inx
         cpx #NUM_CHANNELS
         bne :-
-    lda #$5D
-    sta Vera::Reg::Data0
-    ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
-    sty Vera::Reg::Data0
 
     bra @endofrow
 @blankrow:
@@ -171,22 +158,23 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sty Vera::Reg::Data0
 
     ldx #NUM_CHANNELS
-    lda #$5D
-    sta Vera::Reg::Data0
-    sty Vera::Reg::Data0
     :
+        lda #CustomChars::GRID_LEFT
+        sta Vera::Reg::Data0
+        sty Vera::Reg::Data0
         lda #' '
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        lda #$5D
         sta Vera::Reg::Data0
         sty Vera::Reg::Data0
         dex
         bne :-
 
 @endofrow:
+
+    lda #CustomChars::GRID_RIGHT
+    ldy #%00000001 ; color value for blank row is 0 bg, 1 fg
+    sta Vera::Reg::Data0
+    sty Vera::Reg::Data0
+
     lda xf_tmp3
     bne :+
         inc xf_tmp2
@@ -206,24 +194,15 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ;lda #$A3
     ;sta VERA_data0
 
-    lda #$6D
-    sta Vera::Reg::Data0
-    ldx #(NUM_CHANNELS-1)
+    ldx #NUM_CHANNELS
     :
-        lda #$40
+        lda #CustomChars::GRID_BOTTOM
         sta Vera::Reg::Data0
-        sta Vera::Reg::Data0
-        lda #$71
         sta Vera::Reg::Data0
         dex
         bne :-
-    lda #$40
+    lda #CustomChars::GRID_BOTTOM_RIGHT
     sta Vera::Reg::Data0
-    sta Vera::Reg::Data0
-
-    lda #$7D
-    sta Vera::Reg::Data0
-
 
 
 
@@ -238,10 +217,8 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     lda Grid::x_position
     asl
-    clc
-    adc Grid::x_position
 
-    adc #4
+    adc #3
     asl
     inc
 
