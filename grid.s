@@ -130,8 +130,13 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     bcs @filledrow
 
 @filledrow:
+    ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
+    cmp tmp_y_position ; comparing .A which is the current row being drawn
+    bne :+
+        ldy #((XF_BASE_BG_COLOR>>4)|(XF_BASE_FG_COLOR<<4)) ; invert
+    :
     jsr xf_byte_to_hex
-    ldy #(XF_BASE_BG_COLOR | XF_BASE_FG_COLOR)
+
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
     stx Vera::Reg::Data0

@@ -31,9 +31,7 @@ lookup_addr: .res 2 ; storage for offset in banked ram
 selection_active: .res 1
 .popseg
 selection_top_y: .res 1
-selection_left_x: .res 1
 selection_bottom_y: .res 1
-selection_right_x: .res 1
 
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
@@ -103,8 +101,14 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     bcs @filledrow
 
 @filledrow:
-    jsr xf_byte_to_hex
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
+    cmp y_position ; comparing .A which is the current row being drawn
+    bne :+
+        ldy #((XF_BASE_BG_COLOR>>4)|(XF_BASE_FG_COLOR<<4)) ; invert
+    :
+    jsr xf_byte_to_hex
+
+
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
     stx Vera::Reg::Data0
@@ -120,7 +124,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ldx #0
 @rowloop:
     phx ; save iterator
-    
+
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR) ; default color
 
     lda xf_state
@@ -152,14 +156,6 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     bcc @after_selection
 
     cmp selection_bottom_y
-    beq :+
-        bcs @after_selection
-    :
-
-    ; x is column
-    cpx selection_left_x
-    bcc @after_selection
-    cpx selection_right_x
     beq :+
         bcs @after_selection
     :

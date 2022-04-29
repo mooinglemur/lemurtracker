@@ -866,9 +866,6 @@ sequencer_select_all:
     sta Sequencer::selection_active
     lda Sequencer::max_frame
     sta Sequencer::selection_bottom_y
-    lda #(Grid::NUM_CHANNELS-1)
-    sta Sequencer::selection_right_x
-    stz Sequencer::selection_left_x
     stz Sequencer::selection_top_y
     inc redraw
     rts
@@ -904,7 +901,7 @@ sequencer_selection_continue:
     bne @y_extended
     ; y is not extended yet
     cmp Sequencer::y_position
-    beq @check_x_extended ; y is unextended, but we're not extendeding it
+    beq @check_y_inverted ; y is unextended, but we're not extendeding it
 
     ; now we're going to determine our y extend direction here because
     ; y is about to be extended this frame
@@ -921,39 +918,10 @@ sequencer_selection_continue:
 @new_top:
     lda Sequencer::y_position
     sta Sequencer::selection_top_y
-    bra @check_x_extended
+    bra @check_y_inverted
 @new_bottom:
     lda Sequencer::y_position
     sta Sequencer::selection_bottom_y
-
-@check_x_extended:
-    lda Sequencer::selection_right_x
-    cmp Sequencer::selection_left_x
-    bne @x_extended
-    ; x is not extended yet
-    cmp Grid::x_position ; Sequencer x shares Grid x
-    beq @check_y_inverted ; x is unextended, but we're not extendeding it
-
-    ; now we're going to determine our x extend direction here because
-    ; x is about to be extended this frame
-    bcc @extend_right ; selection left (and right) is less than new x pos,
-                     ; so we extend right.
-                     ; x increasing means selection is extending rightward
-
-@extend_left:
-    smb3 Sequencer::selection_active
-    bra @x_extended
-@extend_right:
-    rmb3 Sequencer::selection_active
-@x_extended:
-    bbr3 Sequencer::selection_active,@new_right
-@new_left:
-    lda Grid::x_position ; Sequencer x shares Grid x
-    sta Sequencer::selection_left_x
-    bra @check_y_inverted
-@new_right:
-    lda Grid::x_position ; Sequencer x shares Grid x
-    sta Sequencer::selection_right_x
 
 @check_y_inverted:
     lda Sequencer::selection_bottom_y
@@ -970,20 +938,6 @@ sequencer_selection_continue:
     sta Sequencer::selection_active
 @y_not_inverted:
 
-@check_x_inverted:
-    lda Sequencer::selection_right_x
-    cmp Sequencer::selection_left_x
-    bcs @x_not_inverted
-    ; x left and right switched places here
-    pha
-    lda Sequencer::selection_left_x
-    sta Sequencer::selection_right_x
-    pla
-    sta Sequencer::selection_left_x
-    lda Sequencer::selection_active
-    eor #%00001000 ; flip the x estend direction bit
-    sta Sequencer::selection_active
-@x_not_inverted:
 
     bra @end
 @noshift:
@@ -1008,9 +962,6 @@ sequencer_selection_start:
 
     lda Sequencer::selection_active
     bne :+
-        lda Grid::x_position ; Sequencer x uses Grid x
-        sta Sequencer::selection_left_x
-        sta Sequencer::selection_right_x
         lda Sequencer::y_position
         sta Sequencer::selection_top_y
         sta Sequencer::selection_bottom_y
