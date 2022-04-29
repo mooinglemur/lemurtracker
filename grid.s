@@ -7,6 +7,9 @@ MAX_STEP = 15
 ; vars that keep state
 x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in
+tmp_y_position: .res 1 ; store y_position at the beginning of draw to
+                       ; avoid artifacts if y_position is changed in IRQ
+                       ; during draw
 cursor_position: .res 1 ; within the column (channel) where is the cursor?
 global_pattern_length: .res 1 ; set on file create/file load
 base_bank: .res 1 ; where does tracker data start
@@ -83,6 +86,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     lda #3
     sta xf_tmp1
     lda y_position
+    sta tmp_y_position
     sec
     sbc #20
     sta xf_tmp2
@@ -109,7 +113,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ldy xf_tmp1
     cpy #23
     bcs :++
-        cmp y_position
+        cmp tmp_y_position
         bcc :+
             jmp @blankrow
         :
@@ -122,7 +126,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     bcc :+
         inc xf_tmp3
     :
-    cmp y_position
+    cmp tmp_y_position
     bcs @filledrow
 
 @filledrow:
@@ -276,10 +280,10 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     ; color current row
     lda xf_tmp2
-    cmp y_position
+    cmp tmp_y_position
     bne @not_current_row
         lda xf_state
-        cmp #XF_STATE_PATTERN_EDITOR
+        cmp #XF_STATE_GRID
         bne @not_current_row ; If we're not editing the pattern, don't hilight the current row
         ldy #XF_AUDITION_BG_COLOR
         lda entrymode
@@ -326,7 +330,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     lda selection_active
     beq @cell_loop_inner
     lda xf_state
-    cmp #XF_STATE_PATTERN_EDITOR
+    cmp #XF_STATE_GRID
     bne @cell_loop_inner
 
     lda xf_tmp2 ; current row
@@ -454,7 +458,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
 
     lda xf_state
-    cmp #XF_STATE_PATTERN_EDITOR
+    cmp #XF_STATE_GRID
     bne @end_cursor
 
 

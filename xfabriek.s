@@ -38,7 +38,7 @@ xf_tmp3: .res 1
 .include "x16.inc"
 .include "vars.s"
 .include "customchars.s"
-.include "tracker_grid.s"
+.include "grid.s"
 .include "sequencer.s"
 .include "instruments.s"
 .include "undo.s"
@@ -72,9 +72,9 @@ XF_STATE_DUMP = 0 ; we end up here when we need to dump memory state to SD
 XF_STATE_NEW_DIALOG = 1
 XF_STATE_SAVE_DIALOG = 2
 XF_STATE_LOAD_DIALOG = 3
-XF_STATE_PATTERN_EDITOR = 4
+XF_STATE_GRID = 4
 ;XF_STATE_PATTERN_EDITOR_ENTRY = 5
-XF_STATE_MIX_EDITOR = 6
+XF_STATE_SEQUENCER = 6
 XF_STATE_INSTRUMENT_PSG = 7
 XF_STATE_INSTRUMENT_FM = 8
 XF_STATE_INSTRUMENT_PCM = 9
@@ -87,7 +87,7 @@ main:
 
     jsr CustomChars::install
 
-    lda #XF_STATE_PATTERN_EDITOR
+    lda #XF_STATE_GRID
     sta xf_state
 
     lda #64

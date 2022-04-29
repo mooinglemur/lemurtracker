@@ -190,7 +190,7 @@ paste_cells:  ; .A bitfield
 
     ldx sel_x_iterator
     ldy sel_y_iterator
-    jsr Undo::store_pattern_cell
+    jsr Undo::store_grid_cell
 
     ldx sel_x_iterator
     stx Grid::selection_right_x
@@ -279,7 +279,7 @@ paste_cells:  ; .A bitfield
     ; current grid position
     ldx Grid::x_position
     ldy Grid::y_position
-    jsr Undo::store_pattern_cell
+    jsr Undo::store_grid_cell
     jsr Undo::mark_checkpoint
 @end:
     inc redraw

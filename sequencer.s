@@ -122,7 +122,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         pha
 
         lda xf_state
-        cmp #XF_STATE_MIX_EDITOR
+        cmp #XF_STATE_SEQUENCER
         bne @got_color
 
         lda Grid::entrymode

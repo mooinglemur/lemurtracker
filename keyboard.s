@@ -354,7 +354,7 @@ handler4: ; XF_STATE_PATTERN_EDITOR
     :
     jmp Function::increment_grid_octave
 @key_F2:
-    lda #XF_STATE_MIX_EDITOR
+    lda #XF_STATE_SEQUENCER
     sta xf_state
     inc redraw
     rts
@@ -444,7 +444,7 @@ handler6: ; XF_STATE_MIX_EDITOR
     inc redraw
     rts
 @key_F1:
-    lda #XF_STATE_PATTERN_EDITOR
+    lda #XF_STATE_GRID
     sta xf_state
     inc redraw
     rts

@@ -27,7 +27,7 @@ tmp3: .res 1
 
 copy:
     lda xf_state
-    cmp #XF_STATE_PATTERN_EDITOR
+    cmp #XF_STATE_GRID
     bne :+
         jmp Clipboard::copy_grid_cells
     :
@@ -197,7 +197,7 @@ delete_cell_above:
 @copy_cell:
     lda x16::Reg::RAMBank
     pha
-    jsr Undo::store_pattern_cell
+    jsr Undo::store_grid_cell
     pla
     sta x16::Reg::RAMBank
 
@@ -224,7 +224,7 @@ delete_cell_above:
     lda x16::Reg::RAMBank
     pha
 
-    jsr Undo::store_pattern_cell
+    jsr Undo::store_grid_cell
     jsr Undo::mark_checkpoint
 
     pla
@@ -256,7 +256,7 @@ delete_selection:
 @loop:
     ldx tmp1
     ldy tmp2
-    jsr Undo::store_pattern_cell
+    jsr Undo::store_grid_cell
     ldx tmp1
     ldy tmp2
     jsr Grid::set_lookup_addr
@@ -411,6 +411,10 @@ grid_select_none:
     rts
 
 grid_selection_start:
+    lda xf_state
+    cmp #XF_STATE_GRID
+    bne @end
+
     lda GKeyboard::modkeys
     and #(GKeyboard::MOD_LSHIFT|GKeyboard::MOD_RSHIFT)
     beq @end
@@ -440,6 +444,12 @@ grid_selection_start:
 
 
 grid_selection_continue:
+    lda xf_state
+    cmp #XF_STATE_GRID
+    beq :+
+        jmp @end
+    :
+
     lda GKeyboard::modkeys
     and #(GKeyboard::MOD_LSHIFT|GKeyboard::MOD_RSHIFT)
     bne :+
@@ -714,7 +724,7 @@ insert_cell:
     ; store an undo event here first
     ldy Grid::y_position
     ldx Grid::x_position
-    jsr Undo::store_pattern_cell
+    jsr Undo::store_grid_cell
 
     ; we need to shift everything down in this column starting from the end
     ; of the pattern and going toward the current position
@@ -722,7 +732,7 @@ insert_cell:
     ldx Grid::x_position
     ldy tmp1
     iny
-    jsr Undo::store_pattern_cell
+    jsr Undo::store_grid_cell
 
     ldx Grid::x_position
     ldy tmp1
@@ -759,7 +769,7 @@ insert_cell:
     lda x16::Reg::RAMBank
     pha
 
-    jsr Undo::store_pattern_cell
+    jsr Undo::store_grid_cell
     jsr Undo::mark_checkpoint
 
     pla
@@ -786,7 +796,7 @@ note_entry:
     ; first put the old value on the undo stack
     ldx Grid::x_position
     ldy Grid::y_position
-    jsr Undo::store_pattern_cell
+    jsr Undo::store_grid_cell
     jsr Undo::mark_checkpoint
 
     ; now actually apply the note

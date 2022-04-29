@@ -26,7 +26,7 @@ set_ram_bank:
     rts
 
 
-store_pattern_cell: ; takes in .X = channel column, .Y = row, affects all registers
+store_grid_cell: ; takes in .X = channel column, .Y = row, affects all registers
     lda #1
     sta tmp_undo_buffer
     lda checkpoint
@@ -283,11 +283,11 @@ reverse_undo_pointer: ; affects .A, we run this after applying an undo event
     rts
 
 
-handle_undo_redo_pattern_cell:
+handle_undo_redo_grid_cell:
     ; the operation here is the same whether we're undoing or redoing
     ; we swap the data in the undo buffer with that in grid memory
 
-    lda #XF_STATE_PATTERN_EDITOR
+    lda #XF_STATE_GRID
     sta xf_state
 
 
@@ -347,7 +347,7 @@ handle_undo_redo_pattern_cell:
 handle_undo_redo_sequencer_cell:
     ; the operation here is the same whether we're undoing or redoing
     ; we swap the data in the undo buffer with that in grid memory
-    lda #XF_STATE_MIX_EDITOR
+    lda #XF_STATE_SEQUENCER
     sta xf_state
 
     jsr set_ram_bank
@@ -412,12 +412,12 @@ undo:
     ldy #0
     lda (lookup_addr),y
     cmp #$01 ; pattern cell
-    beq @undo_pattern_cell
+    beq @undo_grid_cell
     cmp #$02 ; sequencer cell
     beq @undo_sequencer_cell
     bra @check_end_of_undo_group
-@undo_pattern_cell:
-    jsr handle_undo_redo_pattern_cell
+@undo_grid_cell:
+    jsr handle_undo_redo_grid_cell
     bra @check_end_of_undo_group
 @undo_sequencer_cell:
     jsr handle_undo_redo_sequencer_cell
@@ -472,13 +472,13 @@ redo:
 
     ldy #0
     lda (lookup_addr),y
-    cmp #$01 ; pattern cell
-    beq @redo_pattern_cell
+    cmp #$01 ; grid cell
+    beq @redo_grid_cell
     cmp #$02 ; sequencer cell
     beq @redo_sequencer_cell
     bra @check_end_of_redo_group
-@redo_pattern_cell:
-    jsr handle_undo_redo_pattern_cell
+@redo_grid_cell:
+    jsr handle_undo_redo_grid_cell
     bra @check_end_of_redo_group
 @redo_sequencer_cell:
     jsr handle_undo_redo_sequencer_cell
