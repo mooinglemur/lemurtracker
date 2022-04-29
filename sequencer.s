@@ -11,7 +11,7 @@ iterator: .res 1
 
 NUM_CHANNELS = 8
 SEQUENCER_LOCATION_X = 1
-SEQUENCER_LOCATION_Y = 44
+SEQUENCER_LOCATION_Y = 45
 SEQUENCER_GRID_ROWS = 9
 
 .pushseg
@@ -19,6 +19,21 @@ SEQUENCER_GRID_ROWS = 9
 lookup_addr: .res 2 ; storage for offset in banked ram
 .popseg
 
+; selection_active = 0 for no selection
+; bitfield
+;     0 - selecting
+;     1 - selection done
+;     2 - 0 = selecting downward, 1 = selecting upward
+;     3 - 0 = selecting rightward, 1 = selecting leftward
+
+.pushseg
+.segment "ZEROPAGE"
+selection_active: .res 1
+.popseg
+selection_top_y: .res 1
+selection_left_x: .res 1
+selection_bottom_y: .res 1
+selection_right_x: .res 1
 
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
@@ -100,53 +115,76 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     ldy xf_tmp2 ; the row we're drawing
     jsr set_lookup_addr
-    ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
 
 ; draw row
     ldx #0
-    :
-        phx
+@rowloop:
+    phx ; save iterator
 
-        phy
-        phx
-        ply
-        lda (lookup_addr),y
-        ldx xf_tmp2
-        cpx y_position
-        bne @not_current_row
+    ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR) ; default color
+    lda xf_tmp2 ; the row we're drawing
 
-        ; current drawing == eq current row
-        ; set the grid state to reflect the sequencer, it's important
-        sta Grid::channel_to_pattern,y
-        ply
-        pha
+    cmp y_position
+    bne @continue_row
 
-        lda xf_state
-        cmp #XF_STATE_SEQUENCER
-        bne @got_color
+    lda Grid::entrymode
+    bne @entry_mode
 
-        lda Grid::entrymode
-        bne @entry_mode
 
-        ldy #(XF_AUDITION_BG_COLOR|XF_BASE_FG_COLOR)
-        bra @got_color
+    ldy #(XF_AUDITION_BG_COLOR|XF_BASE_FG_COLOR)
+    bra @continue_row
 @entry_mode:
-        ldy #(XF_NOTE_ENTRY_BG_COLOR|XF_BASE_FG_COLOR)
-@got_color:
-        pla
-        phy
-@not_current_row:
-        jsr xf_byte_to_hex_in_grid
-        ply
-        sta Vera::Reg::Data0
-        sty Vera::Reg::Data0
-        stx Vera::Reg::Data0
-        sty Vera::Reg::Data0
+    ldy #(XF_NOTE_ENTRY_BG_COLOR|XF_BASE_FG_COLOR)
+@continue_row:
+    lda xf_state
+    cmp #XF_STATE_SEQUENCER
+    bne @after_selection
 
-        plx
-        inx
-        cpx #NUM_CHANNELS
-        bne :-
+    lda selection_active
+    beq @after_selection
+
+    lda xf_tmp2
+
+    cmp selection_top_y
+    bcc @after_selection
+
+    cmp selection_bottom_y
+    beq :+
+        bcs @after_selection
+    :
+
+    ; x is column
+    cpx selection_left_x
+    bcc @after_selection
+    cpx selection_right_x
+    beq :+
+        bcs @after_selection
+    :
+
+    ldy #(XF_SELECTION_BG_COLOR|XF_BASE_FG_COLOR)
+@after_selection:
+    phy ; save color
+    phx ; transfer iterator...
+    ply ; to y register
+    lda (lookup_addr),y ; so that I can do indirect indexed
+
+
+    ; current drawing == eq current row
+    ; set the grid state to reflect the sequencer, it's important
+    sta Grid::channel_to_pattern,y
+
+@not_current_row:
+    jsr xf_byte_to_hex_in_grid
+    ply ; restore color
+    sta Vera::Reg::Data0
+    sty Vera::Reg::Data0
+    stx Vera::Reg::Data0
+    sty Vera::Reg::Data0
+
+    plx ; restore iterator
+    inx
+    cpx #NUM_CHANNELS
+    bne @rowloop
 
     bra @endofrow
 @blankrow:

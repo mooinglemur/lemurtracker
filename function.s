@@ -55,20 +55,20 @@ decrement_grid_cursor:
 decrement_grid_octave:
     ldy Grid::octave
     bne :+
-        bra @exit
+        bra @end
     :
     dec Grid::octave
-@exit:
+@end:
     inc redraw
     rts
 
 decrement_grid_step:
     ldy Grid::step
     bne :+
-        bra @exit
+        bra @end
     :
     dec Grid::step
-@exit:
+@end:
     inc redraw
     rts
 
@@ -80,10 +80,10 @@ decrement_grid_x_without_starting_selection:
     bne :+
         ldy #(Grid::NUM_CHANNELS - 1)
         sty Grid::x_position
-        bra @exit
+        bra @end
     :
     dec Grid::x_position
-@exit:
+@end:
     jsr grid_selection_continue
     inc redraw
     rts
@@ -97,10 +97,10 @@ decrement_grid_y:
         dey
         sty Grid::y_position
         jsr decrement_sequencer_y
-        bra @exit
+        bra @end
     :
     dec Grid::y_position
-@exit:
+@end:
     jsr grid_selection_continue
     inc redraw
     rts
@@ -143,28 +143,40 @@ decrement_sequencer_cell:
 
     ldy Grid::x_position
     lda (Sequencer::lookup_addr),y
-    beq @exit
+    beq @end
 
     dec
     sta (Sequencer::lookup_addr),y
-@exit:
+@end:
     inc redraw
     rts
 
+decrement_sequencer_x:
+    jsr sequencer_selection_start
+    jsr decrement_grid_x
+@end:
+    jsr sequencer_selection_continue
+    inc redraw
+    rts
+
+
 decrement_sequencer_y:
+    jsr sequencer_selection_start
     ldy Sequencer::y_position
     bne :+
         ldy Sequencer::max_frame
         sty Sequencer::y_position
-        bra @exit
+        bra @end
     :
     dec Sequencer::y_position
-@exit:
+@end:
+    jsr sequencer_selection_continue
     inc redraw
     rts
 
 
 decrement_sequencer_y_page:
+    jsr sequencer_selection_start
     lda Sequencer::y_position
     sec
     sbc #4
@@ -172,6 +184,7 @@ decrement_sequencer_y_page:
         lda #0
     :
     sta Sequencer::y_position
+    jsr sequencer_selection_continue
     inc redraw
     rts
 
@@ -585,10 +598,10 @@ increment_grid_x:
     cpy #(Grid::NUM_CHANNELS - 1)
     bcc :+
         stz Grid::x_position
-        bra @exit
+        bra @end
     :
     inc Grid::x_position
-@exit:
+@end:
     jsr grid_selection_continue
     inc redraw
     rts
@@ -597,10 +610,10 @@ increment_grid_octave:
     ldy Grid::octave
     cpy #Grid::MAX_OCTAVE
     bcc :+
-        bra @exit
+        bra @end
     :
     inc Grid::octave
-@exit:
+@end:
     inc redraw
     rts
 
@@ -608,10 +621,10 @@ increment_grid_step:
     ldy Grid::step
     cpy #Grid::MAX_STEP
     bcc :+
-        bra @exit
+        bra @end
     :
     inc Grid::step
-@exit:
+@end:
     inc redraw
     rts
 
@@ -625,9 +638,9 @@ increment_grid_y:
     bcc :+
         stz Grid::y_position
         jsr increment_sequencer_y
-        bra @exit
+        bra @end
     :
-@exit:
+@end:
     jsr grid_selection_continue
     inc redraw
     rts
@@ -677,27 +690,38 @@ increment_sequencer_cell:
     ldy Grid::x_position
     lda (Sequencer::lookup_addr),y
     cmp Sequencer::max_pattern
-    bcs @exit
+    bcs @end
 
     inc
     sta (Sequencer::lookup_addr),y
-@exit:
+@end:
+    inc redraw
+    rts
+
+increment_sequencer_x:
+    jsr sequencer_selection_start
+    jsr increment_grid_x
+@end:
+    jsr sequencer_selection_continue
     inc redraw
     rts
 
 increment_sequencer_y:
+    jsr sequencer_selection_start
     ldy Sequencer::y_position
     cpy Sequencer::max_frame
     bcc :+
         stz Sequencer::y_position
-        bra @exit
+        bra @end
     :
     inc Sequencer::y_position
-@exit:
+@end:
+    jsr sequencer_selection_continue
     inc redraw
     rts
 
 increment_sequencer_y_page:
+    lda sequencer_selection_start
     lda Sequencer::y_position
     clc
     adc #4
@@ -710,6 +734,7 @@ increment_sequencer_y_page:
     lda Sequencer::max_frame
 @end:
     sta Sequencer::y_position
+    jsr sequencer_selection_continue
     inc redraw
     rts
 
@@ -836,6 +861,172 @@ note_entry:
 play_note: ;.A = note, .X = column, .Y = instrument
     rts
 
+sequencer_select_all:
+    lda #2
+    sta Sequencer::selection_active
+    lda Sequencer::max_frame
+    sta Sequencer::selection_bottom_y
+    lda #(Grid::NUM_CHANNELS-1)
+    sta Sequencer::selection_right_x
+    stz Sequencer::selection_left_x
+    stz Sequencer::selection_top_y
+    inc redraw
+    rts
+
+sequencer_select_none:
+    stz Sequencer::selection_active
+    inc redraw
+    rts
+
+
+sequencer_selection_continue:
+    lda xf_state
+    cmp #XF_STATE_SEQUENCER
+    beq :+
+        jmp @end
+    :
+
+    lda GKeyboard::modkeys
+    and #(GKeyboard::MOD_LSHIFT|GKeyboard::MOD_RSHIFT)
+    bne :+
+        jmp @noshift
+    :
+    ; bail out if we aren't continuing a selection
+    lda Sequencer::selection_active
+    and #1
+    bne :+
+        jmp @noshift
+    :
+
+@check_y_extended:
+    lda Sequencer::selection_bottom_y
+    cmp Sequencer::selection_top_y
+    bne @y_extended
+    ; y is not extended yet
+    cmp Sequencer::y_position
+    beq @check_x_extended ; y is unextended, but we're not extendeding it
+
+    ; now we're going to determine our y extend direction here because
+    ; y is about to be extended this frame
+    bcc @extend_down ; selection top (and bottom) is less than new y pos,
+                     ; so we extend down.
+                     ; y increasing means selection is extending downward
+@extend_up:
+    smb2 Sequencer::selection_active
+    bra @y_extended
+@extend_down:
+    rmb2 Sequencer::selection_active
+@y_extended:
+    bbr2 Sequencer::selection_active,@new_bottom
+@new_top:
+    lda Sequencer::y_position
+    sta Sequencer::selection_top_y
+    bra @check_x_extended
+@new_bottom:
+    lda Sequencer::y_position
+    sta Sequencer::selection_bottom_y
+
+@check_x_extended:
+    lda Sequencer::selection_right_x
+    cmp Sequencer::selection_left_x
+    bne @x_extended
+    ; x is not extended yet
+    cmp Grid::x_position ; Sequencer x shares Grid x
+    beq @check_y_inverted ; x is unextended, but we're not extendeding it
+
+    ; now we're going to determine our x extend direction here because
+    ; x is about to be extended this frame
+    bcc @extend_right ; selection left (and right) is less than new x pos,
+                     ; so we extend right.
+                     ; x increasing means selection is extending rightward
+
+@extend_left:
+    smb3 Sequencer::selection_active
+    bra @x_extended
+@extend_right:
+    rmb3 Sequencer::selection_active
+@x_extended:
+    bbr3 Sequencer::selection_active,@new_right
+@new_left:
+    lda Grid::x_position ; Sequencer x shares Grid x
+    sta Sequencer::selection_left_x
+    bra @check_y_inverted
+@new_right:
+    lda Grid::x_position ; Sequencer x shares Grid x
+    sta Sequencer::selection_right_x
+
+@check_y_inverted:
+    lda Sequencer::selection_bottom_y
+    cmp Sequencer::selection_top_y
+    bcs @y_not_inverted
+    ; y top and bottom switched places here
+    pha
+    lda Sequencer::selection_top_y
+    sta Sequencer::selection_bottom_y
+    pla
+    sta Sequencer::selection_top_y
+    lda Sequencer::selection_active
+    eor #%00000100 ; flip the y estend direction bit
+    sta Sequencer::selection_active
+@y_not_inverted:
+
+@check_x_inverted:
+    lda Sequencer::selection_right_x
+    cmp Sequencer::selection_left_x
+    bcs @x_not_inverted
+    ; x left and right switched places here
+    pha
+    lda Sequencer::selection_left_x
+    sta Sequencer::selection_right_x
+    pla
+    sta Sequencer::selection_left_x
+    lda Sequencer::selection_active
+    eor #%00001000 ; flip the x estend direction bit
+    sta Sequencer::selection_active
+@x_not_inverted:
+
+    bra @end
+@noshift:
+    lda Sequencer::selection_active
+    and #3
+    cmp #1
+    bne @end
+    lda #2
+    sta Sequencer::selection_active
+@end:
+    rts
+
+
+sequencer_selection_start:
+    lda xf_state
+    cmp #XF_STATE_SEQUENCER
+    bne @end
+
+    lda GKeyboard::modkeys
+    and #(GKeyboard::MOD_LSHIFT|GKeyboard::MOD_RSHIFT)
+    beq @end
+
+    lda Sequencer::selection_active
+    bne :+
+        lda Grid::x_position ; Sequencer x uses Grid x
+        sta Sequencer::selection_left_x
+        sta Sequencer::selection_right_x
+        lda Sequencer::y_position
+        sta Sequencer::selection_top_y
+        sta Sequencer::selection_bottom_y
+        lda #1
+        sta Sequencer::selection_active
+        bra @end
+    :
+    and #3
+    cmp #2
+    bne :+
+        stz Sequencer::selection_active
+        jmp sequencer_selection_start ; starting a new selection
+    :
+@end:
+    rts
+
 
 
 
@@ -849,7 +1040,9 @@ set_grid_y:
     rts
 
 set_sequencer_y:
+    jsr sequencer_selection_start
     sta Sequencer::y_position
+    jsr sequencer_selection_continue
     inc redraw
     rts
 

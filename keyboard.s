@@ -393,6 +393,28 @@ handler6: ; XF_STATE_MIX_EDITOR
     tax
     jmp (@fntbl,x)
 @nomatch:
+    ; handle Ctrl+A / Ctrl+Shift+A
+    lda keycode
+    cmp #$41
+    bne :++
+        lda modkeys
+        and #(MOD_LCTRL|MOD_RCTRL)
+        beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            jmp Function::sequencer_select_none
+        :
+        jmp Function::sequencer_select_all
+    :
+
+    ; above here are "nondestructive" ops that don't require note_entry to be true
+
+    lda Grid::entrymode
+    beq @noentry
+
+    ; below here are "destructive" ops, note_entry needs to be on for these
+
 
     ; handle Ctrl+Z / Ctrl+Shift+Z
 
@@ -409,7 +431,7 @@ handler6: ; XF_STATE_MIX_EDITOR
         :
         jmp Function::dispatch_undo
     :
-
+@noentry:
     rts
 @ktbl:
     ; this is the static keymapping
@@ -418,18 +440,14 @@ handler6: ; XF_STATE_MIX_EDITOR
 @fntbl:
     .word Function::decrement_sequencer_y ;up
     .word Function::increment_sequencer_y ;dn
-    .word @key_left
-    .word @key_right
+    .word Function::decrement_sequencer_x ;lt wrapper for grid_x
+    .word Function::increment_sequencer_x ;rt wrapper for grid_x
     .word @key_home
     .word @key_end
     .word Function::decrement_sequencer_y_page
     .word Function::increment_sequencer_y_page
     .word @key_F1
     .word @key_space
-@key_left: ; grid_x is also used for the positioning in the sequence table
-    jmp Function::decrement_grid_x
-@key_right:
-    jmp Function::increment_grid_x
 @key_home:
     lda #0
     jmp Function::set_sequencer_y
