@@ -120,8 +120,13 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ldx #0
 @rowloop:
     phx ; save iterator
-
+    
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR) ; default color
+
+    lda xf_state
+    cmp #XF_STATE_SEQUENCER
+    bne @after_selection
+
     lda xf_tmp2 ; the row we're drawing
 
     cmp y_position
@@ -136,9 +141,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 @entry_mode:
     ldy #(XF_NOTE_ENTRY_BG_COLOR|XF_BASE_FG_COLOR)
 @continue_row:
-    lda xf_state
-    cmp #XF_STATE_SEQUENCER
-    bne @after_selection
+
 
     lda selection_active
     beq @after_selection
