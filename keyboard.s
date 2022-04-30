@@ -151,7 +151,7 @@ handler2:
 handler3:
     rts
 
-handler4: ; XF_STATE_PATTERN_EDITOR
+handler4: ; XF_STATE_GRID
     jsr decode_scancode
     ldy #(@fntbl-@ktbl)
 @loop:
@@ -192,14 +192,16 @@ handler4: ; XF_STATE_PATTERN_EDITOR
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
-            bra @end ; ignore Ctrl+Shift+C for now
+            jmp @end ; ignore Ctrl+Shift+C for now
         :
         jmp Function::dispatch_copy
     :
     ; above here are "nondestructive" ops that don't require note_entry to be true
 
     lda Grid::entrymode
-    beq @noentry
+    bne :+
+        jmp @noentry
+    :
 
     ; below here are "destructive" ops, note_entry needs to be on for these
 
@@ -233,6 +235,20 @@ handler4: ; XF_STATE_PATTERN_EDITOR
         and #(MOD_LSHIFT|MOD_RSHIFT)
         bne :+ ; don't do anything for Ctrl+Shift+X
         jmp Function::dispatch_cut
+    :
+
+    ; handle Ctrl+Y
+
+    lda keycode
+    cmp #$59
+    bne :+
+        lda modkeys
+        and #(MOD_LCTRL|MOD_RCTRL)
+        beq :+
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        bne :+
+        jmp Function::dispatch_redo
     :
 
 
@@ -376,7 +392,7 @@ handler5:
     rts
 
 
-handler6: ; XF_STATE_MIX_EDITOR
+handler6: ; XF_STATE_SEQUENCER
     jsr decode_scancode
     ldy #(@fntbl-@ktbl)
 @loop:

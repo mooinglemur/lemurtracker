@@ -81,6 +81,60 @@ XF_STATE_INSTRUMENT_PCM = 9
 XF_STATE_PLAYBACK = 10
 
 main:
+    ; rom check
+    lda x16::Kernal::VERSION
+    bpl @versioncheck
+    eor #$ff
+    beq @detect_emu ; custom build, unable to detect
+@versioncheck:
+    cmp #39
+    bcc @badversion
+@detect_emu:
+    ; detect emulator
+    lda $9FBE
+    cmp #$31
+    bne @continue_startup ; not emulator
+
+    lda $9FBF
+    cmp #$36
+    bne @continue_startup ; not emulator
+
+    ; toggle emulator keys off
+    lda #1
+    sta $9FB7
+
+    lda $9FB7
+    cmp #1
+    beq @continue_startup
+
+    ; emulator detected, but we can't disable control keys
+    ldx #0
+@emumessageloop:
+    lda @emumessage,x
+    cmp #0
+    beq @emumessagedone
+    phx
+    jsr x16::Kernal::CHROUT
+    plx
+    inx
+    bra @emumessageloop
+@emumessagedone:
+    jsr x16::Kernal::CHRIN
+    bra @continue_startup
+@badversion:
+    ldx #0
+@versionmessageloop:
+    lda @versionmessage,x
+    cmp #0
+    beq @versionmessagedone
+    phx
+    jsr x16::Kernal::CHROUT
+    plx
+    inx
+    bra @versionmessageloop
+@versionmessagedone:
+    rts
+@continue_startup:
     jsr xf_set_charset
 
     jsr xf_clear_screen
@@ -140,12 +194,6 @@ main:
 
 
 
-
-    ; TODO detect emulator and report if the toggle failed
-
-    ; toggle emulator keys off
-    lda #1
-    sta $9FB7
 
 
 
@@ -341,3 +389,12 @@ main:
     jsr xf_irq::teardown
     jsr xf_reset_charset
     rts
+@emumessage:
+    .byte 13,13
+    .byte "!!! EMULATOR ENVIRONMENT DETECTED, BUT WE COULDN'T DISABLE THE EMULATOR'S   !!!",13
+    .byte "!!! COMMAND KEYS. SOME CTRL SHORTCUTS MAY NOT WORK, BUT YOU CAN USE THE F10 !!!",13
+    .byte "!!! MENU TO REACH THOSE TRACKER FUNCTIONS INSTEAD",13,13
+    .byte "PRESS RETURN TO CONTINUE",0
+@versionmessage:
+    .byte 13,13
+    .byte "ROM VERSION TOO OLD, MUST BE >=39",13,0

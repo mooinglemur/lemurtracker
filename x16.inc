@@ -263,6 +263,7 @@ x16_inc = 1
         CMPARE                        := $FF7A
         PRIMM                         := $FF7D
 
+        VERSION                        = $FF80
         SCINIT                        := $FF81
         IOINIT                        := $FF84
         RAMTAS                        := $FF87
