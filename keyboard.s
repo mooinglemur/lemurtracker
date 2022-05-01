@@ -424,6 +424,21 @@ handler6: ; XF_STATE_SEQUENCER
         jmp Function::sequencer_select_all
     :
 
+; handle Ctrl+C / Ctrl+Shift+C
+    lda keycode
+    cmp #$43
+    bne :++
+        lda modkeys
+        and #(MOD_LCTRL|MOD_RCTRL)
+        beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            jmp @end ; ignore Ctrl+Shift+C for now
+        :
+        jmp Function::dispatch_copy
+    :
+
     ; above here are "nondestructive" ops that don't require note_entry to be true
 
     lda Grid::entrymode
@@ -448,6 +463,7 @@ handler6: ; XF_STATE_SEQUENCER
         jmp Function::dispatch_undo
     :
 @noentry:
+@end:
     rts
 @ktbl:
     ; this is the static keymapping

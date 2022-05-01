@@ -149,6 +149,70 @@ copy_grid_cells:
 
     rts
 
+copy_sequencer_rows:
+
+    ; if there's no selection, force select the currently row
+    lda Sequencer::selection_active
+    bne @selection_found
+    lda #2
+    sta Sequencer::selection_active
+    lda Sequencer::y_position
+    sta Sequencer::selection_top_y
+    sta Sequencer::selection_bottom_y
+    inc redraw
+@selection_found:
+    lda Sequencer::selection_top_y
+    sta sel_y_iterator
+    stz clip_y_iterator
+@loop:
+    ; copy the current cell to the buffer
+    ldy sel_y_iterator
+    jsr Sequencer::set_lookup_addr
+
+    ldy #0
+    :
+        lda (Sequencer::lookup_addr),y
+        sta tmp_paste_buffer,y
+        iny
+        cpy #Grid::NUM_CHANNELS
+        bcc :-
+
+    ldx #0
+    ldy clip_y_iterator
+    jsr set_lookup_addr
+
+    ldy #0
+    :
+        lda tmp_paste_buffer,y
+        sta (lookup_addr),y
+
+        iny
+        cpy #8
+        bcc :-
+
+    lda #Grid::NUM_CHANNELS
+    sta x_width
+
+    ; increment y
+    inc clip_y_iterator
+    inc sel_y_iterator
+
+    ; check y bounds
+    lda sel_y_iterator
+    cmp Sequencer::selection_bottom_y
+    beq @loop
+    bcc @loop
+
+    ; we've completed the copy operation
+    ; or cop-eration for short
+    lda sel_y_iterator
+    sta y_height
+    lda #2
+    sta content_type
+
+    rts
+
+
 
 paste_cells:  ; .A bitfield
               ; 0 merge paste,

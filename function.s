@@ -31,6 +31,10 @@ copy:
     bne :+
         jmp Clipboard::copy_grid_cells
     :
+    cmp #XF_STATE_SEQUENCER
+    bne :+
+        jmp Clipboard::copy_sequencer_rows
+    :
 
     rts
 
