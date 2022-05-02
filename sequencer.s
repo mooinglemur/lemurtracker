@@ -53,8 +53,6 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     lda #CustomChars::GRID_TOP_RIGHT
     sta Vera::Reg::Data0
 
-
-    ; cycle through 4 rows
     ; start on row SEQUENCER_LOCATION+1
     lda #SEQUENCER_LOCATION_Y+1
     sta xf_tmp1

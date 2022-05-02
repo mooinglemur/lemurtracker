@@ -32,6 +32,8 @@ xf_byte_to_hex_in_grid: ; converts a number to two ASCII/PETSCII hex digits: inp
     lsr
     lsr
     lsr
+    clc
+    adc #$80
     pha
     txa
     jsr xf_hexify

@@ -2,36 +2,37 @@
 
 .scope CustomChars
 
-NOTE_A = $0A
-NOTE_B = $0B
-NOTE_C = $0C
-NOTE_D = $0D
-NOTE_E = $0E
-NOTE_F = $0F
-NOTE_G = $10
+NOTE_A = $8A
+NOTE_B = $8B
+NOTE_C = $8C
+NOTE_D = $8D
+NOTE_E = $8E
+NOTE_F = $8F
+NOTE_G = $90
 
-GRID_TOP          = $11
-GRID_TOP_LEFT     = $12
-GRID_TOP_RIGHT    = $13
-GRID_LEFT         = $14
+GRID_TOP          = $A4
+GRID_TOP_LEFT     = $A5
+GRID_TOP_RIGHT    = $A6
+GRID_LEFT         = $A7
 GRID_RIGHT        = GRID_LEFT
-NOTE_DOT          = $15
-NOTE_CUT_LEFT     = $16
-NOTE_CUT_MIDDLE   = $17
-NOTE_CUT_RIGHT    = $18
-NOTE_REL_LEFT     = $19
-NOTE_REL_MIDDLE   = $1A
-NOTE_REL_RIGHT    = $1B
-GRID_BOTTOM       = $1C
+NOTE_DOT          = $A8
+NOTE_CUT_LEFT     = $A9
+NOTE_CUT_MIDDLE   = $AA
+NOTE_CUT_RIGHT    = $AB
+NOTE_REL_LEFT     = $AC
+NOTE_REL_MIDDLE   = $AD
+NOTE_REL_RIGHT    = $AE
+GRID_BOTTOM       = $AF
 GRID_BOTTOM_LEFT  = GRID_BOTTOM
-GRID_BOTTOM_RIGHT = $1D
+GRID_BOTTOM_RIGHT = $B0
+
 
 
 
 install:
     ; for the grid letters/numbers, we're going to pull the chars out of the charset
     ; and shift them all over by one pixel, filling in the left pixel
-    VERA_SET_ADDR $1F000, 1 ; beginning of tileset (Data0)
+    VERA_SET_ADDR $1F400, 1 ; top half of tileset (Data0)
     inc Vera::Reg::Ctrl
     VERA_SET_ADDR $1F180, 1 ; start at the number 0 (Data1)
 
@@ -55,9 +56,8 @@ install:
     ror
     sta Vera::Reg::Data0
     inx
-    cpx #(8*7)
+    cpx #(8*26)
     bne :-
-
 
 
     ldx #0

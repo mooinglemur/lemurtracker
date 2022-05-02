@@ -182,6 +182,9 @@ main:
     lda #47
     sta Sequencer::max_pattern
 
+    lda #255
+    sta Instruments::max_instrument
+
     inc redraw
 
     lda #1
@@ -192,11 +195,40 @@ main:
     lda #$A0
     sta Undo::lookup_addr+1
 
+; tmp vvv
+    ldy #0
+    jsr Instruments::set_lookup_addr
+    ldy #0
+    :
+        lda @tempinst,y
+        sta (Instruments::lookup_addr),y
+        iny
+        cpy #160
+        bcc :-
+
+        jmp @mainloop
+
+
+@tempinst:
+    .byte $01,"PSG Instrument "
+    .byte $00,$00,$00,$00,$00,$00,$00,$00
+    .byte $00,$00,$00,$00,$00,$00,$00,$00
+    .byte $02,"FM Instrument  "
+    .byte $00,$00,$00,$00,$00,$00,$00,$00
+    .byte $00,$00,$00,$00,$00,$00,$00,$00
+    .byte $03,"PCM Instrument "
+    .byte $00,$00,$00,$00,$00,$00,$00,$00
+    .byte $00,$00,$00,$00,$00,$00,$00,$00
+    .byte $04,"Layered Inst.  "
+    .byte $00,$00,$00,$00,$00,$00,$00,$00
+    .byte $00,$00,$00,$00,$00,$00,$00,$00
+    .byte $05,"MIDI Instrument"
+    .byte $00,$00,$00,$00,$00,$00,$00,$00
+    .byte $00,$00,$00,$00,$00,$00,$00,$00
 
 
 
-
-
+; tmp ^^^
 @mainloop:
 
     lda redraw
