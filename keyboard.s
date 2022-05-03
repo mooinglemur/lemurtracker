@@ -553,7 +553,7 @@ decode_scancode:
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $54,$5B,$05,$06,$04,$0C,$03,$0B,$83,$0A
     ;     F9  F10 F11 F12 n/  n*
-    .byte $01,$10,$78,$70,$4A,$7C
+    .byte $01,$10,$78,$07,$4A,$7C
 @scancodeh:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $00,$00,$E0,$E0,$E0,$E0,$E0,$00,$00,$00
