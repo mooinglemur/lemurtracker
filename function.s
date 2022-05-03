@@ -417,6 +417,8 @@ dispatch_undo:
 grid_entry:
     sta tmp1
 
+    stz Grid::selection_active
+
     ldx Grid::x_position
     ldy Grid::y_position
     jsr Grid::set_lookup_addr
@@ -652,6 +654,7 @@ grid_entry:
     cmp #$89
     beq @return0
     cmp #$30
+    beq @return0 ; 0 = empty effect
     bcc @returnff
     cmp #$3A
     bcc @return
