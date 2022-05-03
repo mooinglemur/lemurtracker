@@ -284,7 +284,9 @@ handler4: ; XF_STATE_GRID
     lda Grid::cursor_position ; are we in the note column?
     beq @notecolumn
     ; XXX entry for other columns besides the note column
-
+    lda keycode
+    beq @end
+    jsr Function::dispatch_grid_entry ;.A = keycode
     bra @end
 @notecolumn:
     ; XXX handle non note functions here that affect the notes

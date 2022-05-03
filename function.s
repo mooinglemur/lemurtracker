@@ -16,6 +16,7 @@ OP_NOTE = 8
 OP_CUT = 9
 OP_DEC_SEQ_CELL = 10
 OP_INC_SEQ_CELL = 11
+OP_GRID_ENTRY = 12
 
 
 op_dispatch_flag: .byte $00
@@ -344,6 +345,12 @@ dispatch_increment_sequencer_cell:
 @end:
     rts
 
+dispatch_grid_entry:
+    sta op_dispatch_operand
+    lda #OP_GRID_ENTRY
+    sta op_dispatch_flag
+    rts
+
 dispatch_insert:
     lda #OP_INSERT
     sta op_dispatch_flag
@@ -405,6 +412,256 @@ dispatch_undo:
     lda #OP_UNDO
     sta op_dispatch_flag
     rts
+
+
+grid_entry:
+    sta tmp1
+
+    ldx Grid::x_position
+    ldy Grid::y_position
+    jsr Grid::set_lookup_addr
+
+    lda Grid::cursor_position
+    cmp #3
+    beq @insth
+    cmp #4
+    beq @instl
+    cmp #5
+    bne :+
+        jmp @vol
+    :
+    cmp #6
+    bne :+
+        jmp @eff
+    :
+    cmp #7
+    bne :+
+        jmp @effh
+    :
+    jmp @effl
+@end:
+    inc redraw
+    rts
+@savecell:
+    pha
+    ldx Grid::x_position
+    ldy Grid::y_position
+    jsr Undo::store_grid_cell
+    jsr Undo::mark_checkpoint
+
+    ldx Grid::x_position
+    ldy Grid::y_position
+    jsr Grid::set_lookup_addr
+
+    pla
+    rts
+@insth: ; changing the instrument high nybble
+    lda (Grid::lookup_addr)
+    beq @end
+    lda tmp1
+    jsr @key_to_hexh
+    cmp #$ff
+    beq @end
+    jsr @savecell
+    sta tmp2
+    ldy #1
+    lda (Grid::lookup_addr),y
+    and #$0f
+    ora tmp2
+    cmp #$ff ; max instrument is fe
+    bne :+
+        dec
+    :
+    sta (Grid::lookup_addr),y
+    sta Instruments::y_position
+    jsr increment_grid_cursor
+    bra @end
+@instl: ; changing the instrument low nybble
+    lda (Grid::lookup_addr)
+    beq @end
+    lda tmp1
+    jsr @key_to_hex
+    cmp #$ff
+    beq @end
+    jsr @savecell
+    sta tmp2
+    ldy #1
+    lda (Grid::lookup_addr),y
+    and #$f0
+    ora tmp2
+    cmp #$ff ; max instrument is fe
+    bne :+
+        dec
+    :
+    sta (Grid::lookup_addr),y
+    sta Instruments::y_position
+    jsr increment_grid_y_steps_strict
+    jsr decrement_grid_cursor
+    bra @end
+@vol: ; changing the volume
+    lda tmp1
+    jsr @key_to_vol
+    cmp #$ff
+    bne :+
+        jmp @end
+    :
+    jsr @savecell
+    ldy #2
+    sta (Grid::lookup_addr),y
+    jsr increment_grid_y_steps_strict
+    jmp @end
+@eff: ; changing the effect opcode
+    lda tmp1
+    jsr @key_to_eff
+    cmp #$ff
+    bne :+
+        jmp @end
+    :
+    jsr @savecell
+    ldy #3
+    sta (Grid::lookup_addr),y
+    cmp #0
+    bne :+
+        iny
+        sta (Grid::lookup_addr),y
+        iny
+        sta (Grid::lookup_addr),y
+        jsr increment_grid_y_steps_strict
+        jmp @end
+    :
+    jsr increment_grid_cursor
+    jmp @end
+@effh: ; changing the effect high nybble
+    ldy #3 ; don't allow entry unless an effect opcode exists
+    lda (Grid::lookup_addr),y
+    bne :+
+        jmp @end
+    :
+
+    lda tmp1
+    cmp #$89
+    bne :+
+        jsr decrement_grid_cursor
+        lda #$89
+        jmp @eff
+    :
+    jsr @key_to_hexh
+    cmp #$ff
+    bne :+
+        jmp @end
+    :
+    jsr @savecell
+    sta tmp2
+    ldy #4
+    lda (Grid::lookup_addr),y
+    and #$0f
+    ora tmp2
+    sta (Grid::lookup_addr),y
+    jsr increment_grid_cursor
+    jmp @end
+@effl: ; changing the effect low nybble
+    ldy #3 ; don't allow entry unless an effect opcode exists
+    lda (Grid::lookup_addr),y
+    bne :+
+        jmp @end
+    :
+
+
+    lda tmp1
+    cmp #$89
+    bne :+
+        jsr decrement_grid_cursor
+        jsr decrement_grid_cursor
+        lda #$89
+        jmp @eff
+    :
+    jsr @key_to_hex
+    cmp #$ff
+    bne :+
+        jmp @end
+    :
+    jsr @savecell
+    sta tmp2
+    ldy #4
+    lda (Grid::lookup_addr),y
+    and #$f0
+    ora tmp2
+    sta (Grid::lookup_addr),y
+    jsr increment_grid_y_steps_strict
+    jsr decrement_grid_cursor
+    jsr decrement_grid_cursor
+    jmp @end
+@key_to_hexh:
+    cmp #$30
+    bcc @returnff
+    cmp #$3A
+    bcc @kthhnum
+    cmp #$41
+    bcc @returnff
+    cmp #$47
+    bcs @returnff
+    sec
+    sbc #$07
+@kthhnum:
+    sec
+    sbc #$30
+    asl
+    asl
+    asl
+    asl
+    rts
+@returnff:
+    lda #$ff
+    rts
+@key_to_hex:
+    cmp #$30
+    bcc @returnff
+    cmp #$3A
+    bcc @kthnum
+    cmp #$41
+    bcc @returnff
+    cmp #$47
+    bcs @returnff
+    sec
+    sbc #$07
+@kthnum:
+    sec
+    sbc #$30
+    rts
+@return0:
+    lda #0
+    rts
+@key_to_vol: ; returns n+1 or 0 for delete
+    cmp #$89
+    beq @return0
+    cmp #$30
+    bcc @returnff
+    cmp #$3A
+    bcc @ktvnum
+    cmp #$41
+    bcc @returnff
+    cmp #$47
+    bcs @returnff
+    sec
+    sbc #$07
+@ktvnum:
+    sec
+    sbc #$2F
+    rts
+@key_to_eff:
+    cmp #$89
+    beq @return0
+    cmp #$30
+    bcc @returnff
+    cmp #$3A
+    bcc @return
+    cmp #$41
+    bcc @returnff
+    cmp #$5B
+    bcs @returnff
+@return:
+    rts
+
 
 
 
@@ -681,6 +938,12 @@ increment_grid_y_steps:
     bne @advance_step
 @end:
     rts
+
+increment_grid_y_steps_strict:
+    ldy Grid::step
+    bne increment_grid_y_steps
+    rts
+
 
 increment_sequencer_cell:
     ldx Grid::x_position

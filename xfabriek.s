@@ -60,8 +60,8 @@ XF_SELECTION_BG_COLOR = $50 ; green
 
 XF_BASE_FG_COLOR = $01 ; white
 XF_INST_FG_COLOR = $0D ; green
-XF_VOL_FG_COLOR = $03 ; cyan
-XF_EFFECT_FG_COLOR = $0E ; light blue
+XF_VOL_FG_COLOR = $07 ; yellow
+XF_EFFECT_FG_COLOR = $03 ; cyan
 
 .segment "CODE"
 
@@ -182,7 +182,7 @@ main:
     lda #47
     sta Sequencer::max_pattern
 
-    lda #255
+    lda #254
     sta Instruments::max_instrument
 
     inc redraw
@@ -332,6 +332,15 @@ main:
     bne :+
         stz Function::op_dispatch_flag
         jsr Function::increment_sequencer_cell
+    :
+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_GRID_ENTRY
+    bne :+
+        stz Function::op_dispatch_flag
+        lda Function::op_dispatch_operand
+        stz Function::op_dispatch_operand
+        jsr Function::grid_entry
     :
 
 
