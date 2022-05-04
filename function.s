@@ -17,6 +17,7 @@ OP_CUT = 9
 OP_DEC_SEQ_CELL = 10
 OP_INC_SEQ_CELL = 11
 OP_GRID_ENTRY = 12
+OP_INC_SEQ_MAX_ROW = 13
 
 
 op_dispatch_flag: .byte $00
@@ -25,6 +26,7 @@ op_dispatch_operand: .res 1
 tmp1: .res 1
 tmp2: .res 1
 tmp3: .res 1
+tmp8b: .res 8
 
 copy:
     lda xf_state
@@ -136,10 +138,20 @@ decrement_grid_y_steps:
 @end:
     rts
 
+decrement_mix:
+    lda Sequencer::mix
+    beq :+
+        dec
+    :
+    sta Sequencer::mix
+    inc redraw
+    rts
+
+
 decrement_sequencer_cell:
     ldx Grid::x_position
     ldy Sequencer::y_position
-    jsr Undo::store_sequencer_cell
+    jsr Undo::store_sequencer_row
     jsr Undo::mark_checkpoint
 
     ldy Sequencer::y_position
@@ -169,7 +181,7 @@ decrement_sequencer_y:
     jsr sequencer_selection_start
     ldy Sequencer::y_position
     bne :+
-        ldy Sequencer::max_frame
+        ldy Sequencer::max_row
         sty Sequencer::y_position
         bra @end
     :
@@ -337,6 +349,7 @@ dispatch_delete_selection:
     sta op_dispatch_flag
     rts
 
+
 dispatch_increment_sequencer_cell:
     lda Grid::entrymode
     beq @end
@@ -344,6 +357,15 @@ dispatch_increment_sequencer_cell:
     sta op_dispatch_flag
 @end:
     rts
+
+dispatch_increment_sequencer_max_row:
+    lda Grid::entrymode
+    beq @end
+    lda #OP_INC_SEQ_MAX_ROW
+    sta op_dispatch_flag
+@end:
+    rts
+
 
 dispatch_grid_entry:
     sta op_dispatch_operand
@@ -947,11 +969,22 @@ increment_grid_y_steps_strict:
     bne increment_grid_y_steps
     rts
 
+increment_mix:
+    lda Sequencer::mix
+    inc
+    cmp #Sequencer::MIX_LIMIT
+    bcc :+
+        dec
+    :
+    sta Sequencer::mix
+    inc redraw
+    rts
+
 
 increment_sequencer_cell:
     ldx Grid::x_position
     ldy Sequencer::y_position
-    jsr Undo::store_sequencer_cell
+    jsr Undo::store_sequencer_row
     jsr Undo::mark_checkpoint
 
     ldy Sequencer::y_position
@@ -968,6 +1001,75 @@ increment_sequencer_cell:
     inc redraw
     rts
 
+increment_sequencer_max_row: ; increment max row, and populate with first unused pattern
+    lda Sequencer::max_row
+    inc
+    cmp #Sequencer::ROW_LIMIT
+    bcs @end
+
+    jsr Sequencer::set_ram_bank
+    stz Sequencer::lookup_addr
+    lda #$A0
+    sta Sequencer::lookup_addr+1
+
+    ; zero out tmp8b
+    lda #0
+    ldy #0
+    :
+        sta tmp8b,y
+        iny
+        cpy #8
+        bcc :-
+@mainloop:
+    ldy #0
+@rowloop:
+    lda (Sequencer::lookup_addr),y
+    cmp tmp8b,y
+    bcc @next
+    cmp Sequencer::max_pattern
+    bcc :+
+        lda Sequencer::max_pattern
+        dec
+    :
+    sta tmp8b,y
+@next:
+    iny
+    cpy #8
+    bcc @rowloop
+    lda Sequencer::lookup_addr
+    clc
+    adc #8
+    sta Sequencer::lookup_addr
+    lda Sequencer::lookup_addr+1
+    adc #0
+    cmp #$C0
+    bcs @loopend
+    sta Sequencer::lookup_addr+1
+    bra @mainloop
+@loopend:
+    ldx Grid::x_position
+    ldy Sequencer::max_row
+    jsr Undo::store_sequencer_max_row
+    inc Sequencer::max_row
+    ldy Sequencer::max_row
+    sty Sequencer::y_position
+    jsr Undo::store_sequencer_row
+    ldy Sequencer::max_row
+    jsr Sequencer::set_lookup_addr
+    ldy #0
+    :
+        lda tmp8b,y
+        inc
+        sta (Sequencer::lookup_addr),y
+        iny
+        cpy #8
+        bcc :-
+@end:
+    jsr Undo::mark_checkpoint
+    inc redraw
+    rts
+
+
 increment_sequencer_x:
     jsr sequencer_selection_start
     jsr increment_grid_x
@@ -979,7 +1081,7 @@ increment_sequencer_x:
 increment_sequencer_y:
     jsr sequencer_selection_start
     ldy Sequencer::y_position
-    cpy Sequencer::max_frame
+    cpy Sequencer::max_row
     bcc :+
         stz Sequencer::y_position
         bra @end
@@ -997,11 +1099,11 @@ increment_sequencer_y_page:
     adc #4
     bcs @clamp
 
-    cmp Sequencer::max_frame
+    cmp Sequencer::max_row
     bcc @end
 
 @clamp:
-    lda Sequencer::max_frame
+    lda Sequencer::max_row
 @end:
     sta Sequencer::y_position
     jsr sequencer_selection_continue
@@ -1128,13 +1230,25 @@ note_entry:
     rts
 
 
+paste: ; .A = paste type
+    ldx xf_state
+    cpx #XF_STATE_GRID
+    bne :+
+        jmp Clipboard::paste_cells
+    :
+    cpx #XF_STATE_SEQUENCER
+    bne :+
+        jmp Clipboard::paste_sequencer_rows
+    :
+    rts
+
 play_note: ;.A = note, .X = column, .Y = instrument
     rts
 
 sequencer_select_all:
     lda #2
     sta Sequencer::selection_active
-    lda Sequencer::max_frame
+    lda Sequencer::max_row
     sta Sequencer::selection_bottom_y
     stz Sequencer::selection_top_y
     inc redraw
@@ -1261,7 +1375,9 @@ set_grid_y:
     rts
 
 set_sequencer_y:
+    pha
     jsr sequencer_selection_start
+    pla
     sta Sequencer::y_position
     jsr sequencer_selection_continue
     inc redraw

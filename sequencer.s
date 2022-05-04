@@ -3,7 +3,7 @@
 ; We don't use x_position here.  We use Grid::x_position instead
 ;x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in
-max_frame: .res 1 ; the last frame in the sequencer
+max_row: .res 1 ; the last row shown in the sequencer
 max_pattern: .res 1; the highest patten number we can fit in ram
 mix: .res 1 ; which mix we're displaying
 base_bank: .res 1 ; what bank are we going to use for the seq table
@@ -13,6 +13,9 @@ NUM_CHANNELS = 8
 SEQUENCER_LOCATION_X = 1
 SEQUENCER_LOCATION_Y = 45
 SEQUENCER_GRID_ROWS = 9
+
+MIX_LIMIT = 8
+ROW_LIMIT = 128 ; hard limit, row count
 
 .pushseg
 .segment "ZEROPAGE"
@@ -91,7 +94,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     :
 
     ldy xf_tmp2
-    cpy max_frame
+    cpy max_row
     bne :+
         inc xf_tmp3
     :
@@ -165,12 +168,6 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     ply ; to y register
     lda (lookup_addr),y ; so that I can do indirect indexed
 
-
-    ; current drawing == eq current row
-    ; set the grid state to reflect the sequencer, it's important
-    sta Grid::channel_to_pattern,y
-
-@not_current_row:
     jsr xf_byte_to_hex_in_grid
     ply ; restore color
     sta Vera::Reg::Data0
@@ -265,10 +262,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sty Vera::Reg::Data0
     sty Vera::Reg::Data0
 
-
-    rts
-
-
+    ; we fall into update_grid_patterns
 update_grid_patterns:
     ldy y_position
     jsr set_lookup_addr
@@ -282,6 +276,11 @@ update_grid_patterns:
 
     rts
 
+
+set_ram_bank: 
+    lda base_bank
+    sta x16::Reg::RAMBank
+    rts
 
 set_lookup_addr: ; input: .Y = row
     lda base_bank

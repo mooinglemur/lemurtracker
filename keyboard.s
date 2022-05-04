@@ -319,8 +319,8 @@ handler4: ; XF_STATE_GRID
     .word @key_insert
     .word Function::decrement_grid_octave
     .word Function::increment_grid_octave
-    .word Function::dispatch_decrement_sequencer_cell
-    .word Function::dispatch_increment_sequencer_cell
+    .word @key_minus
+    .word @key_equalsplus
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
@@ -388,8 +388,30 @@ handler4: ; XF_STATE_GRID
         jsr Function::dispatch_insert
     :
     rts
-
-
+@key_minus:
+    lda modkeys
+    and #(MOD_LCTRL|MOD_RCTRL)
+    beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            jmp @end
+        :
+        jmp Function::decrement_mix
+    :
+    jmp Function::dispatch_decrement_sequencer_cell
+@key_equalsplus:
+    lda modkeys
+    and #(MOD_LCTRL|MOD_RCTRL)
+    beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            jmp Function::dispatch_increment_sequencer_max_row
+        :
+        jmp Function::increment_mix
+    :
+    jmp Function::dispatch_increment_sequencer_cell
 handler5:
     rts
 
@@ -448,6 +470,24 @@ handler6: ; XF_STATE_SEQUENCER
 
     ; below here are "destructive" ops, note_entry needs to be on for these
 
+    ; handle Ctrl+V / Ctrl+Shift+V
+
+    lda keycode
+    cmp #$56
+    bne :++
+        lda modkeys
+        and #(MOD_LCTRL|MOD_RCTRL)
+        beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            lda #2 ; insert paste
+            jmp Function::dispatch_paste
+        :
+        lda #1 ; regular paste
+        jmp Function::dispatch_paste
+    :
+
 
     ; handle Ctrl+Z / Ctrl+Shift+Z
 
@@ -486,7 +526,7 @@ handler6: ; XF_STATE_SEQUENCER
     lda #0
     jmp Function::set_sequencer_y
 @key_end:
-    lda Sequencer::max_frame
+    lda Sequencer::max_row
     jmp Function::set_sequencer_y
 @key_space:
     ; Flip state of audition/entry flag

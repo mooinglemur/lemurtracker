@@ -176,8 +176,8 @@ main:
     lda #$10
     sta Grid::base_bank
 
-    lda #3
-    sta Sequencer::max_frame
+    lda #0
+    sta Sequencer::max_row
 
     lda #47
     sta Sequencer::max_pattern
@@ -317,7 +317,7 @@ main:
         stz Function::op_dispatch_flag
         lda Function::op_dispatch_operand
         stz Function::op_dispatch_operand
-        jsr Clipboard::paste_cells
+        jsr Function::paste
     :
 
     lda Function::op_dispatch_flag
@@ -341,6 +341,14 @@ main:
         lda Function::op_dispatch_operand
         stz Function::op_dispatch_operand
         jsr Function::grid_entry
+    :
+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_INC_SEQ_MAX_ROW
+    bne :+
+        stz Function::op_dispatch_flag
+        stz Function::op_dispatch_operand
+        jsr Function::increment_sequencer_max_row
     :
 
 
@@ -423,6 +431,12 @@ main:
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
 
+    lda #' '
+    sta Vera::Reg::Data0
+    lda Sequencer::mix
+    jsr xf_byte_to_hex
+    sta Vera::Reg::Data0
+    stx Vera::Reg::Data0
 
     jmp @mainloop
 @exit:

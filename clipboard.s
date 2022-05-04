@@ -213,7 +213,6 @@ copy_sequencer_rows:
     rts
 
 
-
 paste_cells:  ; .A bitfield
               ; 0 merge paste,
               ; 1 paste notes
@@ -350,6 +349,93 @@ paste_cells:  ; .A bitfield
 
     rts
 
+
+paste_sequencer_rows:
+    sta tmp1
+
+    lda content_type
+    cmp #2
+    beq :+
+        jmp @end
+    :
+
+    stz clip_y_iterator
+    lda Sequencer::y_position
+    sta sel_y_iterator
+    sta Sequencer::selection_top_y
+    lda #2
+    sta Sequencer::selection_active
+
+@loop:
+    ldx #0
+    ldy clip_y_iterator
+    jsr set_lookup_addr
+
+    ; read from clipboard
+    ldy #0
+    :
+        lda (lookup_addr),y
+        sta tmp_paste_buffer,y
+        iny
+        cpy #8
+        bcc :-
+
+    ; store undo
+    ldx Grid::x_position
+    ldy sel_y_iterator
+    jsr Undo::store_sequencer_row
+
+    ; copy to sequencer
+    ldy sel_y_iterator
+    sty Sequencer::selection_bottom_y
+    jsr Sequencer::set_lookup_addr
+
+    ldy #0
+    :
+        lda tmp_paste_buffer,y
+        sta (Sequencer::lookup_addr),y
+        iny
+        cpy #8
+        bcc :-
+
+
+    ; done pasting this row
+    inc sel_y_iterator
+    inc clip_y_iterator
+
+    ; check y bounds
+    lda clip_y_iterator
+    cmp y_height
+    bcs :+
+        lda sel_y_iterator
+        cmp #Sequencer::ROW_LIMIT ; max row count, n-1 is last row #
+        bcs :+
+        jmp @loop
+    :
+
+    ; extend Sequencer::max_row if our paste extended past the old end
+    dec sel_y_iterator
+    lda sel_y_iterator
+    cmp Sequencer::max_row
+    bcc :+
+        pha
+        jsr Undo::store_sequencer_max_row
+        pla
+        sta Sequencer::max_row
+
+    :
+
+    ; we've completed the paste operation
+    ; just to make redo put the cursor in the right place, let's resave the
+    ; current sequencer position
+    ldx Grid::x_position
+    ldy Sequencer::y_position
+    jsr Undo::store_sequencer_row
+    jsr Undo::mark_checkpoint
+@end:
+    inc redraw
+
+    rts
 
 
 .endscope

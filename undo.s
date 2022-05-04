@@ -76,7 +76,7 @@ store_grid_cell: ; takes in .X = channel column, .Y = row, affects all registers
 
     rts
 
-store_sequencer_cell: ; takes in .X = channel column, .Y = row, affects all registers
+store_sequencer_row: ; takes in .X = channel column (for position restore), .Y = row, affects all registers
     lda #2
     sta tmp_undo_buffer
     lda checkpoint
@@ -98,12 +98,17 @@ store_sequencer_cell: ; takes in .X = channel column, .Y = row, affects all regi
     :
         sta tmp_undo_buffer,y
         iny
-        cpy #16
+        cpy #8
         bcc :-
 
-    ldy tmp_undo_buffer+3 ; x offset
-    lda (Sequencer::lookup_addr),y
-    sta tmp_undo_buffer+8
+    ; save the row
+    ldy #0
+    :
+        lda (Sequencer::lookup_addr),y
+        sta tmp_undo_buffer+8,y
+        iny
+        cpy #8
+        bcc :-
 
 
     jsr set_ram_bank
@@ -128,6 +133,54 @@ store_sequencer_cell: ; takes in .X = channel column, .Y = row, affects all regi
 
     rts
 
+store_sequencer_max_row: ; takes in .X = channel column, .Y = row, affects all registers
+    lda #3
+    sta tmp_undo_buffer
+    lda checkpoint
+    sta tmp_undo_buffer+1
+    lda Sequencer::mix
+    sta tmp_undo_buffer+2
+    stx tmp_undo_buffer+3
+    sty tmp_undo_buffer+4
+
+
+    lda #2
+    sta checkpoint
+
+    ; zero out the rest of the buffer
+    ldy #5
+    lda #0
+    :
+        sta tmp_undo_buffer,y
+        iny
+        cpy #16
+        bcc :-
+
+    ldy tmp_undo_buffer+3 ; x offset
+    lda Sequencer::max_row
+    sta tmp_undo_buffer+8
+
+    jsr set_ram_bank
+; we need to invalidate the entire redo stack upon storing a new undo event
+; let's do that first
+    jsr invalidate_redo_stack
+; advance the pointer to store our new event
+    jsr advance_undo_pointer
+
+; transfer the tmp_undo_buffer
+    ldy #0
+    :
+        lda tmp_undo_buffer,y
+        sta (lookup_addr),y
+
+        iny
+        cpy #16
+        bcc :-
+
+; make sure a redo for this event doesn't go past here until there are more events
+    jsr mark_redo_stop
+
+    rts
 
 
 invalidate_redo_stack:
@@ -344,7 +397,7 @@ handle_undo_redo_grid_cell:
     ; we're done
     rts
 
-handle_undo_redo_sequencer_cell:
+handle_undo_redo_sequencer_row:
     ; the operation here is the same whether we're undoing or redoing
     ; we swap the data in the undo buffer with that in grid memory
     lda #XF_STATE_SEQUENCER
@@ -373,12 +426,69 @@ handle_undo_redo_sequencer_cell:
 
 
     ; now swap the contents (read from seq table first)
-    ldy Grid::x_position
+    ldy #0
+    :
+        lda (Sequencer::lookup_addr),y
+        pha
+        lda tmp_undo_buffer+8,y
+        sta (Sequencer::lookup_addr),y
+        pla
+        sta tmp_undo_buffer+8,y
+        iny
+        cpy #8
+        bcc :-
 
-    lda (Sequencer::lookup_addr),y
+    ; reset the bank to the undo bank
+    jsr set_ram_bank
+
+    ; now copy the event back into the undo space
+    ldy #8
+    :
+        lda tmp_undo_buffer,y
+        sta (lookup_addr),y
+        iny
+        cpy #16
+        bcc :-
+
+    jsr Sequencer::update_grid_patterns
+
+    ; we're done
+    rts
+
+handle_undo_redo_sequencer_max_row:
+    ; the operation here is the same whether we're undoing or redoing
+    ; we swap the data in the undo buffer with that in grid memory
+    lda #XF_STATE_SEQUENCER
+    sta xf_state
+
+    jsr set_ram_bank
+
+    ; first, copy the undo event into temp
+    ldy #0
+    :
+        lda (lookup_addr),y
+        sta tmp_undo_buffer,y
+        iny
+        cpy #16
+        bcc :-
+
+    ; set the state of the sequencer table to that of the event
+    lda tmp_undo_buffer+2 ; set the mix number
+    sta Sequencer::mix
+    ldx tmp_undo_buffer+3
+    stx Grid::x_position
+    ldy tmp_undo_buffer+4 ; set row number
+    sty Sequencer::y_position
+
+    jsr Sequencer::set_lookup_addr
+
+
+    ; now swap the contents
+
+    lda Sequencer::max_row
     pha
     lda tmp_undo_buffer+8
-    sta (Sequencer::lookup_addr),y
+    sta Sequencer::max_row
     pla
     sta tmp_undo_buffer+8
 
@@ -394,6 +504,8 @@ handle_undo_redo_sequencer_cell:
 
     ; we're done
     rts
+
+
 
 
 undo:
@@ -413,16 +525,22 @@ undo:
     lda (lookup_addr),y
     cmp #$01 ; pattern cell
     beq @undo_grid_cell
-    cmp #$02 ; sequencer cell
-    beq @undo_sequencer_cell
+    cmp #$02 ; sequencer row
+    beq @undo_sequencer_row
+    cmp #$03 ; sequencer max_row
+    beq @undo_sequencer_max_row
     bra @check_end_of_undo_group
 @undo_grid_cell:
     jsr handle_undo_redo_grid_cell
     bra @check_end_of_undo_group
-@undo_sequencer_cell:
-    jsr handle_undo_redo_sequencer_cell
+@undo_sequencer_row:
+    jsr handle_undo_redo_sequencer_row
+    bra @check_end_of_undo_group
+@undo_sequencer_max_row:
+    jsr handle_undo_redo_sequencer_max_row
     bra @check_end_of_undo_group
 @check_end_of_undo_group:
+    jsr set_ram_bank
     ldy #1
     lda (lookup_addr),y
     cmp #2
@@ -474,14 +592,19 @@ redo:
     lda (lookup_addr),y
     cmp #$01 ; grid cell
     beq @redo_grid_cell
-    cmp #$02 ; sequencer cell
-    beq @redo_sequencer_cell
+    cmp #$02 ; sequencer row
+    beq @redo_sequencer_row
+    cmp #$03 ; sequencer max_row
+    beq @redo_sequencer_max_row
     bra @check_end_of_redo_group
 @redo_grid_cell:
     jsr handle_undo_redo_grid_cell
     bra @check_end_of_redo_group
-@redo_sequencer_cell:
-    jsr handle_undo_redo_sequencer_cell
+@redo_sequencer_row:
+    jsr handle_undo_redo_sequencer_row
+    bra @check_end_of_redo_group
+@redo_sequencer_max_row:
+    jsr handle_undo_redo_sequencer_max_row
     bra @check_end_of_redo_group
 @check_end_of_redo_group:
     jsr advance_undo_pointer
@@ -528,6 +651,7 @@ redo:
 ;00 - format
 ;       01 - pattern cell
 ;       02 - sequencer cell
+;       03 - sequencer max row
 ;01 - undo group
 ;       00 - stop point, or uninitialized
 ;       01 - start point, first event in a group
@@ -550,6 +674,15 @@ redo:
 ;05-07 - for possible future use
 ;08 - value
 ;09-0F - for possible future use
+
+; for format 03 (sequencer max row)
+;02 - mix number
+;03 - column
+;04 - row
+;05-07 - for possible future use
+;08 - value
+;09-0F - for possible future use
+
 
 
 .endscope
