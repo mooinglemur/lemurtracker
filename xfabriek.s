@@ -59,6 +59,7 @@ XF_HILIGHT_BG_COLOR_2 = $C0 ; grey
 XF_SELECTION_BG_COLOR = $50 ; green
 
 XF_BASE_FG_COLOR = $01 ; white
+XF_DIM_FG_COLOR = $0F ; grey
 XF_INST_FG_COLOR = $0D ; green
 XF_VOL_FG_COLOR = $07 ; yellow
 XF_EFFECT_FG_COLOR = $03 ; cyan
@@ -179,7 +180,7 @@ main:
     lda #0
     sta Sequencer::max_row
 
-    lda #47
+    lda #95
     sta Sequencer::max_pattern
 
     lda #254
@@ -194,6 +195,8 @@ main:
     sta Undo::lookup_addr
     lda #$A0
     sta Undo::lookup_addr+1
+
+    jsr Sequencer::init
 
 ; tmp vvv
     ldy #0
@@ -272,9 +275,8 @@ main:
     bne :+
         ; clear selection too
         stz Grid::selection_active
-
         stz Function::op_dispatch_flag
-        jsr Function::delete_cell_above
+        jsr Function::backspace
     :
 
     lda Function::op_dispatch_flag
@@ -350,6 +352,15 @@ main:
         stz Function::op_dispatch_operand
         jsr Function::increment_sequencer_max_row
     :
+
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_DELETE_SEQ
+    bne :+
+        stz Function::op_dispatch_flag
+        stz Function::op_dispatch_operand
+        jsr Function::delete_sequencer_row
+    :
+
 
 
     VERA_SET_ADDR ($0010+$1B000),2

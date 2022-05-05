@@ -45,7 +45,8 @@ store_grid_cell: ; takes in .X = channel column, .Y = row, affects all registers
     sta tmp_undo_buffer+5
     lda Sequencer::y_position
     sta tmp_undo_buffer+6
-    stz tmp_undo_buffer+7
+    lda Grid::cursor_position
+    sta tmp_undo_buffer+7
     ldy #0
     :
         lda (Grid::lookup_addr),y
@@ -360,6 +361,8 @@ handle_undo_redo_grid_cell:
     sta Sequencer::mix
     lda tmp_undo_buffer+6 ; set row number
     sta Sequencer::y_position
+    lda tmp_undo_buffer+7 ; set Grid::cursor_position
+    sta Grid::cursor_position
     ; we need to trigger the sequencer to populate Grid state
     jsr Sequencer::update_grid_patterns
     ; now position the Grid memory pointer (changes bank too)
@@ -664,7 +667,7 @@ redo:
 ;04 - row number (y column)
 ;05 - mix number  <-- for restoring the UI
 ;06 - sequencer row <-- for restoring the UI
-;07 - for possible future use
+;07 - Grid::cursor_position <-- for restoring in the UI
 ;08-0F - cell data state
 
 ; for format 02 (sequencer cell)

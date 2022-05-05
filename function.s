@@ -18,6 +18,7 @@ OP_DEC_SEQ_CELL = 10
 OP_INC_SEQ_CELL = 11
 OP_GRID_ENTRY = 12
 OP_INC_SEQ_MAX_ROW = 13
+OP_DELETE_SEQ = 14
 
 
 op_dispatch_flag: .byte $00
@@ -27,6 +28,22 @@ tmp1: .res 1
 tmp2: .res 1
 tmp3: .res 1
 tmp8b: .res 8
+
+
+backspace:
+    lda Grid::cursor_position
+    beq @note_column
+    cmp #4
+    beq @move_left
+    cmp #7
+    bcs @move_left
+    bra @end
+@move_left:
+    jmp decrement_grid_cursor
+@note_column:
+    jmp delete_cell_above
+@end:
+    rts
 
 copy:
     lda xf_state
@@ -161,6 +178,11 @@ decrement_sequencer_cell:
     ldy Grid::x_position
     lda (Sequencer::lookup_addr),y
     beq @end
+    cmp #$FF
+    bne :+
+        lda (Sequencer::mix0_lookup_addr),y
+        beq @end
+    :
 
     dec
     sta (Sequencer::lookup_addr),y
@@ -170,7 +192,14 @@ decrement_sequencer_cell:
 
 decrement_sequencer_x:
     jsr sequencer_selection_start
-    jsr decrement_grid_x
+decrement_sequencer_x_without_starting_selection:
+    ldy Grid::x_position
+    bne :+
+        ldy #(Grid::NUM_CHANNELS - 1)
+        sty Grid::x_position
+        bra @end
+    :
+    dec Grid::x_position
 @end:
     jsr sequencer_selection_continue
     inc redraw
@@ -273,6 +302,85 @@ delete_cell_above:
 @end:
     rts
 
+delete_sequencer_row:
+    ; if we only have one row, do nothing
+    ldy Sequencer::max_row
+    beq @end
+
+    lda Sequencer::mix
+    pha ; preserve currently selected mix
+
+    ldx Grid::x_position
+    ldy Sequencer::y_position
+    jsr Undo::store_sequencer_max_row ; makes sure undo returns us to the correct mix and position
+
+    ; we need to shift everything up in this column from cursor position down
+    ; to the end of the sequencer, (in all mixes!)
+    lda #0
+    sta Sequencer::mix
+@mixloop:
+    ldy Sequencer::y_position
+    sty tmp1
+@loop:
+    ldy tmp1
+    jsr Sequencer::set_lookup_addr
+
+    cpy Sequencer::max_row
+    bcs @empty_row
+@copy_row:
+    ldx Grid::x_position
+    jsr Undo::store_sequencer_row
+    jsr Sequencer::set_ram_bank
+
+    ldy #0
+    :
+        phy
+
+        tya
+        clc
+        adc #Grid::NUM_CHANNELS
+        tay
+        lda (Sequencer::lookup_addr),y
+        ply
+        sta (Sequencer::lookup_addr),y
+
+        iny
+        cpy #8
+        bcc :-
+
+    inc tmp1
+    bra @loop
+
+@empty_row:
+
+    jsr Undo::store_sequencer_row
+    jsr Sequencer::set_ram_bank
+
+    lda #$FF
+    ldy #0
+    :
+        sta (Sequencer::lookup_addr),y
+        iny
+        cpy #8
+        bcc :-
+
+@check_mix: ; Chex mix
+    inc Sequencer::mix
+    lda Sequencer::mix
+    cmp #Sequencer::MIX_LIMIT
+    bcc @mixloop
+@finalize:
+    pla ; restore active mix
+    sta Sequencer::mix
+    ldx Grid::x_position
+    ldy Sequencer::y_position
+    jsr Undo::store_sequencer_max_row ; makes sure redo returns us to the correct mix too
+    jsr Undo::mark_checkpoint
+    dec Sequencer::max_row
+    inc redraw
+@end:
+    rts
+
 
 delete_selection:
     ; tmp1 = x, tmp2 = y
@@ -346,6 +454,11 @@ dispatch_decrement_sequencer_cell:
 
 dispatch_delete_selection:
     lda #OP_DELETE
+    sta op_dispatch_flag
+    rts
+
+dispatch_delete_sequencer_row:
+    lda #OP_DELETE_SEQ
     sta op_dispatch_flag
     rts
 
@@ -992,6 +1105,10 @@ increment_sequencer_cell:
 
     ldy Grid::x_position
     lda (Sequencer::lookup_addr),y
+    cmp #$FF
+    bne :+
+        lda (Sequencer::mix0_lookup_addr),y
+    :
     cmp Sequencer::max_pattern
     bcs @end
 
@@ -1024,6 +1141,8 @@ increment_sequencer_max_row: ; increment max row, and populate with first unused
     ldy #0
 @rowloop:
     lda (Sequencer::lookup_addr),y
+    cmp #$ff
+    beq @next
     cmp tmp8b,y
     bcc @next
     cmp Sequencer::max_pattern
@@ -1053,6 +1172,9 @@ increment_sequencer_max_row: ; increment max row, and populate with first unused
     inc Sequencer::max_row
     ldy Sequencer::max_row
     sty Sequencer::y_position
+    lda Sequencer::mix
+    pha
+    stz Sequencer::mix
     jsr Undo::store_sequencer_row
     ldy Sequencer::max_row
     jsr Sequencer::set_lookup_addr
@@ -1064,15 +1186,23 @@ increment_sequencer_max_row: ; increment max row, and populate with first unused
         iny
         cpy #8
         bcc :-
-@end:
+    pla
+    sta Sequencer::mix
     jsr Undo::mark_checkpoint
+@end:
     inc redraw
     rts
 
 
 increment_sequencer_x:
     jsr sequencer_selection_start
-    jsr increment_grid_x
+    ldy Grid::x_position
+    cpy #(Grid::NUM_CHANNELS - 1)
+    bcc :+
+        stz Grid::x_position
+        bra @end
+    :
+    inc Grid::x_position
 @end:
     jsr sequencer_selection_continue
     inc redraw

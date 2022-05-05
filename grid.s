@@ -14,6 +14,7 @@ cursor_position: .res 1 ; within the column (channel) where is the cursor?
 global_pattern_length: .res 1 ; set on file create/file load
 base_bank: .res 1 ; where does tracker data start
 channel_to_pattern: .res NUM_CHANNELS ; which pattern is referenced in each channel
+channel_is_inherited: .res NUM_CHANNELS ; boolean of whether the channel data is inherited from mix 0
 notechardata: .res 9*NUM_CHANNELS ; temp storage for characters based on pattern data
 iterator: .res 1
 entrymode: .res 1
@@ -367,7 +368,17 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 @cell_loop_inner:
     lda notechardata,x
     sta Vera::Reg::Data0
+    phy
+    ldy tmp3
+    lda channel_is_inherited,y
+    ply
+    cmp #0
+    bne @inherited
     lda column_fg_color,y
+    bra @after_inherit_check
+@inherited:
+    lda column_fg_color_mix,y
+@after_inherit_check:
     ora tmp2
     sta Vera::Reg::Data0
     inx
@@ -567,4 +578,9 @@ note_octave: .byte "0123456789"
 column_fg_color: .byte XF_BASE_FG_COLOR,XF_BASE_FG_COLOR,XF_BASE_FG_COLOR
                  .byte XF_INST_FG_COLOR,XF_INST_FG_COLOR,XF_VOL_FG_COLOR
                  .byte XF_EFFECT_FG_COLOR,XF_EFFECT_FG_COLOR,XF_EFFECT_FG_COLOR
+column_fg_color_mix: .byte XF_DIM_FG_COLOR,XF_DIM_FG_COLOR,XF_DIM_FG_COLOR
+                     .byte XF_BASE_FG_COLOR,XF_BASE_FG_COLOR,XF_DIM_FG_COLOR
+                     .byte XF_BASE_FG_COLOR,XF_BASE_FG_COLOR,XF_BASE_FG_COLOR
+
+
 .endscope

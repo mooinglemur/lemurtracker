@@ -511,6 +511,8 @@ handler6: ; XF_STATE_SEQUENCER
     ; this is the static keymapping
     ;     up  dn  lt  rt  hm  end pgu pgd F1  spc
     .byte $80,$81,$82,$83,$84,$85,$86,$87,$8A,$20
+    ;     -   =   tab del
+    .byte $5F,$3D,$09,$89
 @fntbl:
     .word Function::decrement_sequencer_y ;up
     .word Function::increment_sequencer_y ;dn
@@ -522,6 +524,10 @@ handler6: ; XF_STATE_SEQUENCER
     .word Function::increment_sequencer_y_page
     .word @key_F1
     .word @key_space
+    .word @key_minus
+    .word @key_equalsplus
+    .word @key_tab
+    .word @key_delete
 @key_home:
     lda #0
     jmp Function::set_sequencer_y
@@ -540,6 +546,41 @@ handler6: ; XF_STATE_SEQUENCER
     sta xf_state
     inc redraw
     rts
+@key_minus:
+    lda modkeys
+    and #(MOD_LCTRL|MOD_RCTRL)
+    beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            jmp @end
+        :
+        jmp Function::decrement_mix
+    :
+    jmp Function::dispatch_decrement_sequencer_cell
+@key_equalsplus:
+    lda modkeys
+    and #(MOD_LCTRL|MOD_RCTRL)
+    beq :++
+        lda modkeys
+        and #(MOD_LSHIFT|MOD_RSHIFT)
+        beq :+
+            jmp Function::dispatch_increment_sequencer_max_row
+        :
+        jmp Function::increment_mix
+    :
+    jmp Function::dispatch_increment_sequencer_cell
+@key_tab:
+    stz Grid::cursor_position
+    lda modkeys
+    and #(MOD_LSHIFT|MOD_RSHIFT)
+    beq :+
+        jmp Function::decrement_sequencer_x_without_starting_selection
+    :
+    jmp Function::increment_sequencer_x
+@key_delete:
+    jmp Function::dispatch_delete_sequencer_row
+
 
 handler7:
 handler8:

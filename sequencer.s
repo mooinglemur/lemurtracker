@@ -20,6 +20,7 @@ ROW_LIMIT = 128 ; hard limit, row count
 .pushseg
 .segment "ZEROPAGE"
 lookup_addr: .res 2 ; storage for offset in banked ram
+mix0_lookup_addr: .res 2 ; storage for offset into banked ram but for mix 0
 .popseg
 
 ; selection_active = 0 for no selection
@@ -35,6 +36,38 @@ selection_active: .res 1
 .popseg
 selection_top_y: .res 1
 selection_bottom_y: .res 1
+
+tmpcolor: .res 1
+
+init:
+    ; clear sequencer bank memory
+    ; set row 0 of mix 0 to all $00
+    ; and all other rows of all mixes to $FF
+    stz mix
+    ldy #0
+    jsr set_lookup_addr
+    lda #0
+@mainloop:
+    ldy #0
+@rowloop:
+    sta (lookup_addr),y
+    iny
+    cpy #8
+    bcc @rowloop
+    lda lookup_addr
+    clc
+    adc #8
+    sta lookup_addr
+    lda lookup_addr+1
+    adc #0
+    cmp #$C0
+    bcs @end
+    sta lookup_addr+1
+    lda #$FF
+    bra @mainloop
+@end:
+    rts
+
 
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
@@ -163,13 +196,20 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     ldy #(XF_SELECTION_BG_COLOR|XF_BASE_FG_COLOR)
 @after_selection:
-    phy ; save color
+    sty tmpcolor ; save color
     phx ; transfer iterator...
     ply ; to y register
     lda (lookup_addr),y ; so that I can do indirect indexed
-
+    cmp #$FF
+    bne @after_inherit_check
+    lda tmpcolor
+    and #$F0
+    ora #XF_DIM_FG_COLOR
+    sta tmpcolor
+    lda (mix0_lookup_addr),y
+@after_inherit_check:
     jsr xf_byte_to_hex_in_grid
-    ply ; restore color
+    ldy tmpcolor ; restore color
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
     stx Vera::Reg::Data0
@@ -267,17 +307,25 @@ update_grid_patterns:
     ldy y_position
     jsr set_lookup_addr
     ldy #0
+@loop:
+    ldx #0
+    lda (lookup_addr),y
+    cmp #$FF
+    bcc :+
+        lda (mix0_lookup_addr),y
+        ldx #1
     :
-        lda (lookup_addr),y
-        sta Grid::channel_to_pattern,y
-        iny
-        cpy #Grid::NUM_CHANNELS
-        bcc :-
+    sta Grid::channel_to_pattern,y
+    txa
+    sta Grid::channel_is_inherited,y
+    iny
+    cpy #Grid::NUM_CHANNELS
+    bcc @loop
 
     rts
 
 
-set_ram_bank: 
+set_ram_bank:
     lda base_bank
     sta x16::Reg::RAMBank
     rts
@@ -296,6 +344,7 @@ set_lookup_addr: ; input: .Y = row
     asl
     rol lookup_addr+1
     sta lookup_addr
+    sta mix0_lookup_addr
 
     lda mix
     asl
@@ -304,6 +353,8 @@ set_lookup_addr: ; input: .Y = row
     adc #$A0
     adc lookup_addr+1
     sta lookup_addr+1
+    and #$A3
+    sta mix0_lookup_addr+1
 
     rts
 .endscope

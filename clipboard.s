@@ -170,12 +170,16 @@ copy_sequencer_rows:
     jsr Sequencer::set_lookup_addr
 
     ldy #0
+@columnloop:
+    lda (Sequencer::lookup_addr),y
+    cmp #$FF
+    bne :+
+        lda (Sequencer::mix0_lookup_addr),y
     :
-        lda (Sequencer::lookup_addr),y
-        sta tmp_paste_buffer,y
-        iny
-        cpy #Grid::NUM_CHANNELS
-        bcc :-
+    sta tmp_paste_buffer,y
+    iny
+    cpy #Grid::NUM_CHANNELS
+    bcc @columnloop
 
     ldx #0
     ldy clip_y_iterator
