@@ -361,7 +361,14 @@ main:
         jsr Function::delete_sequencer_row
     :
 
-
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_SET_SEQ_CELL
+    bne :+
+        stz Function::op_dispatch_flag
+        lda Function::op_dispatch_operand
+        stz Function::op_dispatch_operand
+        jsr Function::set_sequencer_cell
+    :
 
     VERA_SET_ADDR ($0010+$1B000),2
     lda Grid::cursor_position

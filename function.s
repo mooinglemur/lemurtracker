@@ -19,7 +19,7 @@ OP_INC_SEQ_CELL = 11
 OP_GRID_ENTRY = 12
 OP_INC_SEQ_MAX_ROW = 13
 OP_DELETE_SEQ = 14
-
+OP_SET_SEQ_CELL = 15
 
 op_dispatch_flag: .byte $00
 op_dispatch_operand: .res 1
@@ -307,7 +307,7 @@ delete_cell_above:
 
 
 
-delete_sequencer_row: ; uses tmp1,tmp2,tmp3
+delete_sequencer_row: ; uses tmp1,tmp2,tmp3,tmp4
     ; if we only have one row, do nothing
     ldy Sequencer::max_row
     bne :+
@@ -319,22 +319,34 @@ delete_sequencer_row: ; uses tmp1,tmp2,tmp3
 
     ldx Grid::x_position
     ldy Sequencer::y_position ; start y position
-    sty tmp3 ; end y position (the same as start, if there is only one row to do)
+    iny
+    sty tmp3 ; end y position (this is the row we copy up)
     lda Sequencer::selection_active ; is selection active? if so, we delete the selection instead
     beq @after_selection
 
     ldy Sequencer::selection_top_y
     sty Sequencer::y_position ; start y position
     ldy Sequencer::selection_bottom_y
+    iny
     sty tmp3 ; end y position
     stz Sequencer::selection_active ; deselect
 
 @after_selection:
+    lda tmp3
+    sta tmp4 ; need to keep a copy of tmp3 for the mix loop
     ldy Sequencer::y_position
     jsr Undo::store_sequencer_max_row ; makes sure undo returns us to the correct mix and position
+    lda tmp3
+    sec
+    sbc Sequencer::y_position
+    sta tmp2
     lda Sequencer::max_row
-    sta tmp2 ; save max_row
-@selectionloop:
+    sec
+    sbc tmp2
+    sta tmp2; save new max_row
+    bpl :+
+        inc tmp2
+    :
     ; we need to shift everything up in this column from cursor position down
     ; to the end of the sequencer, (in all mixes!)
     lda #0
@@ -342,38 +354,48 @@ delete_sequencer_row: ; uses tmp1,tmp2,tmp3
 @mixloop:
     ldy Sequencer::y_position
     sty tmp1 ; reset tmp1 to remaining top row of deletion
+    ldy tmp4
+    sty tmp3
 @loop:
-    ldy tmp1
-    jsr Sequencer::set_lookup_addr
-
+    ldy tmp3
     cpy Sequencer::max_row
+    beq @copy_row
     bcs @empty_row
 @copy_row:
+    ldy tmp1
     ldx Grid::x_position
     jsr Undo::store_sequencer_row
     jsr Sequencer::set_ram_bank
 
+    ldy tmp3
+    jsr Sequencer::set_lookup_addr
+
     ldy #0
     :
-        phy
-
-        tya
-        clc
-        adc #Grid::NUM_CHANNELS
-        tay
         lda (Sequencer::lookup_addr),y
-        ply
-        sta (Sequencer::lookup_addr),y
+        sta tmp8b,y
+        iny
+        cpy #8
+        bcc :-
 
+    ldy tmp1
+    jsr Sequencer::set_lookup_addr
+
+    ldy #0
+    :
+        lda tmp8b,y
+        sta (Sequencer::lookup_addr),y
         iny
         cpy #8
         bcc :-
 
     inc tmp1
+    inc tmp3
     bra @loop
 
 @empty_row:
-
+    ldy tmp1
+    jsr Sequencer::set_lookup_addr
     jsr Undo::store_sequencer_row
     jsr Sequencer::set_ram_bank
 
@@ -384,20 +406,18 @@ delete_sequencer_row: ; uses tmp1,tmp2,tmp3
         iny
         cpy #8
         bcc :-
+    ldy tmp1
+    cpy tmp2 ; max row
+    bcs @check_mix
 
+    inc tmp1
+    inc tmp3
+    bra @loop
 @check_mix: ; Chex mix
     inc Sequencer::mix
     lda Sequencer::mix
     cmp #Sequencer::MIX_LIMIT
     bcc @mixloop
-@check_selection:
-    dec tmp2 ; max row goes down by 1
-    beq @finalize ; if we're on the last row, we are not allowed to delete it
-    dec tmp3
-    bmi @finalize
-    lda tmp3
-    cmp Sequencer::y_position
-    bcs @selectionloop
 @finalize:
     pla ; restore active mix
     sta Sequencer::mix
@@ -414,6 +434,24 @@ delete_sequencer_row: ; uses tmp1,tmp2,tmp3
         dec Sequencer::y_position
     :
     inc redraw
+@check_mix0_row0: ; if we zeroed out (nulled out) all rows, we need to set them to 0
+    lda Sequencer::mix
+    pha
+    stz Sequencer::mix
+    ldy #0
+    jsr Sequencer::set_lookup_addr
+    pla
+    sta Sequencer::mix
+    ldy #8
+    :
+        dey
+        bmi @end
+        lda (Sequencer::lookup_addr),y
+        cmp #$FF
+        bne :-
+        lda #0
+        sta (Sequencer::lookup_addr),y
+        bra :-
 @end:
     rts
 
@@ -578,6 +616,13 @@ dispatch_redo:
     lda #OP_REDO
     sta op_dispatch_flag
     rts
+
+dispatch_set_sequencer_cell:
+    sta op_dispatch_operand
+    lda #OP_SET_SEQ_CELL
+    sta op_dispatch_flag
+    rts
+
 
 dispatch_undo:
     lda #OP_UNDO
@@ -1537,6 +1582,27 @@ set_grid_y:
     pla
     sta Grid::y_position
     jsr grid_selection_continue
+    inc redraw
+    rts
+
+set_sequencer_cell:
+    sta tmp1 ; store updated value
+    ldx Sequencer::mix
+    bne :+
+        cmp #$FF ; if we were going to set the value to $FF, we must not be in mix 0
+        beq @end
+    :
+
+    ldx Grid::x_position
+    ldy Sequencer::y_position
+    jsr Undo::store_sequencer_row
+    jsr Sequencer::set_ram_bank
+    ldy Grid::x_position
+
+    lda tmp1
+    sta (Sequencer::lookup_addr),y
+    jsr Undo::mark_checkpoint
+@end:
     inc redraw
     rts
 
