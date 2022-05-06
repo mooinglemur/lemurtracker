@@ -27,6 +27,7 @@ op_dispatch_operand: .res 1
 tmp1: .res 1
 tmp2: .res 1
 tmp3: .res 1
+tmp4: .res 1
 tmp8b: .res 8
 
 
@@ -302,25 +303,45 @@ delete_cell_above:
 @end:
     rts
 
-delete_sequencer_row:
+
+
+
+
+delete_sequencer_row: ; uses tmp1,tmp2,tmp3
     ; if we only have one row, do nothing
     ldy Sequencer::max_row
-    beq @end
+    bne :+
+        jmp @end
+    :
 
     lda Sequencer::mix
     pha ; preserve currently selected mix
 
     ldx Grid::x_position
+    ldy Sequencer::y_position ; start y position
+    sty tmp3 ; end y position (the same as start, if there is only one row to do)
+    lda Sequencer::selection_active ; is selection active? if so, we delete the selection instead
+    beq @after_selection
+
+    ldy Sequencer::selection_top_y
+    sty Sequencer::y_position ; start y position
+    ldy Sequencer::selection_bottom_y
+    sty tmp3 ; end y position
+    stz Sequencer::selection_active ; deselect
+
+@after_selection:
     ldy Sequencer::y_position
     jsr Undo::store_sequencer_max_row ; makes sure undo returns us to the correct mix and position
-
+    lda Sequencer::max_row
+    sta tmp2 ; save max_row
+@selectionloop:
     ; we need to shift everything up in this column from cursor position down
     ; to the end of the sequencer, (in all mixes!)
     lda #0
     sta Sequencer::mix
 @mixloop:
     ldy Sequencer::y_position
-    sty tmp1
+    sty tmp1 ; reset tmp1 to remaining top row of deletion
 @loop:
     ldy tmp1
     jsr Sequencer::set_lookup_addr
@@ -369,6 +390,14 @@ delete_sequencer_row:
     lda Sequencer::mix
     cmp #Sequencer::MIX_LIMIT
     bcc @mixloop
+@check_selection:
+    dec tmp2 ; max row goes down by 1
+    beq @finalize ; if we're on the last row, we are not allowed to delete it
+    dec tmp3
+    bmi @finalize
+    lda tmp3
+    cmp Sequencer::y_position
+    bcs @selectionloop
 @finalize:
     pla ; restore active mix
     sta Sequencer::mix
@@ -376,7 +405,14 @@ delete_sequencer_row:
     ldy Sequencer::y_position
     jsr Undo::store_sequencer_max_row ; makes sure redo returns us to the correct mix too
     jsr Undo::mark_checkpoint
-    dec Sequencer::max_row
+    lda tmp2
+    sta Sequencer::max_row
+    ldy Sequencer::y_position
+    beq :+
+        cpy Sequencer::max_row
+        bcc :+
+        dec Sequencer::y_position
+    :
     inc redraw
 @end:
     rts

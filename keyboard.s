@@ -302,8 +302,8 @@ handler4: ; XF_STATE_GRID
     ;     n/  n*  -   =
     .byte $96,$97,$5F,$3D
 @fntbl:
-    .word Function::decrement_grid_y_steps ;up
-    .word Function::increment_grid_y_steps ;dn
+    .word @key_up
+    .word @key_down
     .word @key_left
     .word @key_right
     .word @key_home
@@ -321,6 +321,30 @@ handler4: ; XF_STATE_GRID
     .word Function::increment_grid_octave
     .word @key_minus
     .word @key_equalsplus
+@key_up:
+    lda modkeys
+    and #(MOD_LCTRL|MOD_RCTRL)
+    beq :+
+        jmp Function::decrement_grid_y_steps
+    :
+    lda modkeys
+    and #(MOD_LALT|MOD_RALT)
+    beq :+
+        jmp Function::decrement_sequencer_y
+    :
+    jmp Function::decrement_grid_y
+@key_down:
+    lda modkeys
+    and #(MOD_LCTRL|MOD_RCTRL)
+    beq :+
+        jmp Function::increment_grid_y_steps
+    :
+    lda modkeys
+    and #(MOD_LALT|MOD_RALT)
+    beq :+
+        jmp Function::increment_sequencer_y
+    :
+    jmp Function::increment_grid_y
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
