@@ -1596,6 +1596,7 @@ paste: ; .A = paste type
     lda Clipboard::y_height
     jsr insert_sequencer_row
     bcs @end
+    jsr Undo::unmark_checkpoint
 @seq:
     jmp Clipboard::paste_sequencer_rows
 @not_seq:

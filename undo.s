@@ -520,7 +520,13 @@ undo:
     lda undo_size+1
     bne @can_undo
     rts ; immediately return if we can't undo
+
 @can_undo:
+    ; clear selections for now
+    stz Grid::selection_active
+    stz Sequencer::selection_active
+
+
     ; pointer should be at the most recent undo event
     ; reset the bank to the undo bank
     jsr set_ram_bank
@@ -587,7 +593,12 @@ redo:
     lda redo_size+1
     bne @can_redo
     rts ; immediately return if we can't redo
+
 @can_redo:
+    ; clear selections for now
+    stz Grid::selection_active
+    stz Sequencer::selection_active
+
     ; pointer should be behind the first redoable event
     ; reset the bank to the undo bank, and advance
     jsr advance_undo_pointer
@@ -658,9 +669,9 @@ unmark_checkpoint: ; if we want to chain two discrete ops in code
     lda #2
     sta checkpoint
 
-    lda #1
+    lda undo_size
     sec
-    sbc undo_size
+    sbc #1
     sta undo_size
     lda undo_size+1
     sbc #0
