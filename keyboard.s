@@ -505,10 +505,10 @@ handler6: ; XF_STATE_SEQUENCER
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
-            lda #2 ; insert paste
+            lda #1 ; insert paste
             jmp Function::dispatch_paste
         :
-        lda #1 ; regular paste
+        lda #0 ; regular paste
         jmp Function::dispatch_paste
     :
 

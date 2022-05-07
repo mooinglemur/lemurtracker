@@ -1437,11 +1437,10 @@ insert_sequencer_row: ; uses tmp1,tmp2,tmp3,tmp4
     sta Sequencer::mix
 @mixloop:
     lda Sequencer::max_row
-    inc
+    sta tmp2 ; tmp3 is the src cursor
+    clc
+    adc tmp1
     sta tmp3 ; tmp3 is the dest cursor
-    sec
-    sbc tmp1
-    sta tmp2 ; tmp2 is the source cursor
 @loop:
     ldy tmp3
     ldx Grid::x_position
@@ -1586,13 +1585,21 @@ note_entry:
 paste: ; .A = paste type
     ldx xf_state
     cpx #XF_STATE_GRID
-    bne :+
-        jmp Clipboard::paste_cells
-    :
+    bne @not_grid
+    jmp Clipboard::paste_cells
+@not_grid:
     cpx #XF_STATE_SEQUENCER
-    bne :+
-        jmp Clipboard::paste_sequencer_rows
-    :
+    bne @not_seq
+    cmp #0
+    beq @seq
+    ; paste insert
+    lda Clipboard::y_height
+    jsr insert_sequencer_row
+    bcs @end
+@seq:
+    jmp Clipboard::paste_sequencer_rows
+@not_seq:
+@end:
     rts
 
 play_note: ;.A = note, .X = column, .Y = instrument

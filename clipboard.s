@@ -142,7 +142,7 @@ copy_grid_cells:
 
     ; we've completed the copy operation
     ; or cop-eration for short
-    lda sel_y_iterator
+    lda clip_y_iterator
     sta y_height
     lda #1
     sta content_type
@@ -209,7 +209,7 @@ copy_sequencer_rows:
 
     ; we've completed the copy operation
     ; or cop-eration for short
-    lda sel_y_iterator
+    lda clip_y_iterator
     sta y_height
     lda #2
     sta content_type
@@ -355,7 +355,6 @@ paste_cells:  ; .A bitfield
 
 
 paste_sequencer_rows:
-    sta tmp1
 
     lda content_type
     cmp #2
