@@ -370,6 +370,15 @@ main:
         jsr Function::set_sequencer_cell
     :
 
+    lda Function::op_dispatch_flag
+    cmp #Function::OP_INSERT_SEQ
+    bne :+
+        stz Function::op_dispatch_flag
+        lda Function::op_dispatch_operand
+        stz Function::op_dispatch_operand
+        jsr Function::insert_sequencer_row
+    :
+
     VERA_SET_ADDR ($0010+$1B000),2
     lda Grid::cursor_position
     jsr xf_byte_to_hex

@@ -535,8 +535,8 @@ handler6: ; XF_STATE_SEQUENCER
     ; this is the static keymapping
     ;     up  dn  lt  rt  hm  end pgu pgd F1  spc
     .byte $80,$81,$82,$83,$84,$85,$86,$87,$8A,$20
-    ;     -   =   tab del I
-    .byte $5F,$3D,$09,$89,$49
+    ;     -   =   tab ins del I
+    .byte $5F,$3D,$09,$88,$89,$49
 @fntbl:
     .word Function::decrement_sequencer_y ;up
     .word Function::increment_sequencer_y ;dn
@@ -551,6 +551,7 @@ handler6: ; XF_STATE_SEQUENCER
     .word @key_minus
     .word @key_equalsplus
     .word @key_tab
+    .word @key_insert
     .word @key_delete
     .word @key_i
 @key_home:
@@ -603,6 +604,13 @@ handler6: ; XF_STATE_SEQUENCER
         jmp Function::decrement_sequencer_x_without_starting_selection
     :
     jmp Function::increment_sequencer_x
+@key_insert:
+    lda Grid::entrymode
+    bne :+
+        jmp @end
+    :
+    lda #1
+    jmp Function::dispatch_insert_sequencer_row
 @key_delete:
     jmp Function::dispatch_delete_sequencer_row
 @key_i: ; inherit

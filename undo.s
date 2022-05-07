@@ -241,6 +241,7 @@ mark_checkpoint: ; no inputs, we call this to mark the last undo event as
     rts
 
 
+
 mark_redo_stop: ; affects .A, .Y
     ; this does nothing but ensure the next event slot is marked as a stop point
     ; so that redo stops at the right point
@@ -644,6 +645,27 @@ redo:
     bra @can_redo
 @end:
     inc redraw
+    rts
+
+unmark_checkpoint: ; if we want to chain two discrete ops in code
+                   ; where the first marks a chackpoint, this function
+                   ; can undo it
+
+    lda checkpoint
+    cmp #2
+    beq @end
+
+    lda #2
+    sta checkpoint
+
+    lda #1
+    sec
+    sbc undo_size
+    sta undo_size
+    lda undo_size+1
+    sbc #0
+    sta undo_size+1
+@end:
     rts
 
 

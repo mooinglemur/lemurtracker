@@ -20,6 +20,7 @@ OP_GRID_ENTRY = 12
 OP_INC_SEQ_MAX_ROW = 13
 OP_DELETE_SEQ = 14
 OP_SET_SEQ_CELL = 15
+OP_INSERT_SEQ = 16
 
 op_dispatch_flag: .byte $00
 op_dispatch_operand: .res 1
@@ -407,8 +408,10 @@ delete_sequencer_row: ; uses tmp1,tmp2,tmp3,tmp4
         cpy #8
         bcc :-
     ldy tmp1
-    cpy tmp2 ; max row
+    cpy tmp4 ; max selection+1
     bcs @check_mix
+    cpy #127 ; special case if all rows are in use, done with last row
+    beq @check_mix
 
     inc tmp1
     inc tmp3
@@ -417,7 +420,9 @@ delete_sequencer_row: ; uses tmp1,tmp2,tmp3,tmp4
     inc Sequencer::mix
     lda Sequencer::mix
     cmp #Sequencer::MIX_LIMIT
-    bcc @mixloop
+    bcs :+
+        jmp @mixloop
+    :
 @finalize:
     pla ; restore active mix
     sta Sequencer::mix
@@ -565,6 +570,12 @@ dispatch_insert:
     sta op_dispatch_flag
     rts
 
+dispatch_insert_sequencer_row:
+    sta op_dispatch_operand
+    lda #OP_INSERT_SEQ
+    sta op_dispatch_flag
+    rts
+
 
 dispatch_note_entry: ; make note entry happen outside of IRQ
     ; .A = notecode, we need convert to note value (MIDI number)
@@ -627,6 +638,51 @@ dispatch_set_sequencer_cell:
 dispatch_undo:
     lda #OP_UNDO
     sta op_dispatch_flag
+    rts
+
+get_first_unused_patterns:
+    jsr Sequencer::set_ram_bank
+    stz Sequencer::lookup_addr
+    lda #$A0
+    sta Sequencer::lookup_addr+1
+
+    ; zero out tmp8b
+    lda #0
+    ldy #0
+    :
+        sta tmp8b,y
+        iny
+        cpy #8
+        bcc :-
+@mainloop:
+    ldy #0
+@rowloop:
+    lda (Sequencer::lookup_addr),y
+    cmp #$ff
+    beq @next
+    cmp tmp8b,y
+    bcc @next
+    cmp Sequencer::max_pattern
+    bcc :+
+        lda Sequencer::max_pattern
+        dec
+    :
+    sta tmp8b,y
+@next:
+    iny
+    cpy #8
+    bcc @rowloop
+    lda Sequencer::lookup_addr
+    clc
+    adc #8
+    sta Sequencer::lookup_addr
+    lda Sequencer::lookup_addr+1
+    adc #0
+    cmp #$C0
+    bcs @end
+    sta Sequencer::lookup_addr+1
+    bra @mainloop
+@end:
     rts
 
 
@@ -1205,48 +1261,8 @@ increment_sequencer_max_row: ; increment max row, and populate with first unused
     cmp #Sequencer::ROW_LIMIT
     bcs @end
 
-    jsr Sequencer::set_ram_bank
-    stz Sequencer::lookup_addr
-    lda #$A0
-    sta Sequencer::lookup_addr+1
+    jsr get_first_unused_patterns
 
-    ; zero out tmp8b
-    lda #0
-    ldy #0
-    :
-        sta tmp8b,y
-        iny
-        cpy #8
-        bcc :-
-@mainloop:
-    ldy #0
-@rowloop:
-    lda (Sequencer::lookup_addr),y
-    cmp #$ff
-    beq @next
-    cmp tmp8b,y
-    bcc @next
-    cmp Sequencer::max_pattern
-    bcc :+
-        lda Sequencer::max_pattern
-        dec
-    :
-    sta tmp8b,y
-@next:
-    iny
-    cpy #8
-    bcc @rowloop
-    lda Sequencer::lookup_addr
-    clc
-    adc #8
-    sta Sequencer::lookup_addr
-    lda Sequencer::lookup_addr+1
-    adc #0
-    cmp #$C0
-    bcs @loopend
-    sta Sequencer::lookup_addr+1
-    bra @mainloop
-@loopend:
     ldx Grid::x_position
     ldy Sequencer::max_row
     jsr Undo::store_sequencer_max_row
@@ -1397,6 +1413,132 @@ insert_cell:
 @end:
     rts
 
+insert_sequencer_row: ; uses tmp1,tmp2,tmp3,tmp4
+    sta tmp1 ; number of rows we're inserting
+    ; if we would exceed max rows, return with error
+    clc
+    adc Sequencer::max_row
+    cmp #Sequencer::ROW_LIMIT
+    bcc :+
+        ; carry is already set to indicate error
+        rts
+    :
+
+    lda Sequencer::mix
+    pha ; preserve currently selected mix
+
+    ldx Grid::x_position
+    ldy Sequencer::y_position
+    jsr Undo::store_sequencer_max_row ; makes sure undo returns us to the correct mix and position
+
+    ; we need to shift everything from cursor position down
+    ; to the end of the sequencer, (in all mixes!)
+    lda #0
+    sta Sequencer::mix
+@mixloop:
+    lda Sequencer::max_row
+    inc
+    sta tmp3 ; tmp3 is the dest cursor
+    sec
+    sbc tmp1
+    sta tmp2 ; tmp2 is the source cursor
+@loop:
+    ldy tmp3
+    ldx Grid::x_position
+    jsr Undo::store_sequencer_row
+
+    ldy tmp2
+    jsr Sequencer::set_lookup_addr
+
+    ldy #0
+    :
+        lda (Sequencer::lookup_addr),y
+        sta tmp8b,y
+        iny
+        cpy #8
+        bcc :-
+
+    ldy tmp3
+    jsr Sequencer::set_lookup_addr
+
+    ldy #0
+    :
+        lda tmp8b,y
+        sta (Sequencer::lookup_addr),y
+        iny
+        cpy #8
+        bcc :-
+
+    dec tmp2
+    dec tmp3
+    lda tmp2
+    bmi @fill_loop ; in case we wrapped around to FF
+    cmp Sequencer::y_position
+    bcs @loop
+@fill_loop:
+    ; tmp2 is now in the row above our insert
+    ; tmp3 is now in a row that we must nullify (in mixes 1-7)
+    ; or populate (in mix 0)
+    ldy tmp3
+    ldx Grid::x_position
+    jsr Undo::store_sequencer_row
+    ldy tmp3
+    jsr Sequencer::set_lookup_addr
+
+    lda Sequencer::mix
+    beq @mix0
+
+
+    lda #$FF
+    ldy #0
+    :
+        sta (Sequencer::lookup_addr),y
+        iny
+        cpy #8
+        bcc :-
+    bra @check_fill
+@mix0:
+    jsr get_first_unused_patterns ; stores in tmp8b
+
+    ldy tmp3
+    jsr Sequencer::set_lookup_addr
+
+    ldy #0
+    :
+        lda tmp8b,y
+        inc
+        sta (Sequencer::lookup_addr),y
+        iny
+        cpy #8
+        bcc :-
+@check_fill:
+    dec tmp3
+    lda tmp3
+    bmi @check_mix
+    cmp Sequencer::y_position
+    bcs @fill_loop
+@check_mix: ; Chex mix
+    inc Sequencer::mix
+    lda Sequencer::mix
+    cmp #Sequencer::MIX_LIMIT
+    bcs :+
+        jmp @mixloop
+    :
+@finalize:
+    pla ; restore active mix
+    sta Sequencer::mix
+    ldx Grid::x_position
+    ldy Sequencer::y_position
+    jsr Undo::store_sequencer_max_row ; makes sure redo returns us to the correct mix too
+    jsr Undo::mark_checkpoint
+    lda Sequencer::max_row
+    clc
+    adc tmp1
+    sta Sequencer::max_row
+    inc redraw
+@end:
+    ; carry should already be clear to indicate no error
+    rts
 
 
 note_entry:
@@ -1605,6 +1747,8 @@ set_sequencer_cell:
 @end:
     inc redraw
     rts
+
+
 
 set_sequencer_y:
     pha
