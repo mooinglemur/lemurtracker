@@ -253,7 +253,7 @@ main:
         stz Function::op_dispatch_flag
         lda Function::op_dispatch_operand
         stz Function::op_dispatch_operand
-        jsr Function::note_entry
+        jsr Function::Grid::note_entry
     :
 
     lda Function::op_dispatch_flag
@@ -276,7 +276,7 @@ main:
         ; clear selection too
         stz Grid::selection_active
         stz Function::op_dispatch_flag
-        jsr Function::backspace
+        jsr Function::Grid::backspace
     :
 
     lda Function::op_dispatch_flag
@@ -301,7 +301,7 @@ main:
     cmp #Function::OP_DELETE
     bne :+
         stz Function::op_dispatch_flag
-        jsr Function::delete_selection
+        jsr Function::Grid::delete_selection
 
     :
 
@@ -310,7 +310,7 @@ main:
     bne :+
         stz Function::op_dispatch_flag
         jsr Function::copy
-        jsr Function::delete_selection
+        jsr Function::Grid::delete_selection
     :
 
     lda Function::op_dispatch_flag
@@ -342,7 +342,7 @@ main:
         stz Function::op_dispatch_flag
         lda Function::op_dispatch_operand
         stz Function::op_dispatch_operand
-        jsr Function::grid_entry
+        jsr Function::Grid::entry
     :
 
     lda Function::op_dispatch_flag

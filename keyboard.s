@@ -178,9 +178,9 @@ handler4: ; XF_STATE_GRID
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
-            jmp Function::grid_select_none
+            jmp Function::Grid::select_none
         :
-        jmp Function::grid_select_all
+        jmp Function::Grid::select_all
     :
     ; handle Ctrl+C / Ctrl+Shift+C
     lda keycode
@@ -308,8 +308,8 @@ handler4: ; XF_STATE_GRID
     .word @key_right
     .word @key_home
     .word @key_end
-    .word Function::decrement_grid_y_page
-    .word Function::increment_grid_y_page
+    .word Function::Grid::decrement_y_page
+    .word Function::Grid::increment_y_page
     .word @key_tab
     .word @key_space
     .word @key_leftbracket
@@ -317,55 +317,55 @@ handler4: ; XF_STATE_GRID
     .word @key_F2
     .word @key_backspace
     .word @key_insert
-    .word Function::decrement_grid_octave
-    .word Function::increment_grid_octave
+    .word Function::Grid::decrement_octave
+    .word Function::Grid::increment_octave
     .word @key_minus
     .word @key_equalsplus
 @key_up:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL)
     beq :+
-        jmp Function::decrement_grid_y_steps
+        jmp Function::Grid::decrement_y_steps
     :
     lda modkeys
     and #(MOD_LALT|MOD_RALT)
     beq :+
         jmp Function::decrement_sequencer_y
     :
-    jmp Function::decrement_grid_y
+    jmp Function::Grid::decrement_y
 @key_down:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL)
     beq :+
-        jmp Function::increment_grid_y_steps
+        jmp Function::Grid::increment_y_steps
     :
     lda modkeys
     and #(MOD_LALT|MOD_RALT)
     beq :+
         jmp Function::increment_sequencer_y
     :
-    jmp Function::increment_grid_y
+    jmp Function::Grid::increment_y
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::decrement_grid_x
+        jmp Function::Grid::decrement_x
     :
-    jmp Function::decrement_grid_cursor
+    jmp Function::Grid::decrement_cursor
 @key_right:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::increment_grid_x
+        jmp Function::Grid::increment_x
     :
-    jmp Function::increment_grid_cursor
+    jmp Function::Grid::increment_cursor
 @key_home:
     lda #0
-    jmp Function::set_grid_y
+    jmp Function::Grid::set_y
 @key_end:
     lda Grid::global_pattern_length
     dec
-    jmp Function::set_grid_y
+    jmp Function::Grid::set_y
 @key_space:
     ; Flip state of audition/entry flag
     lda Grid::entrymode
@@ -378,23 +378,23 @@ handler4: ; XF_STATE_GRID
     lda modkeys
     and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::decrement_grid_x_without_starting_selection
+        jmp Function::Grid::decrement_x_without_starting_selection
     :
-    jmp Function::increment_grid_x
+    jmp Function::Grid::increment_x
 @key_leftbracket:
     lda modkeys
     and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::decrement_grid_step
+        jmp Function::Grid::decrement_step
     :
-    jmp Function::decrement_grid_octave
+    jmp Function::Grid::decrement_octave
 @key_rightbracket:
     lda modkeys
     and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::increment_grid_step
+        jmp Function::Grid::increment_step
     :
-    jmp Function::increment_grid_octave
+    jmp Function::Grid::increment_octave
 @key_F2:
     lda #XF_STATE_SEQUENCER
     sta xf_state
