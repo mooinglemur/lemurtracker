@@ -92,6 +92,34 @@ update_grid_patterns:
 
     rts
 
+init:
+    ; clear sequencer bank memory
+    ; set row 0 of mix 0 to all $00
+    ; and all other rows of all mixes to $FF
+    stz SeqState::mix
+    ldy #0
+    jsr SeqState::set_lookup_addr
+    lda #0
+@mainloop:
+    ldy #0
+@rowloop:
+    sta (SeqState::lookup_addr),y
+    iny
+    cpy #8
+    bcc @rowloop
+    lda SeqState::lookup_addr
+    clc
+    adc #8
+    sta SeqState::lookup_addr
+    lda SeqState::lookup_addr+1
+    adc #0
+    cmp #$C0
+    bcs @end
+    sta SeqState::lookup_addr+1
+    lda #$FF
+    bra @mainloop
+@end:
+    rts
 
 
 .endscope

@@ -8,6 +8,8 @@ tmp3: .res 1
 
 .include "func/selection_start.s"
 .include "func/selection_continue.s"
+.include "func/select_all.s"
+.include "func/select_none.s"
 .include "func/backspace.s"
 .include "func/delete_cell_above.s"
 .include "func/delete_selection.s"
@@ -26,6 +28,7 @@ tmp3: .res 1
 .include "func/increment_y_page.s"
 .include "func/increment_y_steps.s"
 .include "func/increment_y_steps_strict.s"
+.include "func/insert_cell.s"
 .include "func/note_entry.s"
 .include "func/entry.s"
 .include "func/set_y.s"

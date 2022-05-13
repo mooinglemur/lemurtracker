@@ -178,9 +178,9 @@ handler4: ; XF_STATE_GRID
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
-            jmp Function::Grid::select_none
+            jmp Grid::Func::select_none
         :
-        jmp Function::Grid::select_all
+        jmp Grid::Func::select_all
     :
     ; handle Ctrl+C / Ctrl+Shift+C
     lda keycode
@@ -194,7 +194,7 @@ handler4: ; XF_STATE_GRID
         beq :+
             jmp @end ; ignore Ctrl+Shift+C for now
         :
-        jmp Function::dispatch_copy
+        jmp Dispatch::copy_grid
     :
     ; above here are "nondestructive" ops that don't require note_entry to be true
 
@@ -217,10 +217,10 @@ handler4: ; XF_STATE_GRID
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             lda #%00011111 ; merge paste all
-            jmp Function::dispatch_paste
+            jmp Dispatch::paste_grid
         :
         lda #%00011110 ; non-merge paste all
-        jmp Function::dispatch_paste
+        jmp Dispatch::paste_grid
     :
 
     ; handle Ctrl+X / Ctrl+Shift+X
@@ -234,7 +234,7 @@ handler4: ; XF_STATE_GRID
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         bne :+ ; don't do anything for Ctrl+Shift+X
-        jmp Function::dispatch_cut
+        jmp Dispatch::cut
     :
 
     ; handle Ctrl+Y
@@ -248,7 +248,7 @@ handler4: ; XF_STATE_GRID
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         bne :+
-        jmp Function::dispatch_redo
+        jmp Dispatch::redo
     :
 
 
@@ -263,9 +263,9 @@ handler4: ; XF_STATE_GRID
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
-            jmp Function::dispatch_redo
+            jmp Dispatch::redo
         :
-        jmp Function::dispatch_undo
+        jmp Dispatch::undo
     :
 
     ; handle Delete key with selection active
@@ -274,7 +274,7 @@ handler4: ; XF_STATE_GRID
     bne :+
         lda GridState::selection_active
         beq :+
-        jmp Function::dispatch_delete_selection
+        jmp Dispatch::delete_selection
     :
 
     ; if we're holding down mod keys, don't process entries
@@ -286,13 +286,13 @@ handler4: ; XF_STATE_GRID
     ; XXX entry for other columns besides the note column
     lda keycode
     beq @end
-    jsr Function::dispatch_grid_entry ;.A = keycode
+    jsr Dispatch::grid_entry ;.A = keycode
     bra @end
 @notecolumn:
     ; XXX handle non note functions here that affect the notes
     lda notecode ; if we don't have a valid notecode, skip dispatch
     beq @end
-    jsr Function::dispatch_note_entry ;.A = notecode
+    jsr Dispatch::note_entry ;.A = notecode
 @noentry:
 @end:
     rts
@@ -403,13 +403,13 @@ handler4: ; XF_STATE_GRID
 @key_backspace:
     lda GridState::entrymode
     beq :+
-        jsr Function::dispatch_backspace
+        jsr Dispatch::backspace
     :
     rts
 @key_insert:
     lda GridState::entrymode
     beq :+
-        jsr Function::dispatch_insert
+        jsr Dispatch::insert
     :
     rts
 @key_minus:
@@ -421,9 +421,9 @@ handler4: ; XF_STATE_GRID
         beq :+
             jmp @end
         :
-        jmp Function::decrement_mix
+        jmp Sequencer::Func::decrement_mix
     :
-    jmp Function::dispatch_decrement_sequencer_cell
+    jmp Dispatch::decrement_sequencer_cell
 @key_equalsplus:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL)
@@ -431,11 +431,11 @@ handler4: ; XF_STATE_GRID
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
-            jmp Function::dispatch_increment_sequencer_max_row
+            jmp Dispatch::increment_sequencer_max_row
         :
-        jmp Function::increment_mix
+        jmp Sequencer::Func::increment_mix
     :
-    jmp Function::dispatch_increment_sequencer_cell
+    jmp Dispatch::increment_sequencer_cell
 handler5:
     rts
 
@@ -467,9 +467,9 @@ handler6: ; XF_STATE_SEQUENCER
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
-            jmp Function::sequencer_select_none
+            jmp Sequencer::Func::select_none
         :
-        jmp Function::sequencer_select_all
+        jmp Sequencer::Func::select_all
     :
 
 ; handle Ctrl+C / Ctrl+Shift+C
@@ -484,7 +484,7 @@ handler6: ; XF_STATE_SEQUENCER
         beq :+
             jmp @end ; ignore Ctrl+Shift+C for now
         :
-        jmp Function::dispatch_copy
+        jmp Dispatch::copy_seq
     :
 
     ; above here are "nondestructive" ops that don't require note_entry to be true
@@ -506,10 +506,10 @@ handler6: ; XF_STATE_SEQUENCER
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             lda #1 ; insert paste
-            jmp Function::dispatch_paste
+            jmp Dispatch::paste_seq
         :
         lda #0 ; regular paste
-        jmp Function::dispatch_paste
+        jmp Dispatch::paste_seq
     :
 
 
@@ -524,9 +524,9 @@ handler6: ; XF_STATE_SEQUENCER
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
-            jmp Function::dispatch_redo
+            jmp Dispatch::redo
         :
-        jmp Function::dispatch_undo
+        jmp Dispatch::undo
     :
 @noentry:
 @end:
@@ -581,9 +581,9 @@ handler6: ; XF_STATE_SEQUENCER
         beq :+
             jmp @end
         :
-        jmp Function::decrement_mix
+        jmp Sequencer::Func::decrement_mix
     :
-    jmp Function::dispatch_decrement_sequencer_cell
+    jmp Dispatch::decrement_sequencer_cell
 @key_equalsplus:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL)
@@ -591,11 +591,11 @@ handler6: ; XF_STATE_SEQUENCER
         lda modkeys
         and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
-            jmp Function::dispatch_increment_sequencer_max_row
+            jmp Dispatch::increment_sequencer_max_row
         :
-        jmp Function::increment_mix
+        jmp Sequencer::Func::increment_mix
     :
-    jmp Function::dispatch_increment_sequencer_cell
+    jmp Dispatch::increment_sequencer_cell
 @key_tab:
     stz GridState::cursor_position
     lda modkeys
@@ -610,12 +610,12 @@ handler6: ; XF_STATE_SEQUENCER
         jmp @end
     :
     lda #1
-    jmp Function::dispatch_insert_sequencer_row
+    jmp Dispatch::insert_sequencer_row
 @key_delete:
-    jmp Function::dispatch_delete_sequencer_row
+    jmp Dispatch::delete_sequencer_row
 @key_i: ; inherit
     lda #$FF
-    jmp Function::dispatch_set_sequencer_cell
+    jmp Dispatch::set_sequencer_cell
 
 handler7:
 handler8:

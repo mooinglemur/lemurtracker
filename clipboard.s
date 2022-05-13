@@ -355,6 +355,7 @@ paste_cells:  ; .A bitfield
 
 
 paste_sequencer_rows:
+    sta tmp1
 
     lda content_type
     cmp #2
@@ -362,6 +363,23 @@ paste_sequencer_rows:
         jmp @end
     :
 
+    lda tmp1
+    cmp #0
+    beq @seq
+    ; paste insert
+    lda Clipboard::y_height
+    jsr Sequencer::Func::insert_row
+    bcc :+
+        jmp @end
+    :
+    jsr Undo::unmark_checkpoint
+
+    lda content_type
+    cmp #2
+    beq :+
+        jmp @end
+    :
+@seq:
     stz clip_y_iterator
     lda SeqState::y_position
     sta sel_y_iterator

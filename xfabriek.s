@@ -49,7 +49,7 @@ xf_tmp3: .res 1
 .include "instruments.s"
 .include "clipboard.s"
 
-.include "function.s"
+.include "dispatch.s"
 .include "util.s"
 .include "irq.s"
 .include "keyboard.s"
@@ -202,7 +202,7 @@ main:
     lda #$A0
     sta Undo::lookup_addr+1
 
-    jsr Sequencer::init
+    jsr SeqState::init
 
 ; tmp vvv
     ldy #0
@@ -243,146 +243,162 @@ main:
     lda redraw
     beq :+
         stz redraw
-        jsr Sequencer::draw
+        jsr Sequencer::Func::draw
         jsr Instruments::Func::draw
         jsr Grid::Func::draw
     :
     wai
 
     ; if we have a pending note entry to do
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_NOTE
+    lda Dispatch::flag
+    cmp #Dispatch::OP_NOTE
     bne :+
         ; clear selection too
         stz GridState::selection_active
 
-        stz Function::op_dispatch_flag
-        lda Function::op_dispatch_operand
-        stz Function::op_dispatch_operand
+        stz Dispatch::flag
+        lda Dispatch::operand
+        stz Dispatch::operand
         jsr Grid::Func::note_entry
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_UNDO
+    lda Dispatch::flag
+    cmp #Dispatch::OP_UNDO
     bne :+
-        stz Function::op_dispatch_flag
+        stz Dispatch::flag
         jsr Undo::undo
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_REDO
+    lda Dispatch::flag
+    cmp #Dispatch::OP_REDO
     bne :+
-        stz Function::op_dispatch_flag
+        stz Dispatch::flag
         jsr Undo::redo
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_BACKSPACE
+    lda Dispatch::flag
+    cmp #Dispatch::OP_BACKSPACE
     bne :+
         ; clear selection too
         stz GridState::selection_active
-        stz Function::op_dispatch_flag
+        stz Dispatch::flag
         jsr Grid::Func::backspace
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_INSERT
+    lda Dispatch::flag
+    cmp #Dispatch::OP_INSERT
     bne :+
         ; clear selection too
         stz GridState::selection_active
 
-        stz Function::op_dispatch_flag
-        jsr Function::insert_cell
+        stz Dispatch::flag
+        jsr Grid::Func::insert_cell
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_COPY
+    lda Dispatch::flag
+    cmp #Dispatch::OP_COPY_GRID
     bne :+
-        stz Function::op_dispatch_flag
-        jsr Function::copy
-
+        stz Dispatch::flag
+        jsr Clipboard::copy_grid_cells
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_DELETE
+    lda Dispatch::flag
+    cmp #Dispatch::OP_COPY_SEQ
     bne :+
-        stz Function::op_dispatch_flag
+        stz Dispatch::flag
+        jsr Clipboard::copy_sequencer_rows
+    :
+
+    lda Dispatch::flag
+    cmp #Dispatch::OP_DELETE
+    bne :+
+        stz Dispatch::flag
         jsr Grid::Func::delete_selection
 
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_CUT
+    lda Dispatch::flag
+    cmp #Dispatch::OP_CUT
     bne :+
-        stz Function::op_dispatch_flag
-        jsr Function::copy
+        stz Dispatch::flag
+        jsr Clipboard::copy_grid_cells
         jsr Grid::Func::delete_selection
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_PASTE
+    lda Dispatch::flag
+    cmp #Dispatch::OP_PASTE_GRID
     bne :+
-        stz Function::op_dispatch_flag
-        lda Function::op_dispatch_operand
-        stz Function::op_dispatch_operand
-        jsr Function::paste
+        stz Dispatch::flag
+        lda Dispatch::operand
+        stz Dispatch::operand
+        jsr Clipboard::paste_cells
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_DEC_SEQ_CELL
+    lda Dispatch::flag
+    cmp #Dispatch::OP_PASTE_SEQ
     bne :+
-        stz Function::op_dispatch_flag
-        jsr Function::decrement_sequencer_cell
+        stz Dispatch::flag
+        lda Dispatch::operand
+        stz Dispatch::operand
+        jsr Clipboard::paste_sequencer_rows
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_INC_SEQ_CELL
+
+    lda Dispatch::flag
+    cmp #Dispatch::OP_DEC_SEQ_CELL
     bne :+
-        stz Function::op_dispatch_flag
-        jsr Function::increment_sequencer_cell
+        stz Dispatch::flag
+        jsr Sequencer::Func::decrement_cell
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_GRID_ENTRY
+    lda Dispatch::flag
+    cmp #Dispatch::OP_INC_SEQ_CELL
     bne :+
-        stz Function::op_dispatch_flag
-        lda Function::op_dispatch_operand
-        stz Function::op_dispatch_operand
+        stz Dispatch::flag
+        jsr Sequencer::Func::increment_cell
+    :
+
+    lda Dispatch::flag
+    cmp #Dispatch::OP_GRID_ENTRY
+    bne :+
+        stz Dispatch::flag
+        lda Dispatch::operand
+        stz Dispatch::operand
         jsr Grid::Func::entry
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_INC_SEQ_MAX_ROW
+    lda Dispatch::flag
+    cmp #Dispatch::OP_INC_SEQ_MAX_ROW
     bne :+
-        stz Function::op_dispatch_flag
-        stz Function::op_dispatch_operand
-        jsr Function::increment_sequencer_max_row
+        stz Dispatch::flag
+        stz Dispatch::operand
+        jsr Sequencer::Func::increment_max_row
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_DELETE_SEQ
+    lda Dispatch::flag
+    cmp #Dispatch::OP_DELETE_SEQ
     bne :+
-        stz Function::op_dispatch_flag
-        stz Function::op_dispatch_operand
-        jsr Function::delete_sequencer_row
+        stz Dispatch::flag
+        stz Dispatch::operand
+        jsr Sequencer::Func::delete_row
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_SET_SEQ_CELL
+    lda Dispatch::flag
+    cmp #Dispatch::OP_SET_SEQ_CELL
     bne :+
-        stz Function::op_dispatch_flag
-        lda Function::op_dispatch_operand
-        stz Function::op_dispatch_operand
+        stz Dispatch::flag
+        lda Dispatch::operand
+        stz Dispatch::operand
         jsr Sequencer::Func::set_cell
     :
 
-    lda Function::op_dispatch_flag
-    cmp #Function::OP_INSERT_SEQ
+    lda Dispatch::flag
+    cmp #Dispatch::OP_INSERT_SEQ
     bne :+
-        stz Function::op_dispatch_flag
-        lda Function::op_dispatch_operand
-        stz Function::op_dispatch_operand
-        jsr Function::insert_sequencer_row
+        stz Dispatch::flag
+        lda Dispatch::operand
+        stz Dispatch::operand
+        jsr Dispatch::insert_sequencer_row
     :
 
     VERA_SET_ADDR ($0010+$1B000),2

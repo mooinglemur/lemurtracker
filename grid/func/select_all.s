@@ -1,12 +1,4 @@
-.scope Grid
-
-
-
-
-
-
-
-select_all:
+.proc select_all
     lda #2
     sta GridState::selection_active
     lda GridState::global_pattern_length
@@ -18,11 +10,4 @@ select_all:
     stz GridState::selection_top_y
     inc redraw
     rts
-
-select_none:
-    stz GridState::selection_active
-    inc redraw
-    rts
-
-
-.endscope
+.endproc
