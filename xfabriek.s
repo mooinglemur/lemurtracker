@@ -80,7 +80,7 @@ XF_STATE_NEW_DIALOG = 1
 XF_STATE_SAVE_DIALOG = 2
 XF_STATE_LOAD_DIALOG = 3
 XF_STATE_GRID = 4
-;XF_STATE_PATTERN_EDITOR_ENTRY = 5
+XF_STATE_MENU = 5
 XF_STATE_SEQUENCER = 6
 XF_STATE_INSTRUMENT_PSG = 7
 XF_STATE_INSTRUMENT_FM = 8
@@ -159,7 +159,7 @@ main:
     lda #4
     sta GridState::short_hilight_interval
 
-    jsr xf_irq::setup
+    jsr IRQ::setup
 
     jsr Keyboard::setup_handler
 
@@ -398,7 +398,7 @@ main:
         stz Dispatch::flag
         lda Dispatch::operand
         stz Dispatch::operand
-        jsr Dispatch::insert_sequencer_row
+        jsr Sequencer::Func::insert_row
     :
 
     VERA_SET_ADDR ($0010+$1B000),2
@@ -412,17 +412,17 @@ main:
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
 
-    lda Keyboard::scancode
+    lda KeyboardState::scancode
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
 
-    lda Keyboard::scancode+1
+    lda KeyboardState::scancode+1
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
 
-    lda Keyboard::modkeys
+    lda KeyboardState::modkeys
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
@@ -490,7 +490,7 @@ main:
     jmp @mainloop
 @exit:
 ;	DO THIS WHEN WE'RE EXITING FOR REAL
-    jsr xf_irq::teardown
+    jsr IRQ::teardown
     jsr xf_reset_charset
     rts
 @emumessage:

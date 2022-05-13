@@ -1,24 +1,11 @@
-; keyboard.s - handler for intercepting PS/2 scancodes and storing their effects
+; keyboard.s - handler for intercepting PS/2 scancodes and dispatching their effects
 
 .scope Keyboard
 
-; storage
 old_vec: .res 2
-scancode: .res 2
-modkeys := KeyboardState::modkeys
-keycode: .res 1
-notecode: .res 1
-
 tmp1: .res 2
 tmp2: .res 2
 
-
-MOD_LSHIFT = 1
-MOD_RSHIFT = 2
-MOD_LCTRL = 4
-MOD_RCTRL = 8
-MOD_LALT = 16
-MOD_RALT = 32
 
 setup_handler:
     sei
@@ -52,8 +39,8 @@ handler:
     pha
     phx
 
-    sta scancode
-    stx scancode+1
+    sta KeyboardState::scancode
+    stx KeyboardState::scancode+1
 
     bcs @keyup
 @keydown:
@@ -67,10 +54,10 @@ handler:
     ldy #1
     jsr set_modkeys
 
-    stz scancode
-    stz scancode+1
-    stz notecode
-    stz keycode
+    stz KeyboardState::scancode
+    stz KeyboardState::scancode+1
+    stz KeyboardState::notecode
+    stz KeyboardState::keycode
 @exit:
     plx
     pla
@@ -81,7 +68,7 @@ handler:
 
 
 set_modkeys:
-    ; sets or clears bits in the modkeys variable
+    ; sets or clears bits in the KeyboardState::modkeys variable
     ; bit 0 - $12 - left shift
     ; bit 1 - $59 - right shift
     ; bit 2 - $14 - left ctrl
@@ -90,7 +77,7 @@ set_modkeys:
     ; bit 5 - $E0 $11 - right alt/altgr
 
     lda #0
-    ldx scancode
+    ldx KeyboardState::scancode
     cpx #$12
     bne @not_lshift
     lda #1
@@ -104,7 +91,7 @@ set_modkeys:
     cpx #$14
     bne @not_ctrl
     lda #4
-    ldx scancode+1
+    ldx KeyboardState::scancode+1
     cpx #$E0
     bne @end
     lda #8
@@ -113,7 +100,7 @@ set_modkeys:
     cpx #$11
     bne @not_alt
     lda #16
-    ldx scancode+1
+    ldx KeyboardState::scancode+1
     cpx #$E0
     bne @end
     lda #32
@@ -123,12 +110,12 @@ set_modkeys:
     beq @keydown
 @keyup:
     eor #$ff
-    and modkeys
-    sta modkeys
+    and KeyboardState::modkeys
+    sta KeyboardState::modkeys
     bra @exit
 @keydown:
-    ora modkeys
-    sta modkeys
+    ora KeyboardState::modkeys
+    sta KeyboardState::modkeys
 @exit:
     rts
 
@@ -155,7 +142,7 @@ handler4: ; XF_STATE_GRID
     jsr decode_scancode
     ldy #(@fntbl-@ktbl)
 @loop:
-    lda keycode
+    lda KeyboardState::keycode
     cmp @ktbl-1,y
     beq @match
     dey
@@ -169,28 +156,28 @@ handler4: ; XF_STATE_GRID
     jmp (@fntbl,x)
 @nomatch:
     ; handle Ctrl+A / Ctrl+Shift+A
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$41
     bne :++
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
         beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             jmp Grid::Func::select_none
         :
         jmp Grid::Func::select_all
     :
     ; handle Ctrl+C / Ctrl+Shift+C
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$43
     bne :++
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
         beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             jmp @end ; ignore Ctrl+Shift+C for now
         :
@@ -207,14 +194,14 @@ handler4: ; XF_STATE_GRID
 
     ; handle Ctrl+V / Ctrl+Shift+V
 
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$56
     bne :++
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
         beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             lda #%00011111 ; merge paste all
             jmp Dispatch::paste_grid
@@ -225,28 +212,28 @@ handler4: ; XF_STATE_GRID
 
     ; handle Ctrl+X / Ctrl+Shift+X
 
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$58
     bne :+
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
         beq :+
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         bne :+ ; don't do anything for Ctrl+Shift+X
         jmp Dispatch::cut
     :
 
     ; handle Ctrl+Y
 
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$59
     bne :+
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
         beq :+
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         bne :+
         jmp Dispatch::redo
     :
@@ -254,14 +241,14 @@ handler4: ; XF_STATE_GRID
 
     ; handle Ctrl+Z / Ctrl+Shift+Z
 
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$5A
     bne :++
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
         beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             jmp Dispatch::redo
         :
@@ -269,7 +256,7 @@ handler4: ; XF_STATE_GRID
     :
 
     ; handle Delete key with selection active
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$89
     bne :+
         lda GridState::selection_active
@@ -278,19 +265,19 @@ handler4: ; XF_STATE_GRID
     :
 
     ; if we're holding down mod keys, don't process entries
-    lda modkeys
+    lda KeyboardState::modkeys
     bne @end
 
     lda GridState::cursor_position ; are we in the note column?
     beq @notecolumn
     ; XXX entry for other columns besides the note column
-    lda keycode
+    lda KeyboardState::keycode
     beq @end
-    jsr Dispatch::grid_entry ;.A = keycode
+    jsr Dispatch::grid_entry ;.A = KeyboardState::keycode
     bra @end
 @notecolumn:
     ; XXX handle non note functions here that affect the notes
-    lda notecode ; if we don't have a valid notecode, skip dispatch
+    lda KeyboardState::notecode ; if we don't have a valid notecode, skip dispatch
     beq @end
     jsr Dispatch::note_entry ;.A = notecode
 @noentry:
@@ -322,39 +309,39 @@ handler4: ; XF_STATE_GRID
     .word @key_minus
     .word @key_equalsplus
 @key_up:
-    lda modkeys
-    and #(MOD_LCTRL|MOD_RCTRL)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
     beq :+
         jmp Grid::Func::decrement_y_steps
     :
-    lda modkeys
-    and #(MOD_LALT|MOD_RALT)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LALT|KeyboardState::MOD_RALT)
     beq :+
         jmp Sequencer::Func::decrement_y
     :
     jmp Grid::Func::decrement_y
 @key_down:
-    lda modkeys
-    and #(MOD_LCTRL|MOD_RCTRL)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
     beq :+
         jmp Grid::Func::increment_y_steps
     :
-    lda modkeys
-    and #(MOD_LALT|MOD_RALT)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LALT|KeyboardState::MOD_RALT)
     beq :+
         jmp Sequencer::Func::increment_y
     :
     jmp Grid::Func::increment_y
 @key_left:
-    lda modkeys
-    and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL|KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
     beq :+
         jmp Grid::Func::decrement_x
     :
     jmp Grid::Func::decrement_cursor
 @key_right:
-    lda modkeys
-    and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL|KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
     beq :+
         jmp Grid::Func::increment_x
     :
@@ -375,22 +362,22 @@ handler4: ; XF_STATE_GRID
     rts
 @key_tab:
     stz GridState::cursor_position
-    lda modkeys
-    and #(MOD_LSHIFT|MOD_RSHIFT)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
     beq :+
         jmp Grid::Func::decrement_x_without_starting_selection
     :
     jmp Grid::Func::increment_x
 @key_leftbracket:
-    lda modkeys
-    and #(MOD_LSHIFT|MOD_RSHIFT)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
     beq :+
         jmp Grid::Func::decrement_step
     :
     jmp Grid::Func::decrement_octave
 @key_rightbracket:
-    lda modkeys
-    and #(MOD_LSHIFT|MOD_RSHIFT)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
     beq :+
         jmp Grid::Func::increment_step
     :
@@ -413,11 +400,11 @@ handler4: ; XF_STATE_GRID
     :
     rts
 @key_minus:
-    lda modkeys
-    and #(MOD_LCTRL|MOD_RCTRL)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
     beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             jmp @end
         :
@@ -425,11 +412,11 @@ handler4: ; XF_STATE_GRID
     :
     jmp Dispatch::decrement_sequencer_cell
 @key_equalsplus:
-    lda modkeys
-    and #(MOD_LCTRL|MOD_RCTRL)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
     beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             jmp Dispatch::increment_sequencer_max_row
         :
@@ -444,7 +431,7 @@ handler6: ; XF_STATE_SEQUENCER
     jsr decode_scancode
     ldy #(@fntbl-@ktbl)
 @loop:
-    lda keycode
+    lda KeyboardState::keycode
     cmp @ktbl-1,y
     beq @match
     dey
@@ -458,14 +445,14 @@ handler6: ; XF_STATE_SEQUENCER
     jmp (@fntbl,x)
 @nomatch:
     ; handle Ctrl+A / Ctrl+Shift+A
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$41
     bne :++
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
         beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             jmp Sequencer::Func::select_none
         :
@@ -473,14 +460,14 @@ handler6: ; XF_STATE_SEQUENCER
     :
 
 ; handle Ctrl+C / Ctrl+Shift+C
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$43
     bne :++
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
         beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             jmp @end ; ignore Ctrl+Shift+C for now
         :
@@ -496,14 +483,14 @@ handler6: ; XF_STATE_SEQUENCER
 
     ; handle Ctrl+V / Ctrl+Shift+V
 
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$56
     bne :++
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
         beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             lda #1 ; insert paste
             jmp Dispatch::paste_seq
@@ -515,14 +502,14 @@ handler6: ; XF_STATE_SEQUENCER
 
     ; handle Ctrl+Z / Ctrl+Shift+Z
 
-    lda keycode
+    lda KeyboardState::keycode
     cmp #$5A
     bne :++
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
         beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             jmp Dispatch::redo
         :
@@ -573,11 +560,11 @@ handler6: ; XF_STATE_SEQUENCER
     inc redraw
     rts
 @key_minus:
-    lda modkeys
-    and #(MOD_LCTRL|MOD_RCTRL)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
     beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             jmp @end
         :
@@ -585,11 +572,11 @@ handler6: ; XF_STATE_SEQUENCER
     :
     jmp Dispatch::decrement_sequencer_cell
 @key_equalsplus:
-    lda modkeys
-    and #(MOD_LCTRL|MOD_RCTRL)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
     beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
+        lda KeyboardState::modkeys
+        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
         beq :+
             jmp Dispatch::increment_sequencer_max_row
         :
@@ -598,8 +585,8 @@ handler6: ; XF_STATE_SEQUENCER
     jmp Dispatch::increment_sequencer_cell
 @key_tab:
     stz GridState::cursor_position
-    lda modkeys
-    and #(MOD_LSHIFT|MOD_RSHIFT)
+    lda KeyboardState::modkeys
+    and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
     beq :+
         jmp Sequencer::Func::decrement_x_without_starting_selection
     :
@@ -632,7 +619,7 @@ handler15:
 decode_scancode:
     ldy #(@scancodeh-@scancodel)
 @loop:
-    lda scancode
+    lda KeyboardState::scancode
     cmp @scancodel-1,y
     beq @checkh
 @loop_cont:
@@ -640,15 +627,15 @@ decode_scancode:
     bne @loop
     bra @nomatch
 @checkh:
-    lda scancode+1
+    lda KeyboardState::scancode+1
     cmp @scancodeh-1,y
     beq @match
     bra @loop_cont
 @match:
     lda @keycode-1,y
-    sta keycode
+    sta KeyboardState::keycode
     lda @notecode-1,y
-    sta notecode
+    sta KeyboardState::notecode
 @nomatch:
     rts
 @scancodel:

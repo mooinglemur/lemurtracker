@@ -26,7 +26,6 @@ set_ram_bank:
     rts
 
 
-
 store_sequencer_row: ; takes in .X = channel column (for position restore), .Y = row, affects all registers
     lda #2
     sta tmp_undo_buffer

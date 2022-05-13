@@ -1,3 +1,6 @@
+; Instrument state scope
+; This holds the state of the instrument table,
+; a few constants, and some utility functions for changing that state
 .scope InstState
 
 y_position: .res 1 ; which instrument row are we in

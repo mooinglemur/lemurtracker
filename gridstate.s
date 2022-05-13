@@ -112,9 +112,6 @@ add_base_bank:
 
     rts
 
-
-
-
 .endproc
 
 .endscope

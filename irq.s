@@ -1,9 +1,4 @@
-; This is for the 65C02.  This assembler directive enables
-; the use of 65C02-specific mnemonics.
-; (PHX/PLX, PHY/PLY, BRA, ...)
-.PC02
-
-.scope xf_irq
+.scope IRQ
 .segment "CODE"
 previous_handler: .res 2
 
