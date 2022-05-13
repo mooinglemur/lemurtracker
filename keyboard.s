@@ -5,7 +5,7 @@
 ; storage
 old_vec: .res 2
 scancode: .res 2
-modkeys := GKeyboard::modkeys
+modkeys := KeyboardState::modkeys
 keycode: .res 1
 notecode: .res 1
 
@@ -198,7 +198,7 @@ handler4: ; XF_STATE_GRID
     :
     ; above here are "nondestructive" ops that don't require note_entry to be true
 
-    lda Grid::entrymode
+    lda GridState::entrymode
     bne :+
         jmp @noentry
     :
@@ -272,7 +272,7 @@ handler4: ; XF_STATE_GRID
     lda keycode
     cmp #$89
     bne :+
-        lda Grid::selection_active
+        lda GridState::selection_active
         beq :+
         jmp Function::dispatch_delete_selection
     :
@@ -281,7 +281,7 @@ handler4: ; XF_STATE_GRID
     lda modkeys
     bne @end
 
-    lda Grid::cursor_position ; are we in the note column?
+    lda GridState::cursor_position ; are we in the note column?
     beq @notecolumn
     ; XXX entry for other columns besides the note column
     lda keycode
@@ -308,8 +308,8 @@ handler4: ; XF_STATE_GRID
     .word @key_right
     .word @key_home
     .word @key_end
-    .word Function::Grid::decrement_y_page
-    .word Function::Grid::increment_y_page
+    .word Grid::Func::decrement_y_page
+    .word Grid::Func::increment_y_page
     .word @key_tab
     .word @key_space
     .word @key_leftbracket
@@ -317,97 +317,97 @@ handler4: ; XF_STATE_GRID
     .word @key_F2
     .word @key_backspace
     .word @key_insert
-    .word Function::Grid::decrement_octave
-    .word Function::Grid::increment_octave
+    .word Grid::Func::decrement_octave
+    .word Grid::Func::increment_octave
     .word @key_minus
     .word @key_equalsplus
 @key_up:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL)
     beq :+
-        jmp Function::Grid::decrement_y_steps
+        jmp Grid::Func::decrement_y_steps
     :
     lda modkeys
     and #(MOD_LALT|MOD_RALT)
     beq :+
-        jmp Function::decrement_sequencer_y
+        jmp Sequencer::Func::decrement_y
     :
-    jmp Function::Grid::decrement_y
+    jmp Grid::Func::decrement_y
 @key_down:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL)
     beq :+
-        jmp Function::Grid::increment_y_steps
+        jmp Grid::Func::increment_y_steps
     :
     lda modkeys
     and #(MOD_LALT|MOD_RALT)
     beq :+
-        jmp Function::increment_sequencer_y
+        jmp Sequencer::Func::increment_y
     :
-    jmp Function::Grid::increment_y
+    jmp Grid::Func::increment_y
 @key_left:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::Grid::decrement_x
+        jmp Grid::Func::decrement_x
     :
-    jmp Function::Grid::decrement_cursor
+    jmp Grid::Func::decrement_cursor
 @key_right:
     lda modkeys
     and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::Grid::increment_x
+        jmp Grid::Func::increment_x
     :
-    jmp Function::Grid::increment_cursor
+    jmp Grid::Func::increment_cursor
 @key_home:
     lda #0
-    jmp Function::Grid::set_y
+    jmp Grid::Func::set_y
 @key_end:
-    lda Grid::global_pattern_length
+    lda GridState::global_pattern_length
     dec
-    jmp Function::Grid::set_y
+    jmp Grid::Func::set_y
 @key_space:
     ; Flip state of audition/entry flag
-    lda Grid::entrymode
+    lda GridState::entrymode
     eor #$01
-    sta Grid::entrymode
+    sta GridState::entrymode
     inc redraw
     rts
 @key_tab:
-    stz Grid::cursor_position
+    stz GridState::cursor_position
     lda modkeys
     and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::Grid::decrement_x_without_starting_selection
+        jmp Grid::Func::decrement_x_without_starting_selection
     :
-    jmp Function::Grid::increment_x
+    jmp Grid::Func::increment_x
 @key_leftbracket:
     lda modkeys
     and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::Grid::decrement_step
+        jmp Grid::Func::decrement_step
     :
-    jmp Function::Grid::decrement_octave
+    jmp Grid::Func::decrement_octave
 @key_rightbracket:
     lda modkeys
     and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::Grid::increment_step
+        jmp Grid::Func::increment_step
     :
-    jmp Function::Grid::increment_octave
+    jmp Grid::Func::increment_octave
 @key_F2:
     lda #XF_STATE_SEQUENCER
     sta xf_state
     inc redraw
     rts
 @key_backspace:
-    lda Grid::entrymode
+    lda GridState::entrymode
     beq :+
         jsr Function::dispatch_backspace
     :
     rts
 @key_insert:
-    lda Grid::entrymode
+    lda GridState::entrymode
     beq :+
         jsr Function::dispatch_insert
     :
@@ -489,7 +489,7 @@ handler6: ; XF_STATE_SEQUENCER
 
     ; above here are "nondestructive" ops that don't require note_entry to be true
 
-    lda Grid::entrymode
+    lda GridState::entrymode
     beq @noentry
 
     ; below here are "destructive" ops, note_entry needs to be on for these
@@ -538,14 +538,14 @@ handler6: ; XF_STATE_SEQUENCER
     ;     -   =   tab ins del I
     .byte $5F,$3D,$09,$88,$89,$49
 @fntbl:
-    .word Function::decrement_sequencer_y ;up
-    .word Function::increment_sequencer_y ;dn
-    .word Function::decrement_sequencer_x ;lt wrapper for grid_x
-    .word Function::increment_sequencer_x ;rt wrapper for grid_x
+    .word Sequencer::Func::decrement_y ;up
+    .word Sequencer::Func::increment_y ;dn
+    .word Sequencer::Func::decrement_x ;lt wrapper for grid_x
+    .word Sequencer::Func::increment_x ;rt wrapper for grid_x
     .word @key_home
     .word @key_end
-    .word Function::decrement_sequencer_y_page
-    .word Function::increment_sequencer_y_page
+    .word Sequencer::Func::decrement_y_page
+    .word Sequencer::Func::increment_y_page
     .word @key_F1
     .word @key_space
     .word @key_minus
@@ -556,15 +556,15 @@ handler6: ; XF_STATE_SEQUENCER
     .word @key_i
 @key_home:
     lda #0
-    jmp Function::set_sequencer_y
+    jmp Sequencer::Func::set_y
 @key_end:
-    lda Sequencer::max_row
-    jmp Function::set_sequencer_y
+    lda SeqState::max_row
+    jmp Sequencer::Func::set_y
 @key_space:
     ; Flip state of audition/entry flag
-    lda Grid::entrymode
+    lda GridState::entrymode
     eor #$01
-    sta Grid::entrymode
+    sta GridState::entrymode
     inc redraw
     rts
 @key_F1:
@@ -597,15 +597,15 @@ handler6: ; XF_STATE_SEQUENCER
     :
     jmp Function::dispatch_increment_sequencer_cell
 @key_tab:
-    stz Grid::cursor_position
+    stz GridState::cursor_position
     lda modkeys
     and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
-        jmp Function::decrement_sequencer_x_without_starting_selection
+        jmp Sequencer::Func::decrement_x_without_starting_selection
     :
-    jmp Function::increment_sequencer_x
+    jmp Sequencer::Func::increment_x
 @key_insert:
-    lda Grid::entrymode
+    lda GridState::entrymode
     bne :+
         jmp @end
     :

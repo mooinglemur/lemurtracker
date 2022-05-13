@@ -26,63 +26,13 @@ set_ram_bank:
     rts
 
 
-store_grid_cell: ; takes in .X = channel column, .Y = row, affects all registers
-    lda #1
-    sta tmp_undo_buffer
-    lda checkpoint
-    sta tmp_undo_buffer+1
-    stx tmp_undo_buffer+3
-    sty tmp_undo_buffer+4
-
-    lda #2
-    sta checkpoint
-
-    jsr Grid::set_lookup_addr ; set lookup while x/y are still untouched
-    ; determine the actual pattern by looking up the index in the currently displayed patterns
-    lda Grid::channel_to_pattern,x
-    sta tmp_undo_buffer+2
-    lda Sequencer::mix
-    sta tmp_undo_buffer+5
-    lda Sequencer::y_position
-    sta tmp_undo_buffer+6
-    lda Grid::cursor_position
-    sta tmp_undo_buffer+7
-    ldy #0
-    :
-        lda (Grid::lookup_addr),y
-        sta tmp_undo_buffer+8,y
-        iny
-        cpy #8
-        bcc :-
-
-    jsr set_ram_bank
-; we need to invalidate the entire redo stack upon storing a new undo event
-; let's do that first
-    jsr invalidate_redo_stack
-; advance the pointer to store our new event
-    jsr advance_undo_pointer
-
-; transfer the tmp_undo_buffer
-    ldy #0
-    :
-        lda tmp_undo_buffer,y
-        sta (lookup_addr),y
-
-        iny
-        cpy #16
-        bcc :-
-
-; make sure a redo for this event doesn't go past here until there are more events
-    jsr mark_redo_stop
-
-    rts
 
 store_sequencer_row: ; takes in .X = channel column (for position restore), .Y = row, affects all registers
     lda #2
     sta tmp_undo_buffer
     lda checkpoint
     sta tmp_undo_buffer+1
-    lda Sequencer::mix
+    lda SeqState::mix
     sta tmp_undo_buffer+2
     stx tmp_undo_buffer+3
     sty tmp_undo_buffer+4
@@ -91,7 +41,7 @@ store_sequencer_row: ; takes in .X = channel column (for position restore), .Y =
     lda #2
     sta checkpoint
 
-    jsr Sequencer::set_lookup_addr ; set lookup while y is still untouched
+    jsr SeqState::set_lookup_addr ; set lookup while y is still untouched
 
     ; zero out the rest of the buffer
     ldy #5
@@ -105,7 +55,7 @@ store_sequencer_row: ; takes in .X = channel column (for position restore), .Y =
     ; save the row
     ldy #0
     :
-        lda (Sequencer::lookup_addr),y
+        lda (SeqState::lookup_addr),y
         sta tmp_undo_buffer+8,y
         iny
         cpy #8
@@ -139,7 +89,7 @@ store_sequencer_max_row: ; takes in .X = channel column, .Y = row, affects all r
     sta tmp_undo_buffer
     lda checkpoint
     sta tmp_undo_buffer+1
-    lda Sequencer::mix
+    lda SeqState::mix
     sta tmp_undo_buffer+2
     stx tmp_undo_buffer+3
     sty tmp_undo_buffer+4
@@ -158,7 +108,7 @@ store_sequencer_max_row: ; takes in .X = channel column, .Y = row, affects all r
         bcc :-
 
     ldy tmp_undo_buffer+3 ; x offset
-    lda Sequencer::max_row
+    lda SeqState::max_row
     sta tmp_undo_buffer+8
 
     jsr set_ram_bank
@@ -359,26 +309,26 @@ handle_undo_redo_grid_cell:
 
     ; first set the state of the sequencer table to that of the event
     lda tmp_undo_buffer+5 ; set the mix number
-    sta Sequencer::mix
+    sta SeqState::mix
     lda tmp_undo_buffer+6 ; set row number
-    sta Sequencer::y_position
+    sta SeqState::y_position
     lda tmp_undo_buffer+7 ; set Grid::cursor_position
-    sta Grid::cursor_position
+    sta GridState::cursor_position
     ; we need to trigger the sequencer to populate Grid state
-    jsr Sequencer::update_grid_patterns
+    jsr SeqState::update_grid_patterns
     ; now position the Grid memory pointer (changes bank too)
     ldx tmp_undo_buffer+3
-    stx Grid::x_position
+    stx GridState::x_position
     ldy tmp_undo_buffer+4
-    sty Grid::y_position
-    jsr Grid::set_lookup_addr
+    sty GridState::y_position
+    jsr GridState::set_lookup_addr
     ; now swap the contents
     ldy #0
     :
-        lda (Grid::lookup_addr),y
+        lda (GridState::lookup_addr),y
         pha
         lda tmp_undo_buffer+8,y
-        sta (Grid::lookup_addr),y
+        sta (GridState::lookup_addr),y
         pla
         sta tmp_undo_buffer+8,y
 
@@ -420,22 +370,22 @@ handle_undo_redo_sequencer_row:
 
     ; set the state of the sequencer table to that of the event
     lda tmp_undo_buffer+2 ; set the mix number
-    sta Sequencer::mix
+    sta SeqState::mix
     ldx tmp_undo_buffer+3
-    stx Grid::x_position
+    stx GridState::x_position
     ldy tmp_undo_buffer+4 ; set row number
-    sty Sequencer::y_position
+    sty SeqState::y_position
 
-    jsr Sequencer::set_lookup_addr
+    jsr SeqState::set_lookup_addr
 
 
     ; now swap the contents (read from seq table first)
     ldy #0
     :
-        lda (Sequencer::lookup_addr),y
+        lda (SeqState::lookup_addr),y
         pha
         lda tmp_undo_buffer+8,y
-        sta (Sequencer::lookup_addr),y
+        sta (SeqState::lookup_addr),y
         pla
         sta tmp_undo_buffer+8,y
         iny
@@ -454,7 +404,7 @@ handle_undo_redo_sequencer_row:
         cpy #16
         bcc :-
 
-    jsr Sequencer::update_grid_patterns
+    jsr SeqState::update_grid_patterns
 
     ; we're done
     rts
@@ -478,21 +428,21 @@ handle_undo_redo_sequencer_max_row:
 
     ; set the state of the sequencer table to that of the event
     lda tmp_undo_buffer+2 ; set the mix number
-    sta Sequencer::mix
+    sta SeqState::mix
     ldx tmp_undo_buffer+3
-    stx Grid::x_position
+    stx GridState::x_position
     ldy tmp_undo_buffer+4 ; set row number
-    sty Sequencer::y_position
+    sty SeqState::y_position
 
-    jsr Sequencer::set_lookup_addr
+    jsr SeqState::set_lookup_addr
 
 
     ; now swap the contents
 
-    lda Sequencer::max_row
+    lda SeqState::max_row
     pha
     lda tmp_undo_buffer+8
-    sta Sequencer::max_row
+    sta SeqState::max_row
     pla
     sta tmp_undo_buffer+8
 
@@ -504,7 +454,7 @@ handle_undo_redo_sequencer_max_row:
     lda tmp_undo_buffer+8
     sta (lookup_addr),y
 
-    jsr Sequencer::update_grid_patterns
+    jsr SeqState::update_grid_patterns
 
     ; we're done
     rts
@@ -523,8 +473,8 @@ undo:
 
 @can_undo:
     ; clear selections for now
-    stz Grid::selection_active
-    stz Sequencer::selection_active
+    stz GridState::selection_active
+    stz SeqState::selection_active
 
 
     ; pointer should be at the most recent undo event
@@ -596,8 +546,8 @@ redo:
 
 @can_redo:
     ; clear selections for now
-    stz Grid::selection_active
-    stz Sequencer::selection_active
+    stz GridState::selection_active
+    stz SeqState::selection_active
 
     ; pointer should be behind the first redoable event
     ; reset the bank to the undo bank, and advance
@@ -679,6 +629,58 @@ unmark_checkpoint: ; if we want to chain two discrete ops in code
 @end:
     rts
 
+
+.proc store_grid_cell ; takes in .X = channel column, .Y = row, affects all registers
+    lda #1
+    sta Undo::tmp_undo_buffer
+    lda Undo::checkpoint
+    sta Undo::tmp_undo_buffer+1
+    stx Undo::tmp_undo_buffer+3
+    sty Undo::tmp_undo_buffer+4
+
+    lda #2
+    sta Undo::checkpoint
+
+    jsr GridState::set_lookup_addr ; set lookup while x/y are still untouched
+    ; determine the actual pattern by looking up the index in the currently displayed patterns
+    lda GridState::channel_to_pattern,x
+    sta Undo::tmp_undo_buffer+2
+    lda SeqState::mix
+    sta Undo::tmp_undo_buffer+5
+    lda SeqState::y_position
+    sta Undo::tmp_undo_buffer+6
+    lda GridState::cursor_position
+    sta Undo::tmp_undo_buffer+7
+    ldy #0
+    :
+        lda (GridState::lookup_addr),y
+        sta Undo::tmp_undo_buffer+8,y
+        iny
+        cpy #8
+        bcc :-
+
+    jsr Undo::set_ram_bank
+; we need to invalidate the entire redo stack upon storing a new undo event
+; let's do that first
+    jsr Undo::invalidate_redo_stack
+; advance the pointer to store our new event
+    jsr Undo::advance_undo_pointer
+
+; transfer the tmp_undo_buffer
+    ldy #0
+    :
+        lda Undo::tmp_undo_buffer,y
+        sta (Undo::lookup_addr),y
+
+        iny
+        cpy #16
+        bcc :-
+
+; make sure a redo for this event doesn't go past here until there are more events
+    jsr Undo::mark_redo_stop
+
+    rts
+.endproc
 
 
 ; undo data format

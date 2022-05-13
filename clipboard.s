@@ -70,21 +70,21 @@ set_lookup_addr:
 copy_grid_cells:
 
     ; if there's no selection, force select the currently active cell
-    lda Grid::selection_active
+    lda GridState::selection_active
     bne @selection_found
     lda #2
-    sta Grid::selection_active
-    lda Grid::x_position
-    sta Grid::selection_left_x
-    sta Grid::selection_right_x
-    lda Grid::y_position
-    sta Grid::selection_top_y
-    sta Grid::selection_bottom_y
+    sta GridState::selection_active
+    lda GridState::x_position
+    sta GridState::selection_left_x
+    sta GridState::selection_right_x
+    lda GridState::y_position
+    sta GridState::selection_top_y
+    sta GridState::selection_bottom_y
     inc redraw
 @selection_found:
-    lda Grid::selection_left_x
+    lda GridState::selection_left_x
     sta sel_x_iterator
-    lda Grid::selection_top_y
+    lda GridState::selection_top_y
     sta sel_y_iterator
     stz clip_x_iterator
     stz clip_y_iterator
@@ -92,11 +92,11 @@ copy_grid_cells:
     ; copy the current cell to the buffer
     ldx sel_x_iterator
     ldy sel_y_iterator
-    jsr Grid::set_lookup_addr
+    jsr GridState::set_lookup_addr
 
     ldy #0
     :
-        lda (Grid::lookup_addr),y
+        lda (GridState::lookup_addr),y
         sta tmp_paste_buffer,y
         iny
         cpy #8
@@ -119,7 +119,7 @@ copy_grid_cells:
     inc clip_x_iterator
     inc sel_x_iterator
     lda sel_x_iterator
-    cmp Grid::selection_right_x
+    cmp GridState::selection_right_x
     beq @loop
     bcc @loop
 
@@ -128,7 +128,7 @@ copy_grid_cells:
 
     ; reset x and increment y at the right edge of the selection
     stz clip_x_iterator
-    lda Grid::selection_left_x
+    lda GridState::selection_left_x
     sta sel_x_iterator
 
     inc clip_y_iterator
@@ -136,7 +136,7 @@ copy_grid_cells:
 
     ; check y bounds
     lda sel_y_iterator
-    cmp Grid::selection_bottom_y
+    cmp GridState::selection_bottom_y
     beq @loop
     bcc @loop
 
@@ -152,33 +152,33 @@ copy_grid_cells:
 copy_sequencer_rows:
 
     ; if there's no selection, force select the currently row
-    lda Sequencer::selection_active
+    lda SeqState::selection_active
     bne @selection_found
     lda #2
-    sta Sequencer::selection_active
-    lda Sequencer::y_position
-    sta Sequencer::selection_top_y
-    sta Sequencer::selection_bottom_y
+    sta SeqState::selection_active
+    lda SeqState::y_position
+    sta SeqState::selection_top_y
+    sta SeqState::selection_bottom_y
     inc redraw
 @selection_found:
-    lda Sequencer::selection_top_y
+    lda SeqState::selection_top_y
     sta sel_y_iterator
     stz clip_y_iterator
 @loop:
     ; copy the current cell to the buffer
     ldy sel_y_iterator
-    jsr Sequencer::set_lookup_addr
+    jsr SeqState::set_lookup_addr
 
     ldy #0
 @columnloop:
-    lda (Sequencer::lookup_addr),y
+    lda (SeqState::lookup_addr),y
     cmp #$FF
     bne :+
-        lda (Sequencer::mix0_lookup_addr),y
+        lda (SeqState::mix0_lookup_addr),y
     :
     sta tmp_paste_buffer,y
     iny
-    cpy #Grid::NUM_CHANNELS
+    cpy #GridState::NUM_CHANNELS
     bcc @columnloop
 
     ldx #0
@@ -194,7 +194,7 @@ copy_sequencer_rows:
         cpy #8
         bcc :-
 
-    lda #Grid::NUM_CHANNELS
+    lda #GridState::NUM_CHANNELS
     sta x_width
 
     ; increment y
@@ -203,7 +203,7 @@ copy_sequencer_rows:
 
     ; check y bounds
     lda sel_y_iterator
-    cmp Sequencer::selection_bottom_y
+    cmp SeqState::selection_bottom_y
     beq @loop
     bcc @loop
 
@@ -234,14 +234,14 @@ paste_cells:  ; .A bitfield
 
     stz clip_x_iterator
     stz clip_y_iterator
-    lda Grid::x_position
+    lda GridState::x_position
     sta sel_x_iterator
-    sta Grid::selection_left_x
-    lda Grid::y_position
+    sta GridState::selection_left_x
+    lda GridState::y_position
     sta sel_y_iterator
-    sta Grid::selection_top_y
+    sta GridState::selection_top_y
     lda #2
-    sta Grid::selection_active
+    sta GridState::selection_active
 
 @loop:
     ldx clip_x_iterator
@@ -260,10 +260,10 @@ paste_cells:  ; .A bitfield
     jsr Undo::store_grid_cell
 
     ldx sel_x_iterator
-    stx Grid::selection_right_x
+    stx GridState::selection_right_x
     ldy sel_y_iterator
-    sty Grid::selection_bottom_y
-    jsr Grid::set_lookup_addr
+    sty GridState::selection_bottom_y
+    jsr GridState::set_lookup_addr
 
 @notes:
     ; check whether we're pasting notes
@@ -273,7 +273,7 @@ paste_cells:  ; .A bitfield
     beq @after_notes
 @do_notes:
     lda tmp_paste_buffer+0
-    sta (Grid::lookup_addr) ; 0th index
+    sta (GridState::lookup_addr) ; 0th index
 @after_notes:
     ; check if pasting instruments
     bbr2 tmp1,@after_inst
@@ -281,7 +281,7 @@ paste_cells:  ; .A bitfield
 @do_inst:
     lda tmp_paste_buffer+1
     ldy #1
-    sta (Grid::lookup_addr),y
+    sta (GridState::lookup_addr),y
 @after_inst:
     ; check if pasting volume
     bbr3 tmp1,@after_vol
@@ -292,7 +292,7 @@ paste_cells:  ; .A bitfield
 @do_vol:
     lda tmp_paste_buffer+2
     ldy #2
-    sta (Grid::lookup_addr),y
+    sta (GridState::lookup_addr),y
 @after_vol:
     ; check if pasting effects
     bbr4 tmp1,@after_eff
@@ -304,10 +304,10 @@ paste_cells:  ; .A bitfield
 
     lda tmp_paste_buffer+3
     ldy #3
-    sta (Grid::lookup_addr),y
+    sta (GridState::lookup_addr),y
     lda tmp_paste_buffer+4
     iny
-    sta (Grid::lookup_addr),y
+    sta (GridState::lookup_addr),y
 @after_eff:
 
     ; done pasting this cell
@@ -318,14 +318,14 @@ paste_cells:  ; .A bitfield
     cmp x_width
     bcs :+
         lda sel_x_iterator
-        cmp #Grid::NUM_CHANNELS
+        cmp #GridState::NUM_CHANNELS
         bcs :+
         jmp @loop
     :
 
     ; reset x and increment y at the right edge of the selection
     stz clip_x_iterator
-    lda Grid::x_position
+    lda GridState::x_position
     sta sel_x_iterator
 
     inc sel_y_iterator
@@ -336,7 +336,7 @@ paste_cells:  ; .A bitfield
     cmp y_height
     bcs :+
         lda sel_y_iterator
-        cmp Grid::global_pattern_length
+        cmp GridState::global_pattern_length
         bcs :+
         jmp @loop
     :
@@ -344,8 +344,8 @@ paste_cells:  ; .A bitfield
     ; we've completed the paste operation
     ; just to make redo put the cursor in the right place, let's resave the
     ; current grid position
-    ldx Grid::x_position
-    ldy Grid::y_position
+    ldx GridState::x_position
+    ldy GridState::y_position
     jsr Undo::store_grid_cell
     jsr Undo::mark_checkpoint
 @end:
@@ -363,11 +363,11 @@ paste_sequencer_rows:
     :
 
     stz clip_y_iterator
-    lda Sequencer::y_position
+    lda SeqState::y_position
     sta sel_y_iterator
-    sta Sequencer::selection_top_y
+    sta SeqState::selection_top_y
     lda #2
-    sta Sequencer::selection_active
+    sta SeqState::selection_active
 
 @loop:
     ldx #0
@@ -384,19 +384,19 @@ paste_sequencer_rows:
         bcc :-
 
     ; store undo
-    ldx Grid::x_position
+    ldx GridState::x_position
     ldy sel_y_iterator
     jsr Undo::store_sequencer_row
 
     ; copy to sequencer
     ldy sel_y_iterator
-    sty Sequencer::selection_bottom_y
-    jsr Sequencer::set_lookup_addr
+    sty SeqState::selection_bottom_y
+    jsr SeqState::set_lookup_addr
 
     ldy #0
     :
         lda tmp_paste_buffer,y
-        sta (Sequencer::lookup_addr),y
+        sta (SeqState::lookup_addr),y
         iny
         cpy #8
         bcc :-
@@ -411,7 +411,7 @@ paste_sequencer_rows:
     cmp y_height
     bcs :+
         lda sel_y_iterator
-        cmp #Sequencer::ROW_LIMIT ; max row count, n-1 is last row #
+        cmp #SeqState::ROW_LIMIT ; max row count, n-1 is last row #
         bcs :+
         jmp @loop
     :
@@ -419,20 +419,20 @@ paste_sequencer_rows:
     ; extend Sequencer::max_row if our paste extended past the old end
     dec sel_y_iterator
     lda sel_y_iterator
-    cmp Sequencer::max_row
+    cmp SeqState::max_row
     bcc :+
         pha
         jsr Undo::store_sequencer_max_row
         pla
-        sta Sequencer::max_row
+        sta SeqState::max_row
 
     :
 
     ; we've completed the paste operation
     ; just to make redo put the cursor in the right place, let's resave the
     ; current sequencer position
-    ldx Grid::x_position
-    ldy Sequencer::y_position
+    ldx GridState::x_position
+    ldy SeqState::y_position
     jsr Undo::store_sequencer_row
     jsr Undo::mark_checkpoint
 @end:

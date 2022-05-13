@@ -36,13 +36,19 @@ xf_tmp3: .res 1
 
 
 .include "x16.inc"
-.include "vars.s"
 .include "customchars.s"
+
+.include "keyboardstate.s"
+.include "gridstate.s"
+.include "seqstate.s"
+.include "inststate.s"
+
+.include "undo.s"
 .include "grid.s"
 .include "sequencer.s"
 .include "instruments.s"
-.include "undo.s"
 .include "clipboard.s"
+
 .include "function.s"
 .include "util.s"
 .include "irq.s"
@@ -146,12 +152,12 @@ main:
     sta xf_state
 
     lda #64
-    sta Grid::global_pattern_length
+    sta GridState::global_pattern_length
 
     lda #16
-    sta Grid::long_hilight_interval
+    sta GridState::long_hilight_interval
     lda #4
-    sta Grid::short_hilight_interval
+    sta GridState::short_hilight_interval
 
     jsr xf_irq::setup
 
@@ -163,10 +169,10 @@ main:
     jsr x16::Kernal::MOUSE_CONFIG ; show the default mouse pointer
 
     lda #1
-    sta Sequencer::base_bank
+    sta SeqState::base_bank
 
     lda #2
-    sta Instruments::base_bank
+    sta InstState::base_bank
 
     lda #6
     sta Undo::base_bank
@@ -175,21 +181,21 @@ main:
     sta Clipboard::base_bank
 
     lda #$10
-    sta Grid::base_bank
+    sta GridState::base_bank
 
     lda #0
-    sta Sequencer::max_row
+    sta SeqState::max_row
 
     lda #95
-    sta Sequencer::max_pattern
+    sta SeqState::max_pattern
 
     lda #254
-    sta Instruments::max_instrument
+    sta InstState::max_instrument
 
     inc redraw
 
     lda #1
-    sta Grid::step
+    sta GridState::step
 
     lda #$00
     sta Undo::lookup_addr
@@ -200,11 +206,11 @@ main:
 
 ; tmp vvv
     ldy #0
-    jsr Instruments::set_lookup_addr
+    jsr InstState::set_lookup_addr
     ldy #0
     :
         lda @tempinst,y
-        sta (Instruments::lookup_addr),y
+        sta (InstState::lookup_addr),y
         iny
         cpy #160
         bcc :-
@@ -238,8 +244,8 @@ main:
     beq :+
         stz redraw
         jsr Sequencer::draw
-        jsr Instruments::draw
-        jsr Grid::draw
+        jsr Instruments::Func::draw
+        jsr Grid::Func::draw
     :
     wai
 
@@ -248,12 +254,12 @@ main:
     cmp #Function::OP_NOTE
     bne :+
         ; clear selection too
-        stz Grid::selection_active
+        stz GridState::selection_active
 
         stz Function::op_dispatch_flag
         lda Function::op_dispatch_operand
         stz Function::op_dispatch_operand
-        jsr Function::Grid::note_entry
+        jsr Grid::Func::note_entry
     :
 
     lda Function::op_dispatch_flag
@@ -274,16 +280,16 @@ main:
     cmp #Function::OP_BACKSPACE
     bne :+
         ; clear selection too
-        stz Grid::selection_active
+        stz GridState::selection_active
         stz Function::op_dispatch_flag
-        jsr Function::Grid::backspace
+        jsr Grid::Func::backspace
     :
 
     lda Function::op_dispatch_flag
     cmp #Function::OP_INSERT
     bne :+
         ; clear selection too
-        stz Grid::selection_active
+        stz GridState::selection_active
 
         stz Function::op_dispatch_flag
         jsr Function::insert_cell
@@ -301,7 +307,7 @@ main:
     cmp #Function::OP_DELETE
     bne :+
         stz Function::op_dispatch_flag
-        jsr Function::Grid::delete_selection
+        jsr Grid::Func::delete_selection
 
     :
 
@@ -310,7 +316,7 @@ main:
     bne :+
         stz Function::op_dispatch_flag
         jsr Function::copy
-        jsr Function::Grid::delete_selection
+        jsr Grid::Func::delete_selection
     :
 
     lda Function::op_dispatch_flag
@@ -342,7 +348,7 @@ main:
         stz Function::op_dispatch_flag
         lda Function::op_dispatch_operand
         stz Function::op_dispatch_operand
-        jsr Function::Grid::entry
+        jsr Grid::Func::entry
     :
 
     lda Function::op_dispatch_flag
@@ -367,7 +373,7 @@ main:
         stz Function::op_dispatch_flag
         lda Function::op_dispatch_operand
         stz Function::op_dispatch_operand
-        jsr Function::set_sequencer_cell
+        jsr Sequencer::Func::set_cell
     :
 
     lda Function::op_dispatch_flag
@@ -380,12 +386,12 @@ main:
     :
 
     VERA_SET_ADDR ($0010+$1B000),2
-    lda Grid::cursor_position
+    lda GridState::cursor_position
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
 
-    lda Grid::x_position
+    lda GridState::x_position
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
@@ -407,14 +413,14 @@ main:
 
     lda #' '
     sta Vera::Reg::Data0
-    lda Grid::selection_top_y
+    lda GridState::selection_top_y
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
 
     lda #' '
     sta Vera::Reg::Data0
-    lda Grid::selection_bottom_y
+    lda GridState::selection_bottom_y
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
@@ -460,7 +466,7 @@ main:
 
     lda #' '
     sta Vera::Reg::Data0
-    lda Sequencer::mix
+    lda SeqState::mix
     jsr xf_byte_to_hex
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0

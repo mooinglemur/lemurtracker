@@ -1,6 +1,5 @@
-; vars.s - holds some scoped variables that have global effect
 
-.scope GKeyboard
+.scope KeyboardState
 
 MOD_LSHIFT = 1
 MOD_RSHIFT = 2
