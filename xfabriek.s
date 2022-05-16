@@ -42,6 +42,9 @@ xf_tmp3: .res 1
 .include "gridstate.s"
 .include "seqstate.s"
 .include "inststate.s"
+.include "textfield.s"
+
+.include "playerengine.s"
 
 .include "undo.s"
 .include "grid.s"
@@ -80,12 +83,9 @@ XF_STATE_NEW_DIALOG = 1
 XF_STATE_SAVE_DIALOG = 2
 XF_STATE_LOAD_DIALOG = 3
 XF_STATE_GRID = 4
-XF_STATE_MENU = 5
+XF_STATE_TEXT = 5
 XF_STATE_SEQUENCER = 6
-XF_STATE_INSTRUMENT_PSG = 7
-XF_STATE_INSTRUMENT_FM = 8
-XF_STATE_INSTRUMENT_PCM = 9
-XF_STATE_PLAYBACK = 10
+XF_STATE_INSTRUMENT = 7
 
 main:
     ; rom check
@@ -239,6 +239,15 @@ main:
 
 ; tmp ^^^
 @mainloop:
+
+    lda xf_state
+    cmp #XF_STATE_TEXT
+    bne @mainstate
+
+    jsr TextField::draw
+    wai
+    jmp @mainloop
+@mainstate:
 
     lda redraw
     beq :+

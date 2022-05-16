@@ -122,4 +122,10 @@ init:
     rts
 
 
+default_handler:
+    lda #XF_STATE_SEQUENCER
+    sta xf_state
+    inc redraw
+    rts
+
 .endscope

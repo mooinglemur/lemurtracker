@@ -67,3 +67,40 @@ xf_clear_screen:
     bne @row
 
     rts
+
+xf_set_vera_data_txtcoords: ; .x = col (eor #$FF x coord for color attribute)
+                            ; .y = row, .a = stride, clobbers a
+    cmp #$00
+    bmi @negative_stride
+    asl
+    asl
+    asl
+    asl
+    ora #$01
+    bra @continue
+@negative_stride:
+    eor #$FF
+    inc
+    asl
+    asl
+    asl
+    asl
+    ora #$09
+@continue:
+    sta Vera::Reg::AddrH
+    tya
+    clc
+    adc #$B0
+    sta Vera::Reg::AddrM
+
+    txa
+    bpl @char
+    eor #$FF
+    asl
+    inc
+    bra @col
+@char:
+    asl
+@col:
+    sta Vera::Reg::AddrL
+    rts
