@@ -27,7 +27,7 @@ tmp3: .res 1
 .include "func/increment_y.s"
 .include "func/increment_y_page.s"
 .include "func/increment_y_steps.s"
-.include "func/increment_y_steps_strict.s"
+.include "func/increment_y_steps_noselect.s"
 .include "func/insert_cell.s"
 .include "func/note_entry.s"
 .include "func/entry.s"

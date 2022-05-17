@@ -10,10 +10,14 @@ y_position: .res 1
 constraint: .res 1
 preserve: .res 1
 insertmode: .res 1
+entrymode: .res 1
 
 CONSTRAINT_ASCII = 1
-CONSTRAINT_HEXBYTE = 2
+CONSTRAINT_HEX = 2
 CONSTRAINT_FILENAME = 3
+
+ENTRYMODE_NORMAL = 0
+ENTRYMODE_FILL = 1
 
 TF_BASE_COLOR = $91
 TF_CURSOR_COLOR = $F1
@@ -57,8 +61,9 @@ after_init:
 .proc entry
     ; .A contains the (ascii) character or control code
     cmp #0
-    beq end
-ascii:
+    bne :+
+        jmp end
+    :
     cmp #32
     bcc control_code
     cmp #127
@@ -66,9 +71,35 @@ ascii:
     ldx cursor_position
     cpx width
     bcs end ; don't append when at end
+    ldy constraint
+    cpy #CONSTRAINT_HEX
+    beq hex
+text:
     sta textfield,x
     inc cursor_position
-    bra end
+    lda entrymode
+    cmp #ENTRYMODE_FILL
+    bne end
+    ldx cursor_position
+    cpx width
+    bcc end
+    clc
+    jmp (callback)
+hex:
+    cmp #$30
+    bcc end
+    cmp #$3A
+    bcc text
+    cmp #$41
+    bcc end
+    cmp #$47
+    bcc text
+    cmp #$61
+    bcc end
+    cmp #$67
+    bcs end
+    sbc #$1F ; subtracts and extra with carry clear
+    bra text
 control_code:
     cmp #13 ; enter
     bne :+
@@ -95,6 +126,11 @@ control_code:
         :
         stx cursor_position
         bra end
+    :
+    cmp #$1B ; ESC
+    bne :+
+        sec
+        jmp (callback)
     :
 end:
     rts

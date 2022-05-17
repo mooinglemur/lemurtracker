@@ -12,5 +12,6 @@ modkeys: .res 1
 scancode: .res 2
 keycode: .res 1
 notecode: .res 1
+charcode: .res 1
 
 .endscope

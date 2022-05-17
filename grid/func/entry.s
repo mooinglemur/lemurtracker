@@ -81,7 +81,7 @@ entry:
     :
     sta (GridState::lookup_addr),y
     sta InstState::y_position
-    jsr increment_y_steps_strict
+    jsr increment_y_steps_noselect
     jsr decrement_cursor
     bra @end
 @vol: ; changing the volume
@@ -94,7 +94,7 @@ entry:
     jsr @savecell
     ldy #2
     sta (GridState::lookup_addr),y
-    jsr increment_y_steps_strict
+    jsr increment_y_steps_noselect
     jmp @end
 @eff: ; changing the effect opcode
     lda tmp1
@@ -112,7 +112,7 @@ entry:
         sta (GridState::lookup_addr),y
         iny
         sta (GridState::lookup_addr),y
-        jsr increment_y_steps_strict
+        jsr increment_y_steps_noselect
         jmp @end
     :
     jsr increment_cursor
@@ -173,7 +173,7 @@ entry:
     and #$f0
     ora tmp2
     sta (GridState::lookup_addr),y
-    jsr increment_y_steps_strict
+    jsr increment_y_steps_noselect
     jsr decrement_cursor
     jsr decrement_cursor
     jmp @end
@@ -185,7 +185,14 @@ entry:
     cmp #$41
     bcc @returnff
     cmp #$47
+    bcc @kthhcap
+    cmp #$61
+    bcc @returnff
+    cmp #$67
     bcs @returnff
+    sec
+    sbc #$20
+@kthhcap:
     sec
     sbc #$07
 @kthhnum:
@@ -207,7 +214,14 @@ entry:
     cmp #$41
     bcc @returnff
     cmp #$47
+    bcc @kthcap
+    cmp #$61
+    bcc @returnff
+    cmp #$67
     bcs @returnff
+    sec
+    sbc #$20
+@kthcap:
     sec
     sbc #$07
 @kthnum:
@@ -227,7 +241,14 @@ entry:
     cmp #$41
     bcc @returnff
     cmp #$47
+    bcc @ktvcap
+    cmp #$61
+    bcc @returnff
+    cmp #$67
     bcs @returnff
+    sec
+    sbc #$20
+@ktvcap:
     sec
     sbc #$07
 @ktvnum:
@@ -245,6 +266,12 @@ entry:
     cmp #$41
     bcc @returnff
     cmp #$5B
+    bcc @return
+    cmp #$61
+    bcc @returnff
+    cmp #$7B
     bcs @returnff
+    sec
+    sbc #$20
 @return:
     rts

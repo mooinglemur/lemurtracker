@@ -9,8 +9,16 @@ tmp2: .res 2
 scancode = KeyboardState::scancode
 keycode = KeyboardState::keycode
 notecode = KeyboardState::notecode
+charcode = KeyboardState::charcode
 
 modkeys = KeyboardState::modkeys
+
+MOD_LALT = KeyboardState::MOD_LALT
+MOD_RALT = KeyboardState::MOD_RALT
+MOD_LCTRL = KeyboardState::MOD_LCTRL
+MOD_RCTRL = KeyboardState::MOD_RCTRL
+MOD_LSHIFT = KeyboardState::MOD_LSHIFT
+MOD_RSHIFT = KeyboardState::MOD_RSHIFT
 
 
 setup_handler:
@@ -64,6 +72,7 @@ handler:
     stz scancode+1
     stz notecode
     stz keycode
+    stz charcode
 @exit:
     plx
     pla
@@ -163,13 +172,13 @@ handler4: ; XF_STATE_GRID
 @nomatch:
     ; handle Ctrl+A / Ctrl+Shift+A
     lda keycode
-    cmp #$41
+    cmp #$61
     bne :++
         lda modkeys
-        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+        and #(MOD_LCTRL|MOD_RCTRL)
         beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             jmp Grid::Func::select_none
         :
@@ -177,13 +186,13 @@ handler4: ; XF_STATE_GRID
     :
     ; handle Ctrl+C / Ctrl+Shift+C
     lda keycode
-    cmp #$43
+    cmp #$63
     bne :++
         lda modkeys
-        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+        and #(MOD_LCTRL|MOD_RCTRL)
         beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             jmp @end ; ignore Ctrl+Shift+C for now
         :
@@ -201,13 +210,13 @@ handler4: ; XF_STATE_GRID
     ; handle Ctrl+V / Ctrl+Shift+V
 
     lda keycode
-    cmp #$56
+    cmp #$76
     bne :++
         lda modkeys
-        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+        and #(MOD_LCTRL|MOD_RCTRL)
         beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             lda #%00011111 ; merge paste all
             jmp Dispatch::paste_grid
@@ -219,13 +228,13 @@ handler4: ; XF_STATE_GRID
     ; handle Ctrl+X / Ctrl+Shift+X
 
     lda keycode
-    cmp #$58
+    cmp #$78
     bne :+
         lda modkeys
-        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+        and #(MOD_LCTRL|MOD_RCTRL)
         beq :+
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         bne :+ ; don't do anything for Ctrl+Shift+X
         jmp Dispatch::cut
     :
@@ -233,13 +242,13 @@ handler4: ; XF_STATE_GRID
     ; handle Ctrl+Y
 
     lda keycode
-    cmp #$59
+    cmp #$79
     bne :+
         lda modkeys
-        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+        and #(MOD_LCTRL|MOD_RCTRL)
         beq :+
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         bne :+
         jmp Dispatch::redo
     :
@@ -248,13 +257,13 @@ handler4: ; XF_STATE_GRID
     ; handle Ctrl+Z / Ctrl+Shift+Z
 
     lda keycode
-    cmp #$5A
+    cmp #$7A
     bne :++
         lda modkeys
-        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+        and #(MOD_LCTRL|MOD_RCTRL)
         beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             jmp Dispatch::redo
         :
@@ -271,13 +280,13 @@ handler4: ; XF_STATE_GRID
     :
 
     ; if we're holding down mod keys, don't process entries
-    lda modkeys
-    bne @end
+;    lda modkeys
+;    bne @end
 
     lda GridState::cursor_position ; are we in the note column?
     beq @notecolumn
     ; XXX entry for other columns besides the note column
-    lda keycode
+    lda charcode
     beq @end
     jsr Dispatch::grid_entry ;.A = keycode
     bra @end
@@ -293,7 +302,7 @@ handler4: ; XF_STATE_GRID
     ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2  bsp ins
     .byte $80,$81,$82,$83,$84,$85,$86,$87,$09,$20,$5B,$5D,$8B,$08,$88
     ;     n/  n*  -   =   F9
-    .byte $96,$97,$5F,$3D,$92
+    .byte $96,$97,$2D,$3D,$92
 @fntbl:
     .word @key_up
     .word @key_down
@@ -317,38 +326,38 @@ handler4: ; XF_STATE_GRID
     .word @text_test
 @key_up:
     lda modkeys
-    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+    and #(MOD_LCTRL|MOD_RCTRL)
     beq :+
         jmp Grid::Func::decrement_y_steps
     :
     lda modkeys
-    and #(KeyboardState::MOD_LALT|KeyboardState::MOD_RALT)
+    and #(MOD_LALT|MOD_RALT)
     beq :+
         jmp Sequencer::Func::decrement_y
     :
     jmp Grid::Func::decrement_y
 @key_down:
     lda modkeys
-    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+    and #(MOD_LCTRL|MOD_RCTRL)
     beq :+
         jmp Grid::Func::increment_y_steps
     :
     lda modkeys
-    and #(KeyboardState::MOD_LALT|KeyboardState::MOD_RALT)
+    and #(MOD_LALT|MOD_RALT)
     beq :+
         jmp Sequencer::Func::increment_y
     :
     jmp Grid::Func::increment_y
 @key_left:
     lda modkeys
-    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL|KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+    and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
     beq :+
         jmp Grid::Func::decrement_x
     :
     jmp Grid::Func::decrement_cursor
 @key_right:
     lda modkeys
-    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL|KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+    and #(MOD_LCTRL|MOD_RCTRL|MOD_LSHIFT|MOD_RSHIFT)
     beq :+
         jmp Grid::Func::increment_x
     :
@@ -370,21 +379,21 @@ handler4: ; XF_STATE_GRID
 @key_tab:
     stz GridState::cursor_position
     lda modkeys
-    and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+    and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
         jmp Grid::Func::decrement_x_without_starting_selection
     :
     jmp Grid::Func::increment_x
 @key_leftbracket:
     lda modkeys
-    and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+    and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
         jmp Grid::Func::decrement_step
     :
     jmp Grid::Func::decrement_octave
 @key_rightbracket:
     lda modkeys
-    and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+    and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
         jmp Grid::Func::increment_step
     :
@@ -408,10 +417,10 @@ handler4: ; XF_STATE_GRID
     rts
 @key_minus:
     lda modkeys
-    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+    and #(MOD_LCTRL|MOD_RCTRL)
     beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             jmp @end
         :
@@ -420,10 +429,10 @@ handler4: ; XF_STATE_GRID
     jmp Dispatch::decrement_sequencer_cell
 @key_equalsplus:
     lda modkeys
-    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+    and #(MOD_LCTRL|MOD_RCTRL)
     beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             jmp Dispatch::increment_sequencer_max_row
         :
@@ -435,7 +444,11 @@ handler4: ; XF_STATE_GRID
     sta TextField::callback
     lda #>SeqState::default_handler
     sta TextField::callback+1
-    lda #20
+    lda #TextField::CONSTRAINT_HEX
+    sta TextField::constraint
+    lda #TextField::ENTRYMODE_FILL
+    sta TextField::entrymode
+    lda #30
     sta TextField::width
     ldx #5
     ldy #10
@@ -444,7 +457,7 @@ handler4: ; XF_STATE_GRID
 
 handler5:
     jsr decode_scancode
-    lda keycode
+    lda charcode
     jmp TextField::entry
 
 
@@ -468,13 +481,13 @@ handler6: ; XF_STATE_SEQUENCER
 @nomatch:
     ; handle Ctrl+A / Ctrl+Shift+A
     lda keycode
-    cmp #$41
+    cmp #$61
     bne :++
         lda modkeys
-        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+        and #(MOD_LCTRL|MOD_RCTRL)
         beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             jmp Sequencer::Func::select_none
         :
@@ -483,13 +496,13 @@ handler6: ; XF_STATE_SEQUENCER
 
 ; handle Ctrl+C / Ctrl+Shift+C
     lda keycode
-    cmp #$43
+    cmp #$63
     bne :++
         lda modkeys
-        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+        and #(MOD_LCTRL|MOD_RCTRL)
         beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             jmp @end ; ignore Ctrl+Shift+C for now
         :
@@ -506,13 +519,13 @@ handler6: ; XF_STATE_SEQUENCER
     ; handle Ctrl+V / Ctrl+Shift+V
 
     lda keycode
-    cmp #$56
+    cmp #$76
     bne :++
         lda modkeys
-        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+        and #(MOD_LCTRL|MOD_RCTRL)
         beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             lda #1 ; insert paste
             jmp Dispatch::paste_seq
@@ -525,13 +538,13 @@ handler6: ; XF_STATE_SEQUENCER
     ; handle Ctrl+Z / Ctrl+Shift+Z
 
     lda keycode
-    cmp #$5A
+    cmp #$7A
     bne :++
         lda modkeys
-        and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+        and #(MOD_LCTRL|MOD_RCTRL)
         beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             jmp Dispatch::redo
         :
@@ -545,7 +558,7 @@ handler6: ; XF_STATE_SEQUENCER
     ;     up  dn  lt  rt  hm  end pgu pgd F1  spc
     .byte $80,$81,$82,$83,$84,$85,$86,$87,$8A,$20
     ;     -   =   tab ins del I
-    .byte $5F,$3D,$09,$88,$89,$49
+    .byte $2D,$3D,$09,$88,$89,$69
 @fntbl:
     .word Sequencer::Func::decrement_y ;up
     .word Sequencer::Func::increment_y ;dn
@@ -583,10 +596,10 @@ handler6: ; XF_STATE_SEQUENCER
     rts
 @key_minus:
     lda modkeys
-    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+    and #(MOD_LCTRL|MOD_RCTRL)
     beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             jmp @end
         :
@@ -595,10 +608,10 @@ handler6: ; XF_STATE_SEQUENCER
     jmp Dispatch::decrement_sequencer_cell
 @key_equalsplus:
     lda modkeys
-    and #(KeyboardState::MOD_LCTRL|KeyboardState::MOD_RCTRL)
+    and #(MOD_LCTRL|MOD_RCTRL)
     beq :++
         lda modkeys
-        and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+        and #(MOD_LSHIFT|MOD_RSHIFT)
         beq :+
             jmp Dispatch::increment_sequencer_max_row
         :
@@ -608,7 +621,7 @@ handler6: ; XF_STATE_SEQUENCER
 @key_tab:
     stz GridState::cursor_position
     lda modkeys
-    and #(KeyboardState::MOD_LSHIFT|KeyboardState::MOD_RSHIFT)
+    and #(MOD_LSHIFT|MOD_RSHIFT)
     beq :+
         jmp Sequencer::Func::decrement_x_without_starting_selection
     :
@@ -654,10 +667,16 @@ decode_scancode:
     beq @match
     bra @loop_cont
 @match:
-    lda @keycode-1,y
-    sta keycode
     lda @notecode-1,y
     sta notecode
+    lda @keycode-1,y
+    sta keycode
+    sta charcode
+    lda modkeys
+    and #(MOD_LSHIFT|MOD_RSHIFT)
+    beq @nomatch
+    lda @shiftcode-1,y
+    sta charcode
 @nomatch:
     rts
 @scancodel:
@@ -677,8 +696,8 @@ decode_scancode:
     .byte $6C,$69,$7D,$7A,$70,$71,$41,$49,$4A,$4C
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $54,$5B,$05,$06,$04,$0C,$03,$0B,$83,$0A
-    ;     F9  F10 F11 F12 n/  n*
-    .byte $01,$10,$78,$07,$4A,$7C
+    ;     F9  F10 F11 F12 n/  n*  `   '   BRK ESC
+    .byte $01,$10,$78,$07,$4A,$7C,$0E,$52,$14,$76
 @scancodeh:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $00,$00,$E0,$E0,$E0,$E0,$E0,$00,$00,$00
@@ -696,8 +715,8 @@ decode_scancode:
     .byte $E0,$E0,$E0,$E0,$E0,$E0,$00,$00,$00,$00
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-    ;     F9  F10 F11 F12 n/  n*
-    .byte $00,$00,$00,$00,$E0,$00
+    ;     F9  F10 F11 F12 n/  n*  `   '   BRK ESC
+    .byte $00,$00,$00,$00,$E0,$00,$00,$00,$E1,$00
 @keycode:
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
     .byte $20,$0D,$0D,$80,$81,$82,$83,$09,$08,$5C
@@ -705,18 +724,18 @@ decode_scancode:
     .byte $30,$31,$32,$33,$34,$35,$36,$37,$38,$39
     ;     0   1   2   3   4   5   6   7   8   9
     .byte $30,$31,$32,$33,$34,$35,$36,$37,$38,$39
-    ;     A   B   C   D   E   F   G   H   I   J
-    .byte $41,$42,$43,$44,$45,$46,$47,$48,$49,$4A
-    ;     K   L   M   N   O   P   Q   R   S   T
-    .byte $4B,$4C,$4D,$4E,$4F,$50,$51,$52,$53,$54
-    ;     U   V   W   X   Y   Z   n+  n-  =   -
-    .byte $55,$56,$57,$58,$59,$5A,$2B,$2D,$3D,$5F
+    ;     a   b   c   d   e   f   g   h   i   j
+    .byte $61,$62,$63,$64,$65,$66,$67,$68,$69,$6A
+    ;     k   l   m   n   o   p   q   r   s   t
+    .byte $6B,$6C,$6D,$6E,$6F,$70,$71,$72,$73,$74
+    ;     u   v   w   x   y   z   n+  n-  =   -
+    .byte $75,$76,$77,$78,$79,$7A,$2B,$2D,$3D,$2D
     ;     hm  end pgu pgd ins del ,   .   /   ;
     .byte $84,$85,$86,$87,$88,$89,$2C,$2E,$2F,$3B
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $5B,$5D,$8A,$8B,$8C,$8D,$8E,$8F,$90,$91
-    ;     F9  F10 F11 F12 n/  n*
-    .byte $92,$93,$94,$95,$96,$97
+    ;     F9  F10 F11 F12 n/  n*  `   '   BRK ESC
+    .byte $92,$93,$94,$95,$96,$97,$60,$27,$1B,$1B
 @notecode: ; NULL/no action = $00, C in current octave = $01
            ; note delete = $FF, note cut = $FE, note release = $FD
     ;     spc cr  ncr up  dn  lt  rt  tab bsp \
@@ -735,6 +754,25 @@ decode_scancode:
     .byte $00,$00,$00,$00,$00,$FF,$0D,$0F,$11,$10
     ;     [   ]   F1  F2  F3  F4  F5  F6  F7  F8
     .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
-    ;     F9  F10 F11 F12 n/  n*
-    .byte $00,$00,$00,$00,$00,$00
+    ;     F9  F10 F11 F12 n/  n*  `   '   BRK ESC
+    .byte $00,$00,$00,$00,$00,$00,$00,$00,$00,$00
+@shiftcode:
+    ;     spc cr  ncr up  dn  lt  rt  tab bsp |
+    .byte $20,$0D,$0D,$80,$81,$82,$83,$09,$08,$7C
+    ;     n0  n1  n2  n3  n4  n5  n6  n7  n8  n9
+    .byte $30,$31,$32,$33,$34,$35,$36,$37,$38,$39
+    ;     )   !   @   #   $   %   ^   &   *   (
+    .byte $29,$21,$40,$23,$24,$25,$5E,$26,$2A,$28
+    ;     A   B   C   D   E   F   G   H   I   J
+    .byte $41,$42,$43,$44,$45,$46,$47,$48,$49,$4A
+    ;     K   L   M   N   O   P   Q   R   S   T
+    .byte $4B,$4C,$4D,$4E,$4F,$50,$51,$52,$53,$54
+    ;     U   V   W   X   Y   Z   n+  n-  +   _
+    .byte $55,$56,$57,$58,$59,$5A,$2B,$2D,$2B,$5F
+    ;     hm  end pgu pgd ins del <   >   ?   :
+    .byte $84,$85,$86,$87,$88,$89,$3C,$3E,$3F,$3A
+    ;     {   }   F1  F2  F3  F4  F5  F6  F7  F8
+    .byte $7B,$7D,$8A,$8B,$8C,$8D,$8E,$8F,$90,$91
+    ;     F9  F10 F11 F12 n/  n*  ~   "   BRK ESC
+    .byte $92,$93,$94,$95,$96,$97,$7E,$22,$1B,$1B
 .endscope

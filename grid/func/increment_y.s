@@ -1,5 +1,7 @@
 .proc increment_y
     jsr selection_start
+.endproc
+.proc increment_y_without_starting_selection
     inc GridState::y_position
     ldy GridState::y_position
     cpy GridState::global_pattern_length
