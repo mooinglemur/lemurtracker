@@ -41,7 +41,17 @@ xf_byte_to_hex_in_grid: ; converts a number to two ASCII/PETSCII hex digits: inp
     pla
     rts
 
-
+xf_hex_char_to_nybble:
+    sec
+    sbc #$30
+    cmp #$0A
+    bcc @end
+    sbc #$07
+    cmp #$10
+    bcc @end
+    sbc #$20
+@end:
+    rts
 
 xf_set_charset:
     lda #1

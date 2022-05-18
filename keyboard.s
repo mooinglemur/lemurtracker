@@ -444,9 +444,9 @@ handler4: ; XF_STATE_GRID
     sta TextField::callback
     lda #>SeqState::default_handler
     sta TextField::callback+1
-    lda #TextField::CONSTRAINT_HEX
+    lda #TextField::CONSTRAINT_ASCII
     sta TextField::constraint
-    lda #TextField::ENTRYMODE_FILL
+    lda #TextField::ENTRYMODE_NORMAL
     sta TextField::entrymode
     lda #30
     sta TextField::width
@@ -550,6 +550,35 @@ handler6: ; XF_STATE_SEQUENCER
         :
         jmp Dispatch::undo
     :
+
+    ; handle direct pattern number entry
+    lda keycode
+    cmp #$30
+    bcc @end
+    cmp #$3A
+    bcc @entry
+    cmp #$61
+    bcc @end
+    cmp #$67
+    bcs @end
+@entry:
+    lda #<Sequencer::Func::entry_callback
+    sta TextField::callback
+    lda #>Sequencer::Func::entry_callback
+    sta TextField::callback+1
+    lda #TextField::CONSTRAINT_HEX
+    sta TextField::constraint
+    lda #TextField::ENTRYMODE_FILL
+    sta TextField::entrymode
+    lda #2
+    sta TextField::width
+    lda GridState::x_position
+    asl
+    adc #3
+    tax
+    ldy #(SeqState::SEQUENCER_LOCATION_Y+SeqState::SEQUENCER_GRID_ROWS/2+1)
+    lda charcode
+    jmp TextField::start
 @noentry:
 @end:
     rts

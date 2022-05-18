@@ -34,6 +34,7 @@ xf_tmp2: .res 1
 xf_tmp3: .res 1
 .popseg
 
+framecounter: .res 1
 
 .include "x16.inc"
 .include "customchars.s"

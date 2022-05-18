@@ -12,6 +12,8 @@ preserve: .res 1
 insertmode: .res 1
 entrymode: .res 1
 
+tmp1: .res 1
+
 CONSTRAINT_ASCII = 1
 CONSTRAINT_HEX = 2
 CONSTRAINT_FILENAME = 3
@@ -70,35 +72,63 @@ after_init:
     bcs control_code
     ldx cursor_position
     cpx width
-    bcs end ; don't append when at end
+    bcc :+
+        jmp end ; don't append when at end
+    :
     ldy constraint
     cpy #CONSTRAINT_HEX
     beq hex
 text:
+    ldy insertmode
+    beq :++
+        pha
+        ldy width
+        dey
+        lda textfield,y
+        tay
+        pla
+        cpy #0
+        beq :+
+            jmp end
+        :
+        jsr insert
+    :
     sta textfield,x
     inc cursor_position
     lda entrymode
     cmp #ENTRYMODE_FILL
-    bne end
+    beq :+
+        jmp end
+    :
     ldx cursor_position
     cpx width
-    bcc end
+    bcs :+
+        jmp end
+    :
     clc
     jmp (callback)
 hex:
     cmp #$30
-    bcc end
+    bcs :+
+        jmp end
+    :
     cmp #$3A
     bcc text
     cmp #$41
-    bcc end
+    bcs :+
+        jmp end
+    :
     cmp #$47
     bcc text
     cmp #$61
-    bcc end
+    bcs :+
+        jmp end
+    :
     cmp #$67
-    bcs end
-    sbc #$1F ; subtracts and extra with carry clear
+    bcc :+
+        jmp end
+    :
+    sbc #$1F ; subtracts an extra with carry clear
     bra text
 control_code:
     cmp #13 ; enter
@@ -106,13 +136,22 @@ control_code:
         clc
         jmp (callback)
     :
-    cmp #$82 ; left
+
+    cmp #$84 ; home
     bne :+
+        stz cursor_position
+        jmp end
+    :
+
+    cmp #$82 ; left
+    bne :++
         ldx cursor_position
         dex
-        bmi end
+        bpl :+
+            jmp end
+        :
         stx cursor_position
-        bra end
+        jmp end
     :
     cmp #$83 ; right
     bne :++
@@ -127,12 +166,102 @@ control_code:
         stx cursor_position
         bra end
     :
+
+    cmp #$85 ; end
+    bne :+++
+        ldx #0
+        :
+            lda textfield,x
+            beq :+
+            inx
+            cpx width
+            bcc :-
+        :
+        stx cursor_position
+        bra end
+    :
+
+    cmp #$08 ; backspace
+    bne :+++
+        ldx cursor_position
+        beq end
+
+        txa
+        tay
+        dey
+        :
+            cpy width
+            bcs :+
+            lda textfield,x
+            sta textfield,y
+            inx
+            iny
+            bra :-
+        :
+        stz textfield,x
+        dec cursor_position
+        bra end
+    :
+
+    cmp #$89 ; delete
+    bne :+++
+        ldx cursor_position
+        cpx width
+        bcs end
+
+        txa
+        tay
+        inx
+        :
+            cpy width
+            bcs :+
+            lda textfield,x
+            sta textfield,y
+            inx
+            iny
+            bra :-
+        :
+        stz textfield,x
+        bra end
+    :
+
+    cmp #$88 ; ins
+    bne :+
+        lda insertmode
+        and #1
+        eor #1
+        sta insertmode
+    :
+
     cmp #$1B ; ESC
     bne :+
         sec
         jmp (callback)
     :
 end:
+    rts
+.endproc
+
+.proc insert
+    pha
+
+    ldy width
+    dey
+    ldx width
+    dex
+    dex
+    :
+        cpy cursor_position
+        beq end
+        bcc end
+        lda textfield,x
+        sta textfield,y
+        dex
+        dey
+        bra :-
+end:
+    ldx cursor_position
+    pla
     rts
 .endproc
 
@@ -189,15 +318,39 @@ cursor:
     jsr xf_set_vera_data_txtcoords
     lda #TF_CURSOR_COLOR
     sta Vera::Reg::Data0
+    ; insert mode indicator
+    lda insertmode
+    beq end
+
+    lda framecounter
+    and #32
+    beq end
+
+    lda x_position
+    clc
+    adc cursor_position
+    tax
+    ldy y_position
+    lda #1
+    jsr xf_set_vera_data_txtcoords
+    lda #CustomChars::INSERT_INDICATOR
+    sta Vera::Reg::Data0
 end:
     rts
+.endproc
 
-
-
-
-
+.proc get_byte_from_hex
+    lda textfield
+    jsr xf_hex_char_to_nybble
+    asl
+    asl
+    asl
+    asl
+    sta tmp1
+    lda textfield+1
+    jsr xf_hex_char_to_nybble
+    ora tmp1
     rts
-
 .endproc
 
 .endscope

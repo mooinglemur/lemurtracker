@@ -2,6 +2,7 @@
 .segment "CODE"
 previous_handler: .res 2
 
+
 setup:
     sei
     lda $0314
@@ -31,10 +32,11 @@ handler:
     php
     sei
 
+
     lda Vera::Reg::ISR
     and #$01
     beq @after_handler
-
+    inc framecounter
 
 
 @after_handler:
