@@ -411,6 +411,14 @@ main:
         jsr Sequencer::Func::insert_row
     :
 
+    lda Dispatch::flag
+    cmp #Dispatch::OP_SEQ_ENTRY
+    bne :+
+        stz Dispatch::flag
+        jsr Sequencer::Func::entry
+    :
+
+
     VERA_SET_ADDR ($0010+$1B000),2
     lda GridState::cursor_position
     jsr xf_byte_to_hex

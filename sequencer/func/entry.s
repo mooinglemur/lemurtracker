@@ -1,5 +1,4 @@
-.proc entry_callback
-    bcs end ; carry indicates abort
+.proc entry
     ldx GridState::x_position
     ldy SeqState::y_position
     jsr Undo::store_sequencer_row
@@ -13,6 +12,7 @@
         bcc :+
         lda SeqState::max_pattern
     :
+
     ldy GridState::x_position
     sta (SeqState::lookup_addr),y
 
@@ -23,8 +23,6 @@
     bcc end
     stz GridState::x_position
 end:
-    lda #XF_STATE_SEQUENCER
-    sta xf_state
     inc redraw
     rts
 .endproc

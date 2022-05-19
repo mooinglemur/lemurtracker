@@ -3,8 +3,8 @@
 .scope Keyboard
 
 old_vec: .res 2
-tmp1: .res 2
-tmp2: .res 2
+tmp1: .res 1
+tmp2: .res 1
 
 scancode = KeyboardState::scancode
 keycode = KeyboardState::keycode
@@ -19,7 +19,6 @@ MOD_LCTRL = KeyboardState::MOD_LCTRL
 MOD_RCTRL = KeyboardState::MOD_RCTRL
 MOD_LSHIFT = KeyboardState::MOD_LSHIFT
 MOD_RSHIFT = KeyboardState::MOD_RSHIFT
-
 
 setup_handler:
     sei
@@ -562,14 +561,16 @@ handler6: ; XF_STATE_SEQUENCER
     cmp #$67
     bcs @end
 @entry:
-    lda #<Sequencer::Func::entry_callback
+    lda #<Dispatch::seq_entry
     sta TextField::callback
-    lda #>Sequencer::Func::entry_callback
+    lda #>Dispatch::seq_entry
     sta TextField::callback+1
     lda #TextField::CONSTRAINT_HEX
     sta TextField::constraint
     lda #TextField::ENTRYMODE_FILL
     sta TextField::entrymode
+    lda #1
+    sta TextField::gridmode
     lda #2
     sta TextField::width
     lda GridState::x_position

@@ -1,7 +1,7 @@
 draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     ; Top of grid
-    VERA_SET_ADDR ((SeqState::SEQUENCER_LOCATION_Y * 256)+((SeqState::SEQUENCER_LOCATION_X+2)*2)+Vera::VRAM_text),2
+    VERA_SET_ADDR ((SeqState::SEQUENCER_LOCATION_Y*256)+((SeqState::SEQUENCER_LOCATION_X+2)*2)+Vera::VRAM_text),2
 
     ;lda #$A3
     ;sta VERA_data0

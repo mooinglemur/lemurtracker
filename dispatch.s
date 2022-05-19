@@ -21,6 +21,7 @@ OP_SET_SEQ_CELL = 15
 OP_INSERT_SEQ = 16
 OP_COPY_SEQ = 17
 OP_PASTE_SEQ = 18
+OP_SEQ_ENTRY = 19
 
 flag: .byte $00
 operand: .res 1
@@ -156,6 +157,18 @@ redo:
     lda #OP_REDO
     sta flag
     rts
+
+.proc seq_entry
+    bcs end ; carry indicates abort
+    lda #OP_SEQ_ENTRY
+    sta flag
+end:
+    lda #XF_STATE_SEQUENCER
+    sta xf_state
+    inc redraw
+    rts
+.endproc
+
 
 set_sequencer_cell:
     sta operand

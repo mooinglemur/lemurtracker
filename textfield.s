@@ -11,6 +11,7 @@ constraint: .res 1
 preserve: .res 1
 insertmode: .res 1
 entrymode: .res 1
+gridmode: .res 1
 
 tmp1: .res 1
 
@@ -271,7 +272,30 @@ end:
     lda #2
     jsr xf_set_vera_data_txtcoords
 
-    ldx #0
+    ; draw first character, optionally with gridline
+    lda textfield
+    beq end_string
+    ldx gridmode
+    beq first_character
+    ; we are in grid mode, use a grid tile if possible
+    cmp #$30 ; numeral 0
+    bcc first_character
+    cmp #$5B ; one after Z
+    bcs first_character
+    adc #$50 ; carry is clear, gets the numbers into the right range
+    cmp #$8A ; letters or numbers?
+    bcc first_character ; numbers, we're in the correct place
+    sbc #$07 ; carry is set, we're probably a letter, so shift down to the correct place
+    cmp #$8A ; are we really letters though?
+    bcs first_character ; ah, we are
+    sbc #$48 ; oh no, we're not letters, carry is clear so we're really subtracting $49
+             ; go back to where we started
+first_character:
+    sta Vera::Reg::Data0
+rest_of_characters:
+    ldx #1
+    cpx width
+    beq end_field
     :
         lda textfield,x
         beq end_string
@@ -322,6 +346,7 @@ cursor:
     lda insertmode
     beq end
 
+    ; blinky insert indicator
     lda framecounter
     and #32
     beq end
