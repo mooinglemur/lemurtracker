@@ -425,6 +425,13 @@ main:
 ;        jsr Instruments::Func::delete
     :
 
+    lda Dispatch::flag
+    cmp #Dispatch::OP_NEW_PATTERN
+    bne :+
+        stz Dispatch::flag
+        jsr Sequencer::Func::new_pattern
+    :
+
 
 
     VERA_SET_ADDR ($0010+$1B000),2

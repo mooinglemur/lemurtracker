@@ -21,11 +21,14 @@ increment_max_row: ; increment max row, and populate with first unused pattern
     ldy #0
     :
         lda tmp8b,y
-        inc
+        cmp SeqState::max_pattern
+        bcs :+
+            inc
+        :
         sta (SeqState::lookup_addr),y
         iny
         cpy #8
-        bcc :-
+        bcc :--
     pla
     sta SeqState::mix
     jsr Undo::mark_checkpoint

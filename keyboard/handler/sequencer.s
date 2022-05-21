@@ -141,8 +141,8 @@
     ; this is the static keymapping
     ;     up  dn  lt  rt  hm  end pgu pgd F1  F3  spc
     .byte $80,$81,$82,$83,$84,$85,$86,$87,$8A,$8C,$20
-    ;     -   =   tab ins del I
-    .byte $2D,$3D,$09,$88,$89,$69
+    ;     -   =   tab ins del I   N
+    .byte $2D,$3D,$09,$88,$89,$69,$6E
 @fntbl:
     .word Sequencer::Func::decrement_y ;up
     .word Sequencer::Func::increment_y ;dn
@@ -161,6 +161,7 @@
     .word @key_insert
     .word @key_delete
     .word @key_i
+    .word @key_n
 @key_home:
     lda #0
     jmp Sequencer::Func::set_y
@@ -236,4 +237,12 @@
     :
     lda #$FF
     jmp Dispatch::set_sequencer_cell
+@key_n: ; new pattern (set to max used pattern + 1 if possible)
+    lda GridState::entrymode
+    bne :+
+        jmp @end
+    :
+    jmp Dispatch::new_pattern
+
+
 .endproc

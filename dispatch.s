@@ -23,6 +23,7 @@ OP_COPY_SEQ = 17
 OP_PASTE_SEQ = 18
 OP_SEQ_ENTRY = 19
 OP_DELETE_INST = 20
+OP_NEW_PATTERN = 21
 
 
 flag: .byte $00
@@ -104,6 +105,12 @@ insert:
 insert_sequencer_row:
     sta operand
     lda #OP_INSERT_SEQ
+    sta flag
+    rts
+
+new_pattern:  ; in sequencer, set to unused pattern (if possible)
+    sta operand
+    lda #OP_NEW_PATTERN
     sta flag
     rts
 

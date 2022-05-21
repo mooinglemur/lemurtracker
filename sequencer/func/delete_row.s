@@ -98,7 +98,9 @@ delete_row: ; uses tmp1,tmp2,tmp3,tmp4
         cpy #8
         bcc :-
     ldy tmp1
-    cpy tmp4 ; max selection+1
+
+    ;cpy tmp4 ; max selection+1 (this was wrong)
+    cpy SeqState::max_row ; old max row
     bcs @check_mix
     cpy #127 ; special case if all rows are in use, done with last row
     beq @check_mix

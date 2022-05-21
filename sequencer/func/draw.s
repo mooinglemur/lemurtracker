@@ -1,4 +1,4 @@
-draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
+.proc draw ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     ; Top of grid
     VERA_SET_ADDR ((SeqState::SEQUENCER_LOCATION_Y*256)+((SeqState::SEQUENCER_LOCATION_X+2)*2)+Vera::VRAM_text),2
@@ -205,8 +205,14 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     lda #CustomChars::GRID_BOTTOM_RIGHT
     sta Vera::Reg::Data0
 
+    lda xf_state
+    cmp #XF_STATE_GRID
+    beq @cursor
+    cmp #XF_STATE_SEQUENCER
+    beq @cursor
+    bra @after_cursor
 
-
+@cursor:
 ; now put the cursor where it belongs
     lda #(1 | $20) ; high page, stride = 2
     sta $9F22
@@ -230,6 +236,7 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
     sty Vera::Reg::Data0
     sty Vera::Reg::Data0
-
+@after_cursor:
     ; we fall into update_grid_patterns
     jmp SeqState::update_grid_patterns
+.endproc

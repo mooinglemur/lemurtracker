@@ -20,11 +20,6 @@ get_first_unused_patterns:
     beq @next
     cmp tmp8b,y
     bcc @next
-    cmp SeqState::max_pattern
-    bcc :+
-        lda SeqState::max_pattern
-        dec
-    :
     sta tmp8b,y
 @next:
     iny

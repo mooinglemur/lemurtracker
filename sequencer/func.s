@@ -28,6 +28,7 @@ tmp8b: .res 8
 .include "func/select_all.s"
 .include "func/select_none.s"
 .include "func/entry.s"
+.include "func/new_pattern.s"
 
 
 .endscope
