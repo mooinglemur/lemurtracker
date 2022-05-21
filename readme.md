@@ -1,19 +1,19 @@
 # * WORK IN PROGRESS *
 # Application is in early development :)
 
-# Welcome to xfabriek
+# Welcome to LemurTracker
 
-xfabriek is a tracker music editor and playback engine for the Commander X16.
+LemurTracker is a tracker music editor and playback engine for the Commander X16.
 
 It is designed for composing music, either for standalone playback, or to
 be included in assembly language demos and games.
 
 ## Design goals
 
-xfabriek is designed with a balance between memory footprint, ease of
+LemurTracker is designed with a balance between memory footprint, ease of
 programming, and functionality.
 
-While xfabriek is intended to give chiptune musicians a simple and familiar
+While LemurTracker is intended to give chiptune musicians a simple and familiar
 tracker interface in which to edit music, the main motivation for this
 project is to give game developers the ability for smooth and seamless
 transitions within the music during playback. This is done in two different
@@ -21,14 +21,14 @@ ways:
 
 ### Smooth music transitions
 
-* Uniquely, xfabriek can hold multiple *mixes* within each song. Each mix is a
-  separate list of patterns (usually largely similar to each other) that the
+* Uniquely, LemurTracker can hold multiple *mixes* within each song. Each mix is
+  a separate list of patterns (usually largely similar to each other) that the
   programmer can switch between during gameplay without stopping
   playback of the music and without abrupt transitions. Think of
   Nintendo's Super Mario Galaxy how the music changes when the character
   switches between being underwater and above ground, or in Super Mario
   World where the music adds bongo beats while riding Yoshi. The mix
-  can be selected by the developer and xfabriek's player will handle the
+  can be selected by the developer and LemurTracker's player will handle the
   transition.
 
 * Mixes can have conditional jump or loop points. At specific points in the
@@ -41,7 +41,8 @@ ways:
 ### Sound effects
 
 * Sound effects are simply created as a short song and exported to a binary
-  format. They are meant to be short, as the sound effect is stored in a linear type+register+value+delta format. xfabriek will track two simultaneous sound
+  format. They are meant to be short, as the sound effect is stored in a linear
+  type+register+value+delta format. LemurTracker will track two simultaneous sound
   effects (high and low priority).
 
 ### Terminology

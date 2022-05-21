@@ -1,5 +1,6 @@
 
-; Xfabriek - started 2022-02-18
+; LemurTracker - started 2022-02-18
+; originially known as xfabriek
 ; by MooingLemur
 
 ; Music tracker for the Commander X16
