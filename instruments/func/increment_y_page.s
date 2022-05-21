@@ -9,7 +9,6 @@ increment_y_page:
 
 @clamp:
     lda InstState::max_instrument
-    dec
 @end:
     sta InstState::y_position
     inc redraw
