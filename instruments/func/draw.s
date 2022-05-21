@@ -207,6 +207,14 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
     sta $9F20
 
     lda #(XF_CURSOR_BG_COLOR|XF_BASE_FG_COLOR)
+    ldx xf_state
+    cpx #XF_STATE_INSTRUMENTS
+    bne :+
+        lda #(XF_AUDITION_BG_COLOR|XF_BASE_FG_COLOR)
+        ldx GridState::entrymode
+        beq :+
+        lda #(XF_NOTE_ENTRY_BG_COLOR|XF_BASE_FG_COLOR)
+    :
     ldx #16
     :
         sta Vera::Reg::Data0

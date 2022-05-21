@@ -22,6 +22,8 @@ OP_INSERT_SEQ = 16
 OP_COPY_SEQ = 17
 OP_PASTE_SEQ = 18
 OP_SEQ_ENTRY = 19
+OP_DELETE_INST = 20
+
 
 flag: .byte $00
 operand: .res 1
@@ -54,6 +56,11 @@ decrement_sequencer_cell:
 @end:
     rts
 
+
+delete_instrument:
+    lda #OP_DELETE_INST
+    sta flag
+    rts
 
 delete_selection:
     lda #OP_DELETE

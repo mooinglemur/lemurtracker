@@ -86,7 +86,7 @@ XF_STATE_LOAD_DIALOG = 3
 XF_STATE_GRID = 4
 XF_STATE_TEXT = 5
 XF_STATE_SEQUENCER = 6
-XF_STATE_INSTRUMENT = 7
+XF_STATE_INSTRUMENTS = 7
 
 main:
     ; rom check
@@ -417,6 +417,14 @@ main:
         stz Dispatch::flag
         jsr Sequencer::Func::entry
     :
+
+    lda Dispatch::flag
+    cmp #Dispatch::OP_DELETE_INST
+    bne :+
+        stz Dispatch::flag
+;        jsr Instruments::Func::delete
+    :
+
 
 
     VERA_SET_ADDR ($0010+$1B000),2

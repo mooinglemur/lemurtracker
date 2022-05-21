@@ -144,8 +144,8 @@
 @end:
     rts
 @ktbl:
-    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2  bsp ins
-    .byte $80,$81,$82,$83,$84,$85,$86,$87,$09,$20,$5B,$5D,$8B,$08,$88
+    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2  F3  bsp ins
+    .byte $80,$81,$82,$83,$84,$85,$86,$87,$09,$20,$5B,$5D,$8B,$8C,$08,$88
     ;     n/  n*  -   =   F9
     .byte $96,$97,$2D,$3D,$92
 @fntbl:
@@ -162,6 +162,7 @@
     .word @key_leftbracket
     .word @key_rightbracket
     .word @key_F2
+    .word @key_F3
     .word @key_backspace
     .word @key_insert
     .word Grid::Func::decrement_octave
@@ -245,6 +246,11 @@
     jmp Grid::Func::increment_octave
 @key_F2:
     lda #XF_STATE_SEQUENCER
+    sta xf_state
+    inc redraw
+    rts
+@key_F3:
+    lda #XF_STATE_INSTRUMENTS
     sta xf_state
     inc redraw
     rts

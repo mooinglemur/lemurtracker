@@ -48,7 +48,9 @@
     ; above here are "nondestructive" ops that don't require note_entry to be true
 
     lda GridState::entrymode
-    beq @noentry
+    bne :+
+        jmp @noentry
+    :
 
     ; below here are "destructive" ops, note_entry needs to be on for these
 
@@ -137,8 +139,8 @@
     rts
 @ktbl:
     ; this is the static keymapping
-    ;     up  dn  lt  rt  hm  end pgu pgd F1  spc
-    .byte $80,$81,$82,$83,$84,$85,$86,$87,$8A,$20
+    ;     up  dn  lt  rt  hm  end pgu pgd F1  F3  spc
+    .byte $80,$81,$82,$83,$84,$85,$86,$87,$8A,$8C,$20
     ;     -   =   tab ins del I
     .byte $2D,$3D,$09,$88,$89,$69
 @fntbl:
@@ -151,6 +153,7 @@
     .word Sequencer::Func::decrement_y_page
     .word Sequencer::Func::increment_y_page
     .word @key_F1
+    .word @key_F3
     .word @key_space
     .word @key_minus
     .word @key_equalsplus
@@ -173,6 +176,11 @@
     rts
 @key_F1:
     lda #XF_STATE_GRID
+    sta xf_state
+    inc redraw
+    rts
+@key_F3:
+    lda #XF_STATE_INSTRUMENTS
     sta xf_state
     inc redraw
     rts

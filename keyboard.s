@@ -95,8 +95,8 @@ handlertbl:
     .word handler0,handler1,handler2,handler3
 ;         4/XF_STATE_GRID         5/XF_STATE_TEXT
     .word Keyboard::Handler::grid,Keyboard::Handler::text
-;         5/XF_STATE_SEQUENCER
-    .word Keyboard::Handler::sequencer,handler7
+;         6/XF_STATE_SEQUENCER         7/XF_STATE_INSTRUMENTS
+    .word Keyboard::Handler::sequencer,Keyboard::Handler::instruments
     .word handler8,handler9,handler10,handler11
     .word handler12,handler13,handler14,handler15
 
@@ -104,7 +104,6 @@ handler0:
 handler1:
 handler2:
 handler3:
-handler7:
 handler8:
 handler9:
 handler10:
