@@ -36,7 +36,14 @@ handler:
     lda Vera::Reg::ISR
     and #$01
     beq @after_handler
-    inc framecounter
+    
+    lda framecounter
+    clc
+    adc #1
+    sta framecounter
+    lda framecounter+1
+    adc #0
+    sta framecounter+1
 
 
 @after_handler:

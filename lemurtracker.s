@@ -35,7 +35,7 @@ xf_tmp2: .res 1
 xf_tmp3: .res 1
 .popseg
 
-framecounter: .res 1
+framecounter: .res 2
 
 .include "x16.inc"
 .include "customchars.s"
@@ -45,7 +45,6 @@ framecounter: .res 1
 .include "seqstate.s"
 .include "inststate.s"
 .include "textfield.s"
-
 .include "playerengine.s"
 
 .include "undo.s"
@@ -58,7 +57,7 @@ framecounter: .res 1
 .include "util.s"
 .include "irq.s"
 .include "keyboard.s"
-
+.include "debugpanel.s"
 
 
 XF_BASE_BG_COLOR = $00 ; black
@@ -241,6 +240,7 @@ main:
 
 ; tmp ^^^
 @mainloop:
+    jsr DebugPanel::Func::draw
 
     lda xf_state
     cmp #XF_STATE_TEXT
@@ -436,83 +436,9 @@ main:
 
 
     VERA_SET_ADDR ($0010+$1B000),2
-    lda GridState::cursor_position
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    lda GridState::x_position
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    lda KeyboardState::scancode
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    lda KeyboardState::scancode+1
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    lda KeyboardState::modkeys
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    lda #' '
-    sta Vera::Reg::Data0
-    lda GridState::selection_top_y
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    lda #' '
-    sta Vera::Reg::Data0
-    lda GridState::selection_bottom_y
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    lda #' '
-    sta Vera::Reg::Data0
-    lda Undo::undo_size+1
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-    lda Undo::undo_size
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
 
 
-    lda #' '
-    sta Vera::Reg::Data0
-    lda Undo::redo_size+1
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-    lda Undo::redo_size
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
 
-
-    lda #' '
-    sta Vera::Reg::Data0
-    lda Undo::current_bank_offset
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-    lda Undo::lookup_addr+1
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-    lda Undo::lookup_addr
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
 
     lda #' '
     sta Vera::Reg::Data0
