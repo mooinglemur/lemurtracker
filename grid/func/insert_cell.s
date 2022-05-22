@@ -1,5 +1,5 @@
 insert_cell:
-
+    stz GridState::selection_active
     ldy GridState::global_pattern_length
     dey
     dey

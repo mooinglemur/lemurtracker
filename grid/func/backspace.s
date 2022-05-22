@@ -1,4 +1,5 @@
 .proc backspace
+    stz GridState::selection_active
     lda GridState::cursor_position
     beq note_column
     cmp #4

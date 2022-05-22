@@ -1,6 +1,6 @@
 .scope Undo
 
-base_bank: .res 1
+base_bank: .byte $06
 current_bank_offset: .res 1
 ; undo/redo stack sizes, this can be > 8 bits if we end up being super generous
 undo_size: .res 2

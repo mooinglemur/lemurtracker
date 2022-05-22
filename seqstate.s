@@ -2,10 +2,10 @@
 ; We don't use x_position here.  We use Grid::x_position instead
 ;x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in
-max_row: .res 1 ; the last row shown in the sequencer
-max_pattern: .res 1; the highest patten number we can fit in ram
+max_row: .byte $00 ; the last row shown in the sequencer
+max_pattern: .byte $5F; the highest patten number we can fit in ram
 mix: .res 1 ; which mix we're displaying
-base_bank: .res 1 ; what bank are we going to use for the seq table
+base_bank: .byte $01 ; what bank are we going to use for the seq table
 iterator: .res 1
 
 NUM_CHANNELS = 8

@@ -1,4 +1,5 @@
 .scope GridState
+
 NUM_CHANNELS = 8
 MAX_OCTAVE = 8 ; max octave for the editor (Z key is C in that octave)
 MAX_STEP = 15
@@ -11,7 +12,7 @@ tmp_y_position: .res 1 ; store y_position at the beginning of draw to
                        ; during draw
 cursor_position: .res 1 ; within the column (channel) where is the cursor?
 global_pattern_length: .res 1 ; set on file create/file load
-base_bank: .res 1 ; where does tracker data start
+base_bank: .byte $10 ; where does tracker data start
 channel_to_pattern: .res NUM_CHANNELS ; which pattern is referenced in each channel
 channel_is_inherited: .res NUM_CHANNELS ; boolean of whether the channel data is inherited from mix 0
 notechardata: .res 9*NUM_CHANNELS ; temp storage for characters based on pattern data
@@ -41,8 +42,8 @@ lookup_addr: .res 2 ; storage for offset in banked ram
 .popseg
 
 ; vars that affect entry
-octave: .res 1
-step: .res 1
+octave: .byte $03
+step: .byte $01
 
 note_val:    .byte CustomChars::NOTE_C,CustomChars::NOTE_C,CustomChars::NOTE_D
              .byte CustomChars::NOTE_D,CustomChars::NOTE_E,CustomChars::NOTE_F

@@ -1,4 +1,5 @@
 .proc note_entry
+    stz GridState::selection_active
     pha
     ; first put the old value on the undo stack
     ldx GridState::x_position

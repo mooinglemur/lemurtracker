@@ -6,5 +6,7 @@
 .include "func/decrement_y_page.s"
 .include "func/increment_y_page.s"
 .include "func/set_y.s"
+.include "func/delete.s"
+
 
 .endscope

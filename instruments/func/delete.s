@@ -1,0 +1,3 @@
+.proc delete
+    rts
+.endproc

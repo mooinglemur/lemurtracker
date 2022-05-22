@@ -1,6 +1,6 @@
 .scope Clipboard
 
-base_bank: .res 1
+base_bank: .byte $0A
 
 content_type: .res 1
 x_width: .res 1

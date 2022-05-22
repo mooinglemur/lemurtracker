@@ -4,8 +4,8 @@
 .scope InstState
 
 y_position: .res 1 ; which instrument row are we in
-max_instrument: .res 1 ; the last instrument
-base_bank: .res 1
+max_instrument: .byte $FE ; the last instrument
+base_bank: .byte $02
 
 INSTRUMENTS_LOCATION_X = 20
 INSTRUMENTS_LOCATION_Y = 45
