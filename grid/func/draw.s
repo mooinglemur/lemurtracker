@@ -1,5 +1,28 @@
 
 .proc draw ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
+    ; Application Title
+    VERA_SET_ADDR ($003C+$1B000),2
+    ldx #0
+    :
+        lda title_text,x
+        beq :+
+        sta Vera::Reg::Data0
+        inx
+        bra :-
+    :
+
+    ; Grid Header
+    VERA_SET_ADDR ($0106+$1B000),2
+
+    ldx #0
+    :
+        lda header_text,x
+        beq :+
+        sta Vera::Reg::Data0
+        inx
+        bra :-
+    :
+
     ; Top of grid
     VERA_SET_ADDR ($0206+$1B000),2
 
@@ -321,20 +344,34 @@ selection_off:
 cell_loop_inner:
     lda GridState::notechardata,x
     sta Vera::Reg::Data0
+
+    phy
+    ldy tmp3
+    lda GridState::channel_is_muted,y
+    ply
+    cmp #0
+    bne muted
+
     phy
     ldy tmp3
     lda GridState::channel_is_inherited,y
     ply
     cmp #0
     bne inherited
+
     lda GridState::column_fg_color,y
     bra after_inherit_check
+
+muted:
+    lda GridState::column_fg_color_muted,y
+    bra after_mute_check
 
 inherited:
     lda GridState::column_fg_color_mix,y
 
 after_inherit_check:
     ora tmp2
+after_mute_check:
     sta Vera::Reg::Data0
     inx
     iny
@@ -467,3 +504,6 @@ endofrow:
 end_cursor:
     rts
 .endproc
+
+title_text: .asciiz "LemurTracker v0.0"
+header_text: .asciiz "Pattern [F1]"

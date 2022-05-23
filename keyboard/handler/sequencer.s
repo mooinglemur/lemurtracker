@@ -104,6 +104,9 @@
     :
 
     ; handle direct pattern number entry
+    lda SeqState::busy ; preventing a race
+    bne @end
+
     lda keycode
     cmp #$30
     bcc @end

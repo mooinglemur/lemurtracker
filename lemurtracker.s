@@ -74,6 +74,7 @@ XF_DIM_FG_COLOR = $0F ; grey
 XF_INST_FG_COLOR = $0D ; green
 XF_VOL_FG_COLOR = $07 ; yellow
 XF_EFFECT_FG_COLOR = $03 ; cyan
+XF_MUTED_FG_COLOR = $02 ; red
 
 .segment "CODE"
 
@@ -133,9 +134,11 @@ mainstate:
     bra mainloop
 
 dispatch_function:
+    sei
     stz Dispatch::flag
     lda Dispatch::operand
     stz Dispatch::operand
+    cli
     jmp (dispatch_functions,x)
 
 
@@ -144,16 +147,7 @@ do_grid_cut:
     jmp Grid::Func::delete_selection
 
 
-    VERA_SET_ADDR ($0010+$1B000),2
 
-    lda #' '
-    sta Vera::Reg::Data0
-    lda SeqState::mix
-    jsr xf_byte_to_hex
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    jmp mainloop
 exit:
 ;	DO THIS WHEN WE'RE EXITING FOR REAL
     jsr IRQ::teardown
@@ -166,22 +160,27 @@ dispatch_flags:
     .byte Dispatch::OP_UNDO
     .byte Dispatch::OP_REDO
     .byte Dispatch::OP_BACKSPACE
+
     .byte Dispatch::OP_INSERT
     .byte Dispatch::OP_COPY_GRID
     .byte Dispatch::OP_COPY_SEQ
     .byte Dispatch::OP_DELETE
+
     .byte Dispatch::OP_CUT
     .byte Dispatch::OP_PASTE_GRID
     .byte Dispatch::OP_PASTE_SEQ
     .byte Dispatch::OP_DEC_SEQ_CELL
+
     .byte Dispatch::OP_INC_SEQ_CELL
     .byte Dispatch::OP_GRID_ENTRY
     .byte Dispatch::OP_INC_SEQ_MAX_ROW
     .byte Dispatch::OP_DELETE_SEQ
+
     .byte Dispatch::OP_SET_SEQ_CELL
     .byte Dispatch::OP_INSERT_SEQ
     .byte Dispatch::OP_SEQ_ENTRY
     .byte Dispatch::OP_DELETE_INST
+
     .byte Dispatch::OP_NEW_PATTERN
     .byte 0
 dispatch_functions:
@@ -189,20 +188,25 @@ dispatch_functions:
     .word Undo::undo
     .word Undo::redo
     .word Grid::Func::backspace
+
     .word Grid::Func::insert_cell
     .word Clipboard::copy_grid_cells
     .word Clipboard::copy_sequencer_rows
     .word Grid::Func::delete_selection
+
     .word do_grid_cut
     .word Clipboard::paste_cells
     .word Clipboard::paste_sequencer_rows
     .word Sequencer::Func::decrement_cell
+
     .word Sequencer::Func::increment_cell
     .word Grid::Func::entry
     .word Sequencer::Func::increment_max_row
     .word Sequencer::Func::delete_row
+
     .word Sequencer::Func::set_cell
     .word Sequencer::Func::insert_row
     .word Sequencer::Func::entry
     .word Instruments::Func::delete
+
     .word Sequencer::Func::new_pattern

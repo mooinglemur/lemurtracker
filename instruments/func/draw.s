@@ -1,8 +1,21 @@
 
-draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
+.proc draw ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
+    ; Header
+    VERA_SET_ADDR (((InstState::INSTRUMENTS_LOCATION_Y-1)*256)+((InstState::INSTRUMENTS_LOCATION_X+2)*2)+Vera::VRAM_text),2
+
+
+    ldx #0
+    :
+        lda header_text,x
+        beq :+
+        sta Vera::Reg::Data0
+        inx
+        bra :-
+    :
     ; Top of grid
-    VERA_SET_ADDR ((InstState::INSTRUMENTS_LOCATION_Y * 256)+((InstState::INSTRUMENTS_LOCATION_X+2)*2)+Vera::VRAM_text),2
+    VERA_SET_ADDR ((InstState::INSTRUMENTS_LOCATION_Y*256)+((InstState::INSTRUMENTS_LOCATION_X+2)*2)+Vera::VRAM_text),2
+
 
     lda #CustomChars::GRID_TOP_LEFT
     sta Vera::Reg::Data0
@@ -222,3 +235,6 @@ draw: ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
         bne :-
 
     rts
+.endproc
+
+header_text: .byte "Instruments [F3]",0

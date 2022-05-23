@@ -1,5 +1,22 @@
 .proc draw ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
 
+    ; Label + Mix header
+    VERA_SET_ADDR (((SeqState::SEQUENCER_LOCATION_Y-1)*256)+((SeqState::SEQUENCER_LOCATION_X+2)*2)+Vera::VRAM_text),2
+
+    ldx #0
+    :
+        lda header_text,x
+        beq :+
+        sta Vera::Reg::Data0
+        inx
+        bra :-
+    :
+
+    lda SeqState::mix
+    jsr xf_byte_to_hex
+    stx Vera::Reg::Data0
+
+
     ; Top of grid
     VERA_SET_ADDR ((SeqState::SEQUENCER_LOCATION_Y*256)+((SeqState::SEQUENCER_LOCATION_X+2)*2)+Vera::VRAM_text),2
 
@@ -240,3 +257,5 @@
     ; we fall into update_grid_patterns
     jmp SeqState::update_grid_patterns
 .endproc
+
+header_text: .byte "Seq [F2]   Mix ",0

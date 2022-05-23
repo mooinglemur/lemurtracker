@@ -13,6 +13,7 @@ insertmode: .res 1
 entrymode: .res 1
 gridmode: .res 1
 
+
 tmp1: .res 1
 
 CONSTRAINT_ASCII = 1
@@ -366,7 +367,11 @@ end:
 
 .proc get_byte_from_hex
     lda textfield
+    beq zero
     jsr xf_hex_char_to_nybble
+    sta tmp1
+    ldy textfield+1
+    beq end
     asl
     asl
     asl
@@ -375,6 +380,10 @@ end:
     lda textfield+1
     jsr xf_hex_char_to_nybble
     ora tmp1
+    rts
+zero:
+    lda #0
+end:
     rts
 .endproc
 

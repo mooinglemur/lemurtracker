@@ -174,6 +174,7 @@ redo:
 
 .proc seq_entry
     bcs end ; carry indicates abort
+    inc SeqState::busy
     lda #OP_SEQ_ENTRY
     sta flag
 end:

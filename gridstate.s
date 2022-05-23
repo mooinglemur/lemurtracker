@@ -15,6 +15,7 @@ global_pattern_length: .res 1 ; set on file create/file load
 base_bank: .byte $10 ; where does tracker data start
 channel_to_pattern: .res NUM_CHANNELS ; which pattern is referenced in each channel
 channel_is_inherited: .res NUM_CHANNELS ; boolean of whether the channel data is inherited from mix 0
+channel_is_muted: .res NUM_CHANNELS ; make it dark when muted
 notechardata: .res 9*NUM_CHANNELS ; temp storage for characters based on pattern data
 entrymode: .res 1
 short_hilight_interval: .res 1
@@ -59,6 +60,11 @@ column_fg_color: .byte XF_BASE_FG_COLOR,XF_BASE_FG_COLOR,XF_BASE_FG_COLOR
 column_fg_color_mix: .byte XF_DIM_FG_COLOR,XF_DIM_FG_COLOR,XF_DIM_FG_COLOR
                      .byte XF_BASE_FG_COLOR,XF_BASE_FG_COLOR,XF_DIM_FG_COLOR
                      .byte XF_BASE_FG_COLOR,XF_BASE_FG_COLOR,XF_BASE_FG_COLOR
+column_fg_color_muted: .byte XF_MUTED_FG_COLOR,XF_MUTED_FG_COLOR,XF_MUTED_FG_COLOR
+                       .byte XF_MUTED_FG_COLOR,XF_MUTED_FG_COLOR,XF_MUTED_FG_COLOR
+                       .byte XF_MUTED_FG_COLOR,XF_MUTED_FG_COLOR,XF_MUTED_FG_COLOR
+
+
 
 
 .proc set_lookup_addr ; takes in .X, .Y for tracker position, affects .A, lookup_addr

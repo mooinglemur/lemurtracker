@@ -43,6 +43,28 @@
         :
         jmp Dispatch::copy_grid
     :
+
+    ; process Shift-1 through 8 (mute)
+    lda keycode
+    cmp #$31
+    bcc :+
+    cmp #$39
+    bcs :+
+    lda modkeys
+    and #(MOD_LSHIFT|MOD_RSHIFT)
+    beq :+
+    lda keycode
+    sec
+    sbc #$31
+    tay
+    lda GridState::channel_is_muted,y
+    and #1
+    eor #1
+    sta GridState::channel_is_muted,y
+    inc redraw
+    jmp @end
+    :
+
     ; above here are "nondestructive" ops that don't require note_entry to be true
 
     lda GridState::entrymode
@@ -124,9 +146,10 @@
         jmp Dispatch::delete_selection
     :
 
-    ; if we're holding down mod keys, don't process entries
-;    lda modkeys
-;    bne @end
+    ; if we're holding down mod keys besides shift, don't process entries
+    lda modkeys
+    and #(MOD_LCTRL|MOD_RCTRL|MOD_LALT|MOD_RALT)
+    bne @end
 
     lda GridState::cursor_position ; are we in the note column?
     beq @notecolumn
