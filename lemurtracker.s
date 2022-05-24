@@ -37,6 +37,8 @@ xf_tmp3: .res 1
 
 framecounter: .res 2
 
+.include "githash.s"
+
 .include "x16.inc"
 .include "customchars.s"
 
@@ -82,7 +84,7 @@ redraw: .res 1 ; flag on when a redraw is necessary
 xf_state: .res 1
 
 XF_STATE_DUMP = 0 ; we end up here when we need to dump memory state to SD
-XF_STATE_NEW_DIALOG = 1
+XF_STATE_EDITINST = 1
 XF_STATE_SAVE_DIALOG = 2
 XF_STATE_LOAD_DIALOG = 3
 XF_STATE_GRID = 4
@@ -101,13 +103,23 @@ mainloop:
 
     lda xf_state
     cmp #XF_STATE_TEXT
-    bne mainstate
+    bne check_editinst
 
     jsr TextField::draw
     wai
     jmp mainloop
 
-mainstate:
+check_editinst:
+    lda xf_state
+    cmp #XF_STATE_EDITINST
+    bne mainstates
+
+    lda redraw
+    beq mainloop
+    jsr Instruments::Func::draw_edit
+    bra mainloop
+
+mainstates:
     lda redraw
     beq :+
         stz redraw

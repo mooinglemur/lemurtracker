@@ -25,7 +25,12 @@ NOTE_REL_RIGHT    = $AE
 GRID_BOTTOM       = $AF
 GRID_BOTTOM_LEFT  = GRID_BOTTOM
 GRID_BOTTOM_RIGHT = $B0
-
+BOX_UL            = $B1
+BOX_UR            = $B2
+BOX_LL            = $B3
+BOX_LR            = $B4
+BOX_VERTICAL      = $B5
+BOX_HORIZONTAL    = $AA
 INSERT_INDICATOR  = $BB
 
 
@@ -65,7 +70,7 @@ install:
     lda graphic_chars,x
     sta Vera::Reg::Data0
     inx
-    cpx #(8*13)
+    cpx #(8*18)
     bne :-
 
     rts
@@ -202,6 +207,55 @@ graphic_chars:
     .byte %00000000
     .byte %00000000
 
+    ; upper left box
+    .byte %00000000
+    .byte %00000000
+    .byte %00000000
+    .byte %00011111
+    .byte %00011111
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+
+    ; upper right box
+    .byte %00000000
+    .byte %00000000
+    .byte %00000000
+    .byte %11111000
+    .byte %11111000
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+
+    ; lower left box
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+    .byte %00011111
+    .byte %00011111
+    .byte %00000000
+    .byte %00000000
+    .byte %00000000
+
+    ; lower right box
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+    .byte %11111000
+    .byte %11111000
+    .byte %00000000
+    .byte %00000000
+    .byte %00000000
+
+    ; vertical box
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
 
 
 

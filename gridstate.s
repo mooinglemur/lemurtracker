@@ -65,8 +65,6 @@ column_fg_color_muted: .byte XF_MUTED_FG_COLOR,XF_MUTED_FG_COLOR,XF_MUTED_FG_COL
                        .byte XF_MUTED_FG_COLOR,XF_MUTED_FG_COLOR,XF_MUTED_FG_COLOR
 
 
-
-
 .proc set_lookup_addr ; takes in .X, .Y for tracker position, affects .A, lookup_addr
     stz lookup_addr
     stz lookup_addr+1

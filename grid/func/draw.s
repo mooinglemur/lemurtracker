@@ -11,6 +11,17 @@
         bra :-
     :
 
+    ; Git version
+    VERA_SET_ADDR ($0146+$1B000),2
+    ldx #0
+    :
+        lda githash,x
+        beq :+
+        sta Vera::Reg::Data0
+        inx
+        bra :-
+    :
+
     ; Grid Header
     VERA_SET_ADDR ($0106+$1B000),2
 

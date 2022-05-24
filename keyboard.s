@@ -92,7 +92,9 @@ dohandler:
 ;   ^^ we're outta here
 
 handlertbl:
-    .word handler0,handler1,handler2,handler3
+    .word handler0
+    .word Keyboard::Handler::editinst
+    .word handler2,handler3
 ;         4/XF_STATE_GRID         5/XF_STATE_TEXT
     .word Keyboard::Handler::grid,Keyboard::Handler::text
 ;         6/XF_STATE_SEQUENCER         7/XF_STATE_INSTRUMENTS

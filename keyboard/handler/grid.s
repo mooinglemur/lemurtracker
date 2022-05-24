@@ -15,6 +15,16 @@
     tax
     jmp (@fntbl,x)
 @nomatch:
+
+    jsr common_all
+    bcc :+
+        jmp @noentry
+    :
+    jsr common_grid_seq
+    bcc :+
+        jmp @noentry
+    :
+
     ; handle Ctrl+A / Ctrl+Shift+A
     lda keycode
     cmp #$61
@@ -44,26 +54,6 @@
         jmp Dispatch::copy_grid
     :
 
-    ; process Shift-1 through 8 (mute)
-    lda keycode
-    cmp #$31
-    bcc :+
-    cmp #$39
-    bcs :+
-    lda modkeys
-    and #(MOD_LSHIFT|MOD_RSHIFT)
-    beq :+
-    lda keycode
-    sec
-    sbc #$31
-    tay
-    lda GridState::channel_is_muted,y
-    and #1
-    eor #1
-    sta GridState::channel_is_muted,y
-    inc redraw
-    jmp @end
-    :
 
     ; above here are "nondestructive" ops that don't require note_entry to be true
 
@@ -106,36 +96,6 @@
         jmp Dispatch::cut
     :
 
-    ; handle Ctrl+Y
-
-    lda keycode
-    cmp #$79
-    bne :+
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
-        beq :+
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
-        bne :+
-        jmp Dispatch::redo
-    :
-
-
-    ; handle Ctrl+Z / Ctrl+Shift+Z
-
-    lda keycode
-    cmp #$7A
-    bne :++
-        lda modkeys
-        and #(MOD_LCTRL|MOD_RCTRL)
-        beq :++
-        lda modkeys
-        and #(MOD_LSHIFT|MOD_RSHIFT)
-        beq :+
-            jmp Dispatch::redo
-        :
-        jmp Dispatch::undo
-    :
 
     ; handle Delete key with selection active
     lda keycode
@@ -167,8 +127,8 @@
 @end:
     rts
 @ktbl:
-    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   F2  F3  bsp ins
-    .byte $80,$81,$82,$83,$84,$85,$86,$87,$09,$20,$5B,$5D,$8B,$8C,$08,$88
+    ;     up  dn  lt  rt  hm  end pgu pgd tab spc [   ]   bsp ins
+    .byte $80,$81,$82,$83,$84,$85,$86,$87,$09,$20,$5B,$5D,$08,$88
     ;     n/  n*  -   =   F9
     .byte $96,$97,$2D,$3D,$92
 @fntbl:
@@ -184,8 +144,6 @@
     .word @key_space
     .word @key_leftbracket
     .word @key_rightbracket
-    .word @key_F2
-    .word @key_F3
     .word @key_backspace
     .word @key_insert
     .word Grid::Func::decrement_octave
@@ -267,16 +225,6 @@
         jmp Grid::Func::increment_step
     :
     jmp Grid::Func::increment_octave
-@key_F2:
-    lda #XF_STATE_SEQUENCER
-    sta xf_state
-    inc redraw
-    rts
-@key_F3:
-    lda #XF_STATE_INSTRUMENTS
-    sta xf_state
-    inc redraw
-    rts
 @key_backspace:
     lda GridState::entrymode
     beq :+
