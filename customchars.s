@@ -31,6 +31,8 @@ BOX_LL            = $B3
 BOX_LR            = $B4
 BOX_VERTICAL      = $B5
 BOX_HORIZONTAL    = $AA
+BOX_TLEFT         = $B6
+BOX_TRIGHT        = $B7
 INSERT_INDICATOR  = $BB
 
 
@@ -70,7 +72,7 @@ install:
     lda graphic_chars,x
     sta Vera::Reg::Data0
     inx
-    cpx #(8*18)
+    cpx #(8*20)
     bne :-
 
     rts
@@ -253,6 +255,26 @@ graphic_chars:
     .byte %00011000
     .byte %00011000
     .byte %00011000
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+
+    ; t left
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+    .byte %00011111
+    .byte %00011111
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+
+    ; t right
+    .byte %00011000
+    .byte %00011000
+    .byte %00011000
+    .byte %11111000
+    .byte %11111000
     .byte %00011000
     .byte %00011000
     .byte %00011000

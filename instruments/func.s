@@ -1,5 +1,10 @@
 .scope Func
 
+tmp1: .res 1
+tmp2: .res 1
+tmp3: .res 1
+tmp4: .res 1
+
 .include "func/draw.s"
 .include "func/decrement_y.s"
 .include "func/increment_y.s"

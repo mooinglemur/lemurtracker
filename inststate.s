@@ -7,6 +7,10 @@ y_position: .res 1 ; which instrument row are we in
 max_instrument: .byte $FE ; the last instrument
 base_bank: .byte $02
 
+edit_field_idx: .res 1 ; the field in the instrument edit that is hilighted
+                       ; the exact field depends on the type of instrument
+edit_instrument_type: .res 1
+
 INSTRUMENTS_LOCATION_X = 20
 INSTRUMENTS_LOCATION_Y = 45
 INSTRUMENTS_GRID_ROWS = 9
@@ -45,14 +49,14 @@ set_lookup_addr: ; input: .Y = row
     rts
 
 
-instrument_type: .byte " NUL"," PSG"," OPM"," PCM"," LYR"," MID", " XXX"
+instrument_type: .byte " NUL"," PSG"," OPM"," NOI"," MUL"," PCM", " XXX"
 instrument_type_color:
     .byte $00,$00,$00,$00 ; NUL
     .byte $00,$D0,$D0,$D0 ; PSG
     .byte $00,$A1,$A1,$A1 ; OPM
-    .byte $00,$21,$21,$21 ; PCM
-    .byte $00,$C1,$C1,$C1 ; LYR
-    .byte $00,$61,$61,$61 ; MID
+    .byte $00,$21,$21,$21 ; NOI
+    .byte $00,$C1,$C1,$C1 ; MUL
+    .byte $00,$61,$61,$61 ; PCM
     .byte $00,$01,$01,$01 ; XXX
 
 
