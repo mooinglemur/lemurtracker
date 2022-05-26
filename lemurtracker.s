@@ -116,6 +116,7 @@ check_editinst:
 
     lda redraw
     beq mainloop
+    stz redraw
     jsr Instruments::Func::draw_edit
     bra mainloop
 

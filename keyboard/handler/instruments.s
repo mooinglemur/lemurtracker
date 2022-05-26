@@ -65,6 +65,7 @@
     :
     jmp Dispatch::delete_instrument
 @key_enter:
+    stz InstState::edit_field_idx
     lda #XF_STATE_EDITINST
     sta xf_state
     inc redraw

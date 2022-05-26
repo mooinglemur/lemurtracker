@@ -49,7 +49,7 @@ loop:
     lda texts,x
     sta xf_tmp1
     lda texts+1,x
-    beq end
+    beq cursor
     sta xf_tmp2
 
     ldx tmp1
@@ -72,6 +72,24 @@ loop:
     inc tmp2
     inc tmp3
     bra loop
+cursor:
+    lda InstState::edit_field_idx
+    clc
+    adc #EDITBOX_Y+3
+    tay
+    lda #EDITBOX_X+5
+    eor #$FF
+    tax
+    lda #2
+    jsr xf_set_vera_data_txtcoords
+    lda #(XF_CURSOR_BG_COLOR|XF_BASE_FG_COLOR)
+    ldx #16
+    :
+        sta Vera::Reg::Data0 ; color
+        dex
+        bne :-
+
+
 end:
     rts
 texts: .word top,text1,divider,text2,text3,text4,text5,bottom,0
