@@ -1,3 +1,4 @@
 .proc delete
-    rts
+    lda #0
+    jmp set_instrument_type
 .endproc

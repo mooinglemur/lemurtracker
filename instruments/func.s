@@ -11,9 +11,8 @@ tmp4: .res 1
 .include "func/decrement_y_page.s"
 .include "func/increment_y_page.s"
 .include "func/set_y.s"
-.include "func/delete.s"
 .include "func/draw_edit.s"
 .include "func/set_instrument_type.s"
-
+.include "func/delete.s"
 
 .endscope

@@ -77,12 +77,12 @@ lookup_addr: .res 2
 ; for format 04 (instrument first half)
 ;02 - row
 ;03-07 - for possible future use
-;08-0F - value
+;08-0F - value (instrument type and name)
 
 ; for format 05 (instrument second half)
 ;02 - row
 ;03-07 - for possible future use
-;08-0F - value
+;08-0F - value (instrument parameters)
 
 
 
