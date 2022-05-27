@@ -24,6 +24,7 @@ OP_PASTE_SEQ = 18
 OP_SEQ_ENTRY = 19
 OP_DELETE_INST = 20
 OP_NEW_PATTERN = 21
+OP_INST_SET_TYPE = 22
 
 
 flag: .byte $00
@@ -184,19 +185,26 @@ end:
     rts
 .endproc
 
+.proc set_instrument_type
+    sta operand
+    lda #OP_INST_SET_TYPE
+    sta flag
+    inc redraw
+    rts
+.endproc
 
-set_sequencer_cell:
+.proc set_sequencer_cell
     sta operand
     lda #OP_SET_SEQ_CELL
     sta flag
     rts
+.endproc
 
-
-undo:
+.proc undo
     lda #OP_UNDO
     sta flag
     rts
-
+.endproc
 
 
 

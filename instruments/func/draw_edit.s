@@ -19,7 +19,6 @@ EDITBOX_Y = 18
     bne :+
         jmp draw_edit_ymnoise_instrument
     :
-
     cmp #4
     bne :+
         jmp draw_edit_multi_instrument
@@ -82,7 +81,7 @@ cursor:
     tax
     lda #2
     jsr xf_set_vera_data_txtcoords
-    lda #(XF_CURSOR_BG_COLOR|XF_BASE_FG_COLOR)
+    lda #(XF_NOTE_ENTRY_BG_COLOR|XF_BASE_FG_COLOR)
     ldx #16
     :
         sta Vera::Reg::Data0 ; color

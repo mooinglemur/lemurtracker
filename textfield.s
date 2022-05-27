@@ -275,10 +275,23 @@ end:
 
     ; draw first character, optionally with gridline
     lda textfield
-    beq end_string
+    bne :+
+        ldx gridmode
+        beq end_string
+    :
     ldx gridmode
     beq first_character
     ; we are in grid mode, use a grid tile if possible
+    cmp #0
+    bne :+ ; null
+        lda #CustomChars::GRID_LEFT
+        bra first_character
+    :
+    cmp #$20 ; space
+    bne :+
+        lda #CustomChars::GRID_LEFT
+        bra first_character
+    :
     cmp #$30 ; numeral 0
     bcc first_character
     cmp #$5B ; one after Z

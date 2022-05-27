@@ -38,7 +38,7 @@
     sta xf_tmp2
     stz xf_tmp3
 
-@rowstart:
+rowstart:
     lda #(1 | $10) ; high bank, stride = 1
     sta $9F22
 
@@ -52,7 +52,7 @@
 
     lda xf_tmp3
     beq :+
-        jmp @blankrow
+        jmp blankrow
     :
 
     lda xf_tmp2
@@ -61,9 +61,9 @@
     bcs :++
         cmp InstState::y_position
         bcc :+
-            jmp @blankrow
+            jmp blankrow
         :
-        bra @filledrow
+        bra filledrow
     :
 
     ldy xf_tmp2
@@ -72,9 +72,9 @@
         inc xf_tmp3
     :
     cmp InstState::y_position
-    bcs @filledrow
+    bcs filledrow
 
-@filledrow:
+filledrow:
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
     cmp InstState::y_position ; comparing .A which is the current row being drawn
     bne :+
@@ -92,26 +92,61 @@
 
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
     lda (InstState::lookup_addr)
-    beq @unconfigured_row
+    bne :+
+        jmp unconfigured_row
+    :
 
     ldx #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
 
     ldy #1
     lda (InstState::lookup_addr),y
-    clc
-    adc #$49
+
+    ; use a grid tile if possible in first position
+    bne :+ ; null
+        lda #CustomChars::GRID_LEFT
+        bra first_character
+    :
+    cmp #$20 ; space
+    bne :+
+        lda #CustomChars::GRID_LEFT
+        bra first_character
+    :
+    cmp #$30 ; numeral 0
+    bcc first_character
+    cmp #$5B ; one after Z
+    bcs first_character
+    adc #$50 ; carry is clear, gets the numbers into the right range
+    cmp #$8A ; letters or numbers?
+    bcc first_character ; numbers, we're in the correct place
+    sbc #$07 ; carry is set, we're probably a letter, so shift down to the correct place
+    cmp #$8A ; are we really letters though?
+    bcs first_character ; ah, we are
+    sbc #$48 ; oh no, we're not letters, carry is clear so we're really subtracting $49
+             ; go back to where we started
+first_character:
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
-
-    iny
+rest_of_characters:
+    ldy #2
     :
         lda (InstState::lookup_addr),y
+        beq end_string
         sta Vera::Reg::Data0
         stx Vera::Reg::Data0
         iny
         cpy #16
-        bne :-
+        bcc :-
+        bra end_name
+end_string:
+    lda #$20
+    :
+        sta Vera::Reg::Data0
+        stx Vera::Reg::Data0
+        iny
+        cpy #16
+        bcc :-
 
+end_name:
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
 
     lda (InstState::lookup_addr)
@@ -138,8 +173,8 @@
     lda InstState::instrument_type_color+3,x
     sta Vera::Reg::Data0
 
-    bra @endofrow
-@unconfigured_row:
+    bra endofrow
+unconfigured_row:
     lda #CustomChars::NOTE_DOT
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
@@ -151,8 +186,8 @@
         sty Vera::Reg::Data0
         dex
         bne :-
-    bra @endofrow
-@blankrow:
+    bra endofrow
+blankrow:
     lda #$20
     ldy #%00000001 ; color value for blank row is 0 bg, 1 fg
     sta Vera::Reg::Data0
@@ -172,7 +207,7 @@
         dex
         bne :-
 
-@endofrow:
+endofrow:
     lda #CustomChars::GRID_RIGHT
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
@@ -185,7 +220,7 @@
     lda xf_tmp1
     cmp #(InstState::INSTRUMENTS_LOCATION_Y+InstState::INSTRUMENTS_GRID_ROWS+1)
     bcs :+
-        jmp @rowstart
+        jmp rowstart
     :
 
 ;   Bottom of grid
@@ -215,7 +250,7 @@
 
     lda #(InstState::INSTRUMENTS_LOCATION_X+2)
     asl
-    ina
+    inc
 
     sta $9F20
 

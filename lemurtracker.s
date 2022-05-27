@@ -117,6 +117,7 @@ check_editinst:
     lda redraw
     beq mainloop
     stz redraw
+    jsr Instruments::Func::draw
     jsr Instruments::Func::draw_edit
     bra mainloop
 
@@ -195,6 +196,7 @@ dispatch_flags:
     .byte Dispatch::OP_DELETE_INST
 
     .byte Dispatch::OP_NEW_PATTERN
+    .byte Dispatch::OP_INST_SET_TYPE
     .byte 0
 dispatch_functions:
     .word Grid::Func::note_entry
@@ -223,3 +225,4 @@ dispatch_functions:
     .word Instruments::Func::delete
 
     .word Sequencer::Func::new_pattern
+    .word Instruments::Func::set_instrument_type
