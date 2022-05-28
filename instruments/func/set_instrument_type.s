@@ -4,10 +4,21 @@
     sta InstState::edit_instrument_type
     inc redraw
 
+    ; store the undo event (32 bytes takes 4 slots)
+
     ldy InstState::y_position
-    jsr Undo::store_instrument_first_half
+    lda #0
+    jsr Undo::store_instrument ; 1/4
     ldy InstState::y_position
-    jsr Undo::store_instrument_second_half
+    lda #8
+    jsr Undo::store_instrument ; 2/4
+    ldy InstState::y_position
+    lda #16
+    jsr Undo::store_instrument ; 3/4
+    ldy InstState::y_position
+    lda #24
+    jsr Undo::store_instrument ; 4/4
+
     jsr Undo::mark_checkpoint
 
     ldy InstState::y_position

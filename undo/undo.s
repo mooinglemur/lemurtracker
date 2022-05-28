@@ -25,10 +25,8 @@ undo:
     beq @undo_sequencer_row
     cmp #$03 ; sequencer max_row
     beq @undo_sequencer_max_row
-    cmp #$04 ; instrument first half
-    beq @undo_instrument_first_half
-    cmp #$05 ; instrument second half
-    beq @undo_instrument_second_half
+    cmp #$04 ; instrument
+    beq @undo_instrument
     bra @check_end_of_undo_group
 @undo_grid_cell:
     jsr handle_undo_redo_grid_cell
@@ -39,11 +37,8 @@ undo:
 @undo_sequencer_max_row:
     jsr handle_undo_redo_sequencer_max_row
     bra @check_end_of_undo_group
-@undo_instrument_first_half:
-    jsr handle_undo_redo_instrument_first_half
-    bra @check_end_of_undo_group
-@undo_instrument_second_half:
-    jsr handle_undo_redo_instrument_second_half
+@undo_instrument:
+    jsr handle_undo_redo_instrument
     bra @check_end_of_undo_group
 @check_end_of_undo_group:
     jsr set_ram_bank

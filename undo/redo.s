@@ -23,10 +23,8 @@ redo:
     beq @redo_sequencer_row
     cmp #$03 ; sequencer max_row
     beq @redo_sequencer_max_row
-    cmp #$04 ; instrument first half
-    beq @redo_instrument_first_half
-    cmp #$05
-    beq @redo_instrument_second_half
+    cmp #$04 ; instrument
+    beq @redo_instrument
     bra @check_end_of_redo_group
 @redo_grid_cell:
     jsr handle_undo_redo_grid_cell
@@ -37,11 +35,8 @@ redo:
 @redo_sequencer_max_row:
     jsr handle_undo_redo_sequencer_max_row
     bra @check_end_of_redo_group
-@redo_instrument_first_half:
-    jsr handle_undo_redo_instrument_first_half
-    bra @check_end_of_redo_group
-@redo_instrument_second_half:
-    jsr handle_undo_redo_instrument_second_half
+@redo_instrument:
+    jsr handle_undo_redo_instrument
     bra @check_end_of_redo_group
 @check_end_of_redo_group:
     jsr advance_undo_pointer
