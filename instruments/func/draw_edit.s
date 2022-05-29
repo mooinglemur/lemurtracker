@@ -35,52 +35,20 @@ EDITBOX_Y = 18
 .endproc
 
 .proc draw_edit_new_instrument
-    ldx #EDITBOX_X+4
-    stx tmp1
-    ldy #EDITBOX_Y
-    sty tmp2
-    stz tmp3
+    ldx #<dialog
+    ldy #>dialog
+    jsr Util::dialog
 
-loop:
-    lda tmp3
-    asl
-    tax
-    lda texts,x
-    sta xf_tmp1
-    lda texts+1,x
-    beq cursor
-    sta xf_tmp2
-
-    ldx tmp1
-    ldy tmp2
-    lda #1
-    jsr xf_set_vera_data_txtcoords
-
-    ldx #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
-    ldy #0
-
-    :
-        lda (xf_tmp1),y
-        beq :+
-        sta Vera::Reg::Data0 ; character
-        stx Vera::Reg::Data0 ; color
-        iny
-        bra :-
-    :
-
-    inc tmp2
-    inc tmp3
-    bra loop
 cursor:
     lda InstState::edit_field_idx
     clc
     adc #EDITBOX_Y+3
     tay
-    lda #EDITBOX_X+5
+    lda #EDITBOX_X+1
     eor #$FF
     tax
     lda #2
-    jsr xf_set_vera_data_txtcoords
+    jsr Util::set_vera_data_txtcoords
     lda #(XF_NOTE_ENTRY_BG_COLOR|XF_BASE_FG_COLOR)
     ldx #16
     :
@@ -91,133 +59,144 @@ cursor:
 
 end:
     rts
-texts: .word top,text1,divider,text2,text3,text4,text5,bottom,0
-top:   .byte CustomChars::BOX_UL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-       .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-       .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-       .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-       .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-       .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_UR,0
-text1: .byte CustomChars::BOX_VERTICAL,"New Instrument  ",CustomChars::BOX_VERTICAL,0
-divider: .byte CustomChars::BOX_TLEFT,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-         .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-         .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-         .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-         .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-         .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_TRIGHT,0
-text2: .byte CustomChars::BOX_VERTICAL,"VERA PSG        ",CustomChars::BOX_VERTICAL,0
-text3: .byte CustomChars::BOX_VERTICAL,"YM2151 (OPM) FM ",CustomChars::BOX_VERTICAL,0
-text4: .byte CustomChars::BOX_VERTICAL,"YM2151 NOISE    ",CustomChars::BOX_VERTICAL,0
-text5: .byte CustomChars::BOX_VERTICAL,"Multilayered    ",CustomChars::BOX_VERTICAL,0
-bottom:.byte CustomChars::BOX_LL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-       .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-       .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-       .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-       .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL
-       .byte CustomChars::BOX_HORIZONTAL,CustomChars::BOX_HORIZONTAL,CustomChars::BOX_LR,0
 
+dialog: .byte EDITBOX_Y,EDITBOX_X,6,16
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
+
+        .byte 2,1,1
+        .word text1
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),15
+
+        .byte 1,2 ; separator
+
+        .byte 2,3,1
+        .word text2
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),15
+
+        .byte 2,4,1
+        .word text3
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),15
+
+        .byte 2,5,1
+        .word text4
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),15
+
+        .byte 2,6,1
+        .word text5
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),15
+
+        .byte 0
+
+text1: .asciiz "New Instrument"
+text2: .asciiz "VERA PSG"
+text3: .asciiz "YM2151 (OPM) FM"
+text4: .asciiz "YM2151 NOISE"
+text5: .asciiz "Multilayered"
 
 .endproc
 
 .proc draw_edit_psg_instrument
-    ldx #EDITBOX_X
-    stx tmp1
-    ldy #EDITBOX_Y
-    sty tmp2
-    stz tmp3
 
-    ; header
-    lda #1
-    jsr xf_set_vera_data_txtcoords
-    ldx #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
-    lda #CustomChars::BOX_UL
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    lda #CustomChars::BOX_HORIZONTAL
-    ldy #24
-    :
-        sta Vera::Reg::Data0
-        stx Vera::Reg::Data0
-        dey
-        bne :-
-
-    lda #CustomChars::BOX_UR
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    ; name line
-    ldx tmp1
-    inc tmp2
-    ldy tmp2
-    lda #1
-    jsr xf_set_vera_data_txtcoords
-
-    ldx #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
-
-    lda #CustomChars::BOX_VERTICAL
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
-    ldy #0
-    :
-        lda text1,y
-        beq :+
-        sta Vera::Reg::Data0 ; character
-        stx Vera::Reg::Data0 ; color
-        iny
-        bra :-
-    :
-
-    ; name field itself
-    ldx #(XF_HILIGHT_BG_COLOR_1|XF_BASE_FG_COLOR)
-    ldy #1
-    :
-        lda (InstState::lookup_addr),y
-        beq :+
-        sta Vera::Reg::Data0 ; character
-        stx Vera::Reg::Data0 ; color
-        iny
-        cpy #16
-        bcc :-
-    :
-
-    ; name field pad out the nulls with spaces
-    lda #$20
-    :
-        cpy #16
-        bcs :+
-        sta Vera::Reg::Data0 ; character
-        stx Vera::Reg::Data0 ; color
-        iny
-        bra :-
-    :
-
-    ; instrument type
-    lda (InstState::lookup_addr)
-    asl
-    asl
-    tay
-    ldx #0
-    :
-        lda InstState::instrument_type,y
-        sta Vera::Reg::Data0 ; character
-        lda InstState::instrument_type_color,y
-        sta Vera::Reg::Data0 ; color
-        iny
-        inx
-        cpx #4
-        bcc :-
-
-    ldx #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
-    lda #CustomChars::BOX_VERTICAL
-    sta Vera::Reg::Data0
-    stx Vera::Reg::Data0
-
+    ldx #<dialog
+    ldy #>dialog
+    jsr Util::dialog
 
     rts
 
-text1: .asciiz "Name:"
+
+dialog: .byte EDITBOX_Y,EDITBOX_X,8,24
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
+
+        .byte 2,1,1
+        .word text1
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),4
+
+        .byte 3,1,6
+        .byte InstState::lookup_addr,1
+        .byte (XF_HILIGHT_BG_COLOR_1|XF_BASE_FG_COLOR),15
+
+        .byte 2,1,22
+        .word text2
+        .byte $D0,3
+
+        .byte 2,2,1
+        .word text3
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),6
+
+        .byte 7,2,7
+        .byte InstState::lookup_addr,$10
+        .byte (XF_HILIGHT_BG_COLOR_1|XF_BASE_FG_COLOR),$80
+
+        .byte 2,2,8
+        .word text4
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),10
+
+        .byte 7,2,18
+        .byte InstState::lookup_addr,$10
+        .byte (XF_HILIGHT_BG_COLOR_1|XF_BASE_FG_COLOR),$40
+
+        .byte 2,2,19
+        .word text5
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),1
+
+        .byte 2,3,1
+        .word text6
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),8
+
+        .byte 2,4,1
+        .word text7
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),12
+
+        .byte 5,4,16
+        .byte InstState::lookup_addr,$11
+        .byte (XF_HILIGHT_BG_COLOR_1|XF_BASE_FG_COLOR),1
+
+        .byte 2,5,1
+        .word text8
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),11
+
+        .byte 5,5,16
+        .byte InstState::lookup_addr,$12
+        .byte (XF_HILIGHT_BG_COLOR_1|XF_BASE_FG_COLOR),1
+
+        .byte 2,6,1
+        .word text9
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),10
+
+        .byte 5,6,16
+        .byte InstState::lookup_addr,$13
+        .byte (XF_HILIGHT_BG_COLOR_1|XF_BASE_FG_COLOR),1
+
+        .byte 2,7,1
+        .word text10
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),10
+
+        .byte 5,7,16
+        .byte InstState::lookup_addr,$14
+        .byte (XF_HILIGHT_BG_COLOR_1|XF_BASE_FG_COLOR),1
+
+        .byte 2,8,1
+        .word text11
+        .byte (XF_BASE_BG_COLOR|XF_BASE_FG_COLOR),14
+
+        .byte 5,8,16
+        .byte InstState::lookup_addr,$15
+        .byte (XF_HILIGHT_BG_COLOR_1|XF_BASE_FG_COLOR),1
+
+        .byte 0
+
+text1: .asciiz "Name"
+text2: .asciiz "PSG"
+text3: .asciiz "Left ["
+text4: .asciiz "]  Right ["
+text5: .asciiz "]"
+text6: .asciiz "Waveform"
+text7: .asciiz "Volume Macro"
+text8: .asciiz "Pitch Macro"
+text9: .asciiz "Fine Macro"
+text10:.asciiz "Duty Macro"
+text11:.asciiz "Waveform Macro"
+
 .endproc
 
 .proc draw_edit_ym_instrument

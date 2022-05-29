@@ -1,5 +1,14 @@
+.scope Util
 
-xf_byte_to_hex: ; converts a number to two ASCII/PETSCII hex digits: input A = number to convert, output A = most sig nybble, X = least sig nybble, affects A,X
+tmp1: .res 1
+tmp2: .res 1
+tmp3: .res 1
+tmp4: .res 1
+tmp5: .res 1
+tmp6: .res 1
+tmp7: .res 1
+
+byte_to_hex: ; converts a number to two ASCII/PETSCII hex digits: input A = number to convert, output A = most sig nybble, X = least sig nybble, affects A,X
     pha
 
     and #$0f
@@ -22,7 +31,7 @@ xf_hexify:
     eor #%00110000
     rts
 
-xf_byte_to_hex_in_grid: ; converts a number to two ASCII/PETSCII hex digits: input A = number to convert, output A = most sig nybble, X = least sig nybble, affects A,X
+byte_to_hex_in_grid: ; converts a number to two ASCII/PETSCII hex digits: input A = number to convert, output A = most sig nybble, X = least sig nybble, affects A,X
     pha
     and #$0f
 
@@ -41,7 +50,7 @@ xf_byte_to_hex_in_grid: ; converts a number to two ASCII/PETSCII hex digits: inp
     pla
     rts
 
-xf_hex_char_to_nybble:
+hex_char_to_nybble:
     sec
     sbc #$30
     cmp #$0A
@@ -53,15 +62,15 @@ xf_hex_char_to_nybble:
 @end:
     rts
 
-xf_set_charset:
+set_charset:
     lda #1
     jmp x16::Kernal::SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
 
-xf_reset_charset:
+reset_charset:
     lda #2
     jmp x16::Kernal::SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
 
-xf_clear_screen:
+clear_screen:
     VERA_SET_ADDR $1B000,1
     ldy #64 ; rows
 @row:
@@ -78,7 +87,7 @@ xf_clear_screen:
 
     rts
 
-xf_set_vera_data_txtcoords: ; .x = col (eor #$FF x coord for color attribute)
+set_vera_data_txtcoords: ; .x = col (eor #$FF x coord for color attribute)
                             ; .y = row, .a = stride, clobbers a
     cmp #$00
     bmi @negative_stride
@@ -114,3 +123,7 @@ xf_set_vera_data_txtcoords: ; .x = col (eor #$FF x coord for color attribute)
 @col:
     sta Vera::Reg::AddrL
     rts
+
+.include "util/dialog.s"
+
+.endscope

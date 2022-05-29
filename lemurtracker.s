@@ -30,9 +30,10 @@ entry:
 
 .pushseg
 .segment "ZEROPAGE"
-xf_tmp1: .res 1
-xf_tmp2: .res 1
-xf_tmp3: .res 1
+zp_tmp1: .res 1
+zp_tmp2: .res 1
+zp_tmp3: .res 1
+zp_tmp4: .res 1
 .popseg
 
 framecounter: .res 2
@@ -46,6 +47,7 @@ framecounter: .res 2
 .include "gridstate.s"
 .include "seqstate.s"
 .include "inststate.s"
+.include "util.s"
 .include "textfield.s"
 .include "playerengine.s"
 
@@ -56,7 +58,6 @@ framecounter: .res 2
 .include "clipboard.s"
 
 .include "dispatch.s"
-.include "util.s"
 .include "irq.s"
 .include "keyboard.s"
 .include "debugpanel.s"
@@ -165,7 +166,7 @@ do_grid_cut:
 exit:
 ;	DO THIS WHEN WE'RE EXITING FOR REAL
     jsr IRQ::teardown
-    jsr xf_reset_charset
+    jsr Util::reset_charset
     rts
 
 

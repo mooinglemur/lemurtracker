@@ -1,4 +1,4 @@
-.proc draw ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
+.proc draw ; affects A,X,Y,zp_tmp1,zp_tmp2,zp_tmp3
 
     ; Label + Mix header
     VERA_SET_ADDR (((SeqState::SEQUENCER_LOCATION_Y-1)*256)+((SeqState::SEQUENCER_LOCATION_X+2)*2)+Vera::VRAM_text),2
@@ -13,15 +13,12 @@
     :
 
     lda SeqState::mix
-    jsr xf_byte_to_hex
+    jsr Util::byte_to_hex
     stx Vera::Reg::Data0
 
 
     ; Top of grid
     VERA_SET_ADDR ((SeqState::SEQUENCER_LOCATION_Y*256)+((SeqState::SEQUENCER_LOCATION_X+2)*2)+Vera::VRAM_text),2
-
-    ;lda #$A3
-    ;sta VERA_data0
 
     ldx #SeqState::NUM_CHANNELS
     :
@@ -37,18 +34,18 @@
 
     ; start on row SEQUENCER_LOCATION+1
     lda #SeqState::SEQUENCER_LOCATION_Y+1
-    sta xf_tmp1
+    sta zp_tmp1
     lda SeqState::y_position
     sec
     sbc #4
-    sta xf_tmp2
-    stz xf_tmp3
+    sta zp_tmp2
+    stz zp_tmp3
 
 @rowstart:
     lda #(1 | $10) ; high bank, stride = 1
     sta $9F22
 
-    lda xf_tmp1 ; row number
+    lda zp_tmp1 ; row number
     clc
     adc #$b0
     sta $9F21
@@ -56,13 +53,13 @@
     lda #(SeqState::SEQUENCER_LOCATION_X*2) ; grid start
     sta $9F20
 
-    lda xf_tmp3
+    lda zp_tmp3
     beq :+
         jmp @blankrow
     :
 
-    lda xf_tmp2
-    ldy xf_tmp1
+    lda zp_tmp2
+    ldy zp_tmp1
     cpy #(SeqState::SEQUENCER_LOCATION_Y+(SeqState::SEQUENCER_GRID_ROWS/2)+1)
     bcs :++
         cmp SeqState::y_position
@@ -72,10 +69,10 @@
         bra @filledrow
     :
 
-    ldy xf_tmp2
+    ldy zp_tmp2
     cpy SeqState::max_row
     bne :+
-        inc xf_tmp3
+        inc zp_tmp3
     :
     cmp SeqState::y_position
     bcs @filledrow
@@ -86,7 +83,7 @@
     bne :+
         ldy #((XF_BASE_BG_COLOR>>4)|(XF_BASE_FG_COLOR<<4)) ; invert
     :
-    jsr xf_byte_to_hex
+    jsr Util::byte_to_hex
 
 
     sta Vera::Reg::Data0
@@ -97,7 +94,7 @@
     stz SeqState::iterator
 
 
-    ldy xf_tmp2 ; the row we're drawing
+    ldy zp_tmp2 ; the row we're drawing
     jsr SeqState::set_lookup_addr
 
 ; draw row
@@ -111,7 +108,7 @@
     cmp #XF_STATE_SEQUENCER
     bne @after_selection
 
-    lda xf_tmp2 ; the row we're drawing
+    lda zp_tmp2 ; the row we're drawing
 
     cmp SeqState::y_position
     bne @continue_row
@@ -130,7 +127,7 @@
     lda SeqState::selection_active
     beq @after_selection
 
-    lda xf_tmp2
+    lda zp_tmp2
 
     cmp SeqState::selection_top_y
     bcc @after_selection
@@ -154,7 +151,7 @@
     sta SeqState::tmpcolor
     lda (SeqState::mix0_lookup_addr),y
 @after_inherit_check:
-    jsr xf_byte_to_hex_in_grid
+    jsr Util::byte_to_hex_in_grid
     ldy SeqState::tmpcolor ; restore color
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
@@ -193,14 +190,14 @@
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
 
-    lda xf_tmp3
+    lda zp_tmp3
     bne :+
-        inc xf_tmp2
+        inc zp_tmp2
 
 
     :
-    inc xf_tmp1
-    lda xf_tmp1
+    inc zp_tmp1
+    lda zp_tmp1
     cmp #(SeqState::SEQUENCER_LOCATION_Y+SeqState::SEQUENCER_GRID_ROWS+1)
     bcs :+
         jmp @rowstart
@@ -208,9 +205,6 @@
 
 ;   Bottom of grid
     VERA_SET_ADDR (((SeqState::SEQUENCER_LOCATION_Y+SeqState::SEQUENCER_GRID_ROWS+1) * 256)+((SeqState::SEQUENCER_LOCATION_X+2)*2)+Vera::VRAM_text),2
-
-    ;lda #$A3
-    ;sta VERA_data0
 
     ldx #SeqState::NUM_CHANNELS
     :

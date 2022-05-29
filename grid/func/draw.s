@@ -1,5 +1,5 @@
 
-.proc draw ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
+.proc draw ; affects A,X,Y,zp_tmp1,zp_tmp2,zp_tmp3
     ; Application Title
     VERA_SET_ADDR ($003C+$1B000),2
     ldx #0
@@ -37,9 +37,6 @@
     ; Top of grid
     VERA_SET_ADDR ($0206+$1B000),2
 
-    ;lda #$A3
-    ;sta VERA_data0
-
     ldx #GridState::NUM_CHANNELS
     :
         lda #CustomChars::GRID_TOP_LEFT
@@ -62,19 +59,19 @@
     ; cycle through 40 rows
     ; start on row 3
     lda #3
-    sta xf_tmp1
+    sta zp_tmp1
     lda GridState::y_position
     sta GridState::tmp_y_position
     sec
     sbc #20
-    sta xf_tmp2
-    stz xf_tmp3
+    sta zp_tmp2
+    stz zp_tmp3
 
 rowstart:
     lda #(1 | $10) ; high bank, stride = 1
     sta $9F22
 
-    lda xf_tmp1 ; row number
+    lda zp_tmp1 ; row number
     clc
     adc #$b0
     sta $9F21
@@ -82,13 +79,13 @@ rowstart:
     lda #2 ; one character over
     sta $9F20
 
-    lda xf_tmp3
+    lda zp_tmp3
     beq :+
         jmp blankrow
     :
 
-    lda xf_tmp2
-    ldy xf_tmp1
+    lda zp_tmp2
+    ldy zp_tmp1
     cpy #23
     bcs :++
         cmp GridState::tmp_y_position
@@ -98,11 +95,11 @@ rowstart:
         bra filledrow
     :
 
-    ldy xf_tmp2
+    ldy zp_tmp2
     iny
     cpy GridState::global_pattern_length
     bcc :+
-        inc xf_tmp3
+        inc zp_tmp3
     :
     cmp GridState::tmp_y_position
     bcs filledrow
@@ -113,7 +110,7 @@ filledrow:
     bne :+
         ldy #((XF_BASE_BG_COLOR>>4)|(XF_BASE_FG_COLOR<<4)) ; invert
     :
-    jsr xf_byte_to_hex
+    jsr Util::byte_to_hex
 
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
@@ -125,7 +122,7 @@ filledrow:
 
 fetch_notedata_loop:
     ldx iterator
-    ldy xf_tmp2 ; the row we're drawing
+    ldy zp_tmp2 ; the row we're drawing
     jsr GridState::set_lookup_addr
 
     txa
@@ -206,7 +203,7 @@ get_instrument_number:
     ldy #1
     lda (GridState::lookup_addr),y
     phx
-    jsr xf_byte_to_hex
+    jsr Util::byte_to_hex
     ply
     phx
     phy
@@ -223,7 +220,7 @@ get_volume: ; byte should be 1-16 and displayed value should be shifted down one
     beq :+
         phx
         dec
-        jsr xf_byte_to_hex
+        jsr Util::byte_to_hex
         txa
         plx
         sta GridState::notechardata+5,x
@@ -245,7 +242,7 @@ get_effect_arg:
     ldy #4
     lda (GridState::lookup_addr),y
     phx
-    jsr xf_byte_to_hex
+    jsr Util::byte_to_hex
     ply
     phx
     phy
@@ -265,7 +262,7 @@ end_column:
     ldy #XF_BASE_BG_COLOR
 
     ; color current row
-    lda xf_tmp2
+    lda zp_tmp2
     cmp GridState::tmp_y_position
     bne not_current_row
         lda xf_state
@@ -283,7 +280,7 @@ not_current_row:
 
 long_hilight:
     ; color every 16 (or whatever) rows
-    lda xf_tmp2
+    lda zp_tmp2
     sec
 
 long_hilight_loop:
@@ -298,7 +295,7 @@ do_long_hilight:
 
 short_hilight:
     ; color every 4 (or whatever) rows
-    lda xf_tmp2
+    lda zp_tmp2
     sec
 
 short_hilight_loop:
@@ -325,7 +322,7 @@ cell_loop_outer:
     cmp #XF_STATE_GRID
     bne cell_loop_inner
 
-    lda xf_tmp2 ; current row
+    lda zp_tmp2 ; current row
 
     cmp GridState::selection_top_y
     bcc selection_off
@@ -441,14 +438,14 @@ blankrow:
     sty Vera::Reg::Data0
 
 endofrow:
-    lda xf_tmp3
+    lda zp_tmp3
     bne :+
-        inc xf_tmp2
+        inc zp_tmp2
 
 
     :
-    inc xf_tmp1
-    lda xf_tmp1
+    inc zp_tmp1
+    lda zp_tmp1
     cmp #43
     bcs :+
         jmp rowstart

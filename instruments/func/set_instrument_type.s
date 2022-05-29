@@ -58,7 +58,7 @@
     lda #1
     sta (InstState::lookup_addr) ; set instrument, preserve name if it exists
     ldy #$10
-    lda %11000000 ; left+right, pulse wave
+    lda #%11000000 ; left+right, pulse wave
     sta (InstState::lookup_addr),y
     lda #$FF
     :
@@ -107,7 +107,7 @@
     :
         iny
         sta (InstState::lookup_addr),y ; default macros and fm table
-        cpy #$14
+        cpy #$15
         bcc :-
 
     lda #$00

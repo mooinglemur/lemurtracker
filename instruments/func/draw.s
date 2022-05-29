@@ -1,5 +1,5 @@
 
-.proc draw ; affects A,X,Y,xf_tmp1,xf_tmp2,xf_tmp3
+.proc draw ; affects A,X,Y,zp_tmp1,zp_tmp2,zp_tmp3
 
     ; Header
     VERA_SET_ADDR (((InstState::INSTRUMENTS_LOCATION_Y-1)*256)+((InstState::INSTRUMENTS_LOCATION_X+2)*2)+Vera::VRAM_text),2
@@ -31,18 +31,18 @@
 
     ; start on row INSTRUMENTS_LOCATION+1
     lda #InstState::INSTRUMENTS_LOCATION_Y+1
-    sta xf_tmp1
+    sta zp_tmp1
     lda InstState::y_position
     sec
     sbc #4
-    sta xf_tmp2
-    stz xf_tmp3
+    sta zp_tmp2
+    stz zp_tmp3
 
 rowstart:
     lda #(1 | $10) ; high bank, stride = 1
     sta $9F22
 
-    lda xf_tmp1 ; row number
+    lda zp_tmp1 ; row number
     clc
     adc #$b0
     sta $9F21
@@ -50,13 +50,13 @@ rowstart:
     lda #(InstState::INSTRUMENTS_LOCATION_X*2) ; grid start
     sta $9F20
 
-    lda xf_tmp3
+    lda zp_tmp3
     beq :+
         jmp blankrow
     :
 
-    lda xf_tmp2
-    ldy xf_tmp1
+    lda zp_tmp2
+    ldy zp_tmp1
     cpy #(InstState::INSTRUMENTS_LOCATION_Y+(InstState::INSTRUMENTS_GRID_ROWS/2)+1)
     bcs :++
         cmp InstState::y_position
@@ -66,10 +66,10 @@ rowstart:
         bra filledrow
     :
 
-    ldy xf_tmp2
+    ldy zp_tmp2
     cpy InstState::max_instrument
     bne :+
-        inc xf_tmp3
+        inc zp_tmp3
     :
     cmp InstState::y_position
     bcs filledrow
@@ -80,14 +80,14 @@ filledrow:
     bne :+
         ldy #((XF_BASE_BG_COLOR>>4)|(XF_BASE_FG_COLOR<<4)) ; invert
     :
-    jsr xf_byte_to_hex
+    jsr Util::byte_to_hex
 
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
     stx Vera::Reg::Data0
     sty Vera::Reg::Data0
 
-    ldy xf_tmp2
+    ldy zp_tmp2
     jsr InstState::set_lookup_addr
 
     ldy #(XF_BASE_BG_COLOR|XF_BASE_FG_COLOR)
@@ -212,12 +212,12 @@ endofrow:
     sta Vera::Reg::Data0
     sty Vera::Reg::Data0
 
-    lda xf_tmp3
+    lda zp_tmp3
     bne :+
-        inc xf_tmp2
+        inc zp_tmp2
     :
-    inc xf_tmp1
-    lda xf_tmp1
+    inc zp_tmp1
+    lda zp_tmp1
     cmp #(InstState::INSTRUMENTS_LOCATION_Y+InstState::INSTRUMENTS_GRID_ROWS+1)
     bcs :+
         jmp rowstart

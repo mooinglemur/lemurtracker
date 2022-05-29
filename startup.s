@@ -63,9 +63,9 @@ versionmessagedone:
 
 
 .proc continue_startup
-    jsr xf_set_charset
+    jsr Util::set_charset
 
-    jsr xf_clear_screen
+    jsr Util::clear_screen
 
     jsr CustomChars::install
 

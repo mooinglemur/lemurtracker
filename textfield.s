@@ -271,7 +271,7 @@ end:
     ldx x_position
     ldy y_position
     lda #2
-    jsr xf_set_vera_data_txtcoords
+    jsr Util::set_vera_data_txtcoords
 
     ; draw first character, optionally with gridline
     lda textfield
@@ -332,7 +332,7 @@ end_field:
     tax
     ldy y_position
     lda #2
-    jsr xf_set_vera_data_txtcoords
+    jsr Util::set_vera_data_txtcoords
 
     lda #TF_BASE_COLOR
     ldx #0
@@ -353,7 +353,7 @@ cursor:
     tax
     ldy y_position
     lda #1
-    jsr xf_set_vera_data_txtcoords
+    jsr Util::set_vera_data_txtcoords
     lda #TF_CURSOR_COLOR
     sta Vera::Reg::Data0
     ; insert mode indicator
@@ -371,7 +371,7 @@ cursor:
     tax
     ldy y_position
     lda #1
-    jsr xf_set_vera_data_txtcoords
+    jsr Util::set_vera_data_txtcoords
     lda #CustomChars::INSERT_INDICATOR
     sta Vera::Reg::Data0
 end:
@@ -381,7 +381,7 @@ end:
 .proc get_byte_from_hex
     lda textfield
     beq zero
-    jsr xf_hex_char_to_nybble
+    jsr Util::hex_char_to_nybble
     sta tmp1
     ldy textfield+1
     beq end
@@ -391,7 +391,7 @@ end:
     asl
     sta tmp1
     lda textfield+1
-    jsr xf_hex_char_to_nybble
+    jsr Util::hex_char_to_nybble
     ora tmp1
     rts
 zero:
