@@ -125,5 +125,6 @@ set_vera_data_txtcoords: ; .x = col (eor #$FF x coord for color attribute)
     rts
 
 .include "util/dialog.s"
+.include "util/cursor.s"
 
 .endscope

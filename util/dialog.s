@@ -24,6 +24,7 @@
                 ; 5 = hex byte indirect - args = y offset, x offset, zp, offset, color, FF is null?
                 ; 6 = tick - args = y offset, x offset, lsb, msb, color, mask
                 ; 7 = tick indirect - args = y offset, x offset, zp, offset, color, mask
+                ; 8 = callback - y offset, x offset, lsb, msb, color, parameter (callback returns byte to dosplay)
 
     stx zp_tmp1
     sty zp_tmp2
@@ -196,6 +197,10 @@ inner_loop:
     beq element_tick
     cmp #7
     beq element_tick_indirect
+    cmp #8
+    bne :+
+        jmp element_callback
+    :
     jmp end ; panic return, shouldn't ever get here, but an unfinished dialog would be a clue that we did
 element_text:
     jsr dialog_set_lookup
@@ -305,11 +310,35 @@ do_tick:
         stx Vera::Reg::Data0
         bra endtext
     :
-    lda #'x' ; show tick
+    lda #CustomChars::TICK_MARK ; show tick
     sta Vera::Reg::Data0
     stx Vera::Reg::Data0
     bra endtext
-
+element_callback:
+    inc tmp2
+    lda tmp6
+    clc
+    adc #3
+    tay
+    ; fetch callback address
+    lda (zp_tmp1),y
+    sta zp_tmp3
+    iny
+    lda (zp_tmp1),y
+    sta zp_tmp4
+    iny
+    ; fetch and stash color
+    lda (zp_tmp1),y
+    pha
+    iny
+    lda (zp_tmp1),y
+    jsr do_callback
+    sta Vera::Reg::Data0
+    pla
+    sta Vera::Reg::Data0
+    jmp endtext
+do_callback:
+    jmp (zp_tmp3)
 finish_row:
     ldy tmp2
     lda #$20 ; space

@@ -2,7 +2,7 @@
 .scope TextField
 
 callback: .res 2
-textfield: .res 64
+textfield: .res 128
 width: .res 1
 cursor_position: .res 1
 x_position: .res 1
@@ -12,7 +12,6 @@ preserve: .res 1
 insertmode: .res 1
 entrymode: .res 1
 gridmode: .res 1
-
 
 tmp1: .res 1
 
@@ -46,8 +45,7 @@ TF_CURSOR_COLOR = $F1
     :
         stz textfield,x
         inx
-        cpx #64
-        bcc :-
+        bpl :-
 
 after_init:
     ldx #XF_STATE_TEXT

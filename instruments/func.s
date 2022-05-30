@@ -14,5 +14,6 @@ tmp4: .res 1
 .include "func/draw_edit.s"
 .include "func/set_instrument_type.s"
 .include "func/delete.s"
+.include "func/name_entry.s"
 
 .endscope

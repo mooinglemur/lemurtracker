@@ -1,13 +1,23 @@
+.include "editinst/psg.s"
+
 .proc editinst
     lda InstState::edit_instrument_type
     cmp #1
-    beq editinst_psg
+    bne :+
+        jmp editinst_psg
+    :
     cmp #2
-    beq editinst_ym
+    bne :+
+        jmp editinst_ym
+    :
     cmp #3
-    beq editinst_ymnoise
+    bne :+
+        jmp editinst_ymnoise
+    :
     cmp #4
-    beq editinst_multi
+    bne :+
+        jmp editinst_multi
+    :
 
     ; No instrument selected, select which instrument
 
@@ -68,12 +78,7 @@ key_dn:
     rts
 .endproc
 
-.proc editinst_psg
-    lda #XF_STATE_INSTRUMENTS
-    sta xf_state
-    inc redraw
-    rts
-.endproc
+
 
 .proc editinst_ym
     lda #XF_STATE_INSTRUMENTS

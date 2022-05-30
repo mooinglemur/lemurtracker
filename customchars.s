@@ -33,6 +33,7 @@ BOX_VERTICAL      = $B5
 BOX_HORIZONTAL    = $AA
 BOX_TLEFT         = $B6
 BOX_TRIGHT        = $B7
+TICK_MARK         = $B8
 INSERT_INDICATOR  = $BB
 
 
@@ -72,7 +73,7 @@ install:
     lda graphic_chars,x
     sta Vera::Reg::Data0
     inx
-    cpx #(8*20)
+    cpx #(8*21)
     bne :-
 
     rts
@@ -279,6 +280,15 @@ graphic_chars:
     .byte %00011000
     .byte %00011000
 
+    ; tick (check) mark
+    .byte %00000000
+    .byte %00000001
+    .byte %00000010
+    .byte %00000100
+    .byte %01101000
+    .byte %01110000
+    .byte %01100000
+    .byte %00000000
 
 
 .endscope

@@ -120,7 +120,7 @@ check_editinst:
     stz redraw
     jsr Instruments::Func::draw
     jsr Instruments::Func::draw_edit
-    bra mainloop
+    bra check_dispatch
 
 mainstates:
     lda redraw
@@ -132,6 +132,7 @@ mainstates:
     :
     wai
 
+check_dispatch:
     ldy #$FF
     :
         iny
@@ -198,6 +199,7 @@ dispatch_flags:
 
     .byte Dispatch::OP_NEW_PATTERN
     .byte Dispatch::OP_INST_SET_TYPE
+    .byte Dispatch::OP_INST_NAME_ENTRY
     .byte 0
 dispatch_functions:
     .word Grid::Func::note_entry
@@ -227,3 +229,4 @@ dispatch_functions:
 
     .word Sequencer::Func::new_pattern
     .word Instruments::Func::set_instrument_type
+    .word Instruments::Func::name_entry
