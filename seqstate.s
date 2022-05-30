@@ -7,7 +7,6 @@ max_pattern: .byte $5F; the highest patten number we can fit in ram
 mix: .res 1 ; which mix we're displaying
 base_bank: .byte $01 ; what bank are we going to use for the seq table
 iterator: .res 1
-busy: .byte $00
 
 NUM_CHANNELS = 8
 SEQUENCER_LOCATION_X = 1

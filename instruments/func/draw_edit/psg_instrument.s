@@ -1,8 +1,4 @@
 .proc draw_edit_psg_instrument
-    ldy #$10
-    lda (InstState::lookup_addr),y
-    and #3
-
 
     ldx #<dialog
     ldy #>dialog

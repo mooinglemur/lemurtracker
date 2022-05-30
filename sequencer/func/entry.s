@@ -24,6 +24,7 @@
     stz GridState::x_position
 end:
     inc redraw
-    stz SeqState::busy
+    lda #XF_STATE_SEQUENCER
+    sta xf_state
     rts
 .endproc

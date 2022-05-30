@@ -92,7 +92,7 @@ dohandler:
 ;   ^^ we're outta here
 
 handlertbl:
-    .word handler0
+    .word noop
     .word Keyboard::Handler::editinst
     .word handler2,handler3
 ;         4/XF_STATE_GRID         5/XF_STATE_TEXT
@@ -102,7 +102,6 @@ handlertbl:
     .word handler8,handler9,handler10,handler11
     .word handler12,handler13,handler14,handler15
 
-handler0:
 handler1:
 handler2:
 handler3:
@@ -114,6 +113,7 @@ handler12:
 handler13:
 handler14:
 handler15:
+noop:
     rts
 
 

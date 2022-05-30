@@ -23,7 +23,7 @@ end:
 uptbl:    .byte $00,$00,$00,$01,$01,$02,$02,$03,$07,$07,$08,$09
 downtbl:  .byte $01,$03,$06,$07,$07,$07,$07,$08,$0A,$0B,$0A,$0B
 lefttbl:  .byte $00,$01,$01,$03,$03,$04,$05,$07,$08,$08,$0A,$0A
-righttbl: .byte $01,$02,$02,$04,$05,$06,$06,$07,$09,$09,$0B,$0B
+righttbl: .byte $00,$02,$02,$04,$05,$06,$06,$07,$09,$09,$0B,$0B
 ktbl:
     ; this is the static keymapping
     ;     ent esc up  dn  lt  rt
@@ -38,21 +38,11 @@ fntbl:
 key_enter:
     lda InstState::edit_field_idx
     bne :+
-        lda #<Dispatch::inst_name_entry
+        lda #<Dispatch::inst_name_entry_end
         sta TextField::callback
-        lda #>Dispatch::inst_name_entry
+        lda #>Dispatch::inst_name_entry_end
         sta TextField::callback+1
-        lda #TextField::CONSTRAINT_ASCII
-        sta TextField::constraint
-        lda #TextField::ENTRYMODE_NORMAL
-        sta TextField::entrymode
-        stz TextField::insertmode
-        stz TextField::gridmode
-        lda #15
-        sta TextField::width
-        ldx #(Instruments::Func::EDITBOX_X+7)
-        ldy #(Instruments::Func::EDITBOX_Y+3)
-        jmp TextField::start
+        jmp Dispatch::inst_name_entry_start
     :
     rts
 key_esc:

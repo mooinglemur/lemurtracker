@@ -36,10 +36,12 @@ TF_CURSOR_COLOR = $F1
     ; if .A is nonzero, treat it as the first character typed
     stx x_position
     sty y_position
+    stz cursor_position
+
     ldx preserve
     bne after_init
 
-    stz cursor_position
+
 
     ldx #0
     :
@@ -62,6 +64,7 @@ after_init:
 
 .proc entry
     ; .A contains the (ascii) character or control code
+    ; Can be called in IRQ
     cmp #0
     bne :+
         jmp end
@@ -105,6 +108,8 @@ text:
     bcs :+
         jmp end
     :
+    lda #XF_STATE_NOOP
+    sta xf_state
     clc
     jmp (callback)
 hex:
@@ -133,6 +138,8 @@ hex:
 control_code:
     cmp #13 ; enter
     bne :+
+        lda #XF_STATE_NOOP
+        sta xf_state
         clc
         jmp (callback)
     :
@@ -154,10 +161,12 @@ control_code:
         jmp end
     :
     cmp #$83 ; right
-    bne :++
+    bne :+++
         ldx cursor_position
         lda textfield,x
-        beq end
+        bne :+
+            jmp end
+        :
         inx
         cpx width
         beq :+
@@ -235,6 +244,8 @@ control_code:
 
     cmp #$1B ; ESC
     bne :+
+        lda #XF_STATE_NOOP
+        sta xf_state
         sec
         jmp (callback)
     :

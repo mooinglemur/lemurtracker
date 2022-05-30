@@ -25,7 +25,8 @@ OP_SEQ_ENTRY = 19
 OP_DELETE_INST = 20
 OP_NEW_PATTERN = 21
 OP_INST_SET_TYPE = 22
-OP_INST_NAME_ENTRY = 23
+OP_INST_NAME_ENTRY_START = 23
+OP_INST_NAME_ENTRY_END = 24
 
 flag: .byte $00
 operand: .res 1
@@ -91,9 +92,15 @@ increment_sequencer_max_row:
 @end:
     rts
 
-.proc inst_name_entry
+.proc inst_name_entry_start
+    lda #OP_INST_NAME_ENTRY_START
+    sta flag
+    rts
+.endproc
+
+.proc inst_name_entry_end
     bcs end ; carry indicates abort
-    lda #OP_INST_NAME_ENTRY
+    lda #OP_INST_NAME_ENTRY_END
     sta flag
 end:
     lda #XF_STATE_EDITINST
@@ -185,9 +192,9 @@ redo:
 
 .proc seq_entry
     bcs end ; carry indicates abort
-    inc SeqState::busy
     lda #OP_SEQ_ENTRY
     sta flag
+    rts
 end:
     lda #XF_STATE_SEQUENCER
     sta xf_state

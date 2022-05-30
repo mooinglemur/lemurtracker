@@ -84,7 +84,7 @@ XF_MUTED_FG_COLOR = $02 ; red
 redraw: .res 1 ; flag on when a redraw is necessary
 xf_state: .res 1
 
-XF_STATE_DUMP = 0 ; we end up here when we need to dump memory state to SD
+XF_STATE_NOOP = 0
 XF_STATE_EDITINST = 1
 XF_STATE_SAVE_DIALOG = 2
 XF_STATE_LOAD_DIALOG = 3
@@ -103,12 +103,13 @@ mainloop:
     jsr DebugPanel::Func::draw
 
     lda xf_state
+    beq check_dispatch ; no-op state means we're handing off between IRQ and main loop
     cmp #XF_STATE_TEXT
     bne check_editinst
 
     jsr TextField::draw
     wai
-    jmp mainloop
+    bra mainloop
 
 check_editinst:
     lda xf_state
@@ -116,7 +117,7 @@ check_editinst:
     bne mainstates
 
     lda redraw
-    beq mainloop
+    beq check_dispatch
     stz redraw
     jsr Instruments::Func::draw
     jsr Instruments::Func::draw_edit
@@ -199,7 +200,8 @@ dispatch_flags:
 
     .byte Dispatch::OP_NEW_PATTERN
     .byte Dispatch::OP_INST_SET_TYPE
-    .byte Dispatch::OP_INST_NAME_ENTRY
+    .byte Dispatch::OP_INST_NAME_ENTRY_START
+    .byte Dispatch::OP_INST_NAME_ENTRY_END
     .byte 0
 dispatch_functions:
     .word Grid::Func::note_entry
@@ -229,4 +231,5 @@ dispatch_functions:
 
     .word Sequencer::Func::new_pattern
     .word Instruments::Func::set_instrument_type
-    .word Instruments::Func::name_entry
+    .word Instruments::Func::name_entry_start
+    .word Instruments::Func::name_entry_end
