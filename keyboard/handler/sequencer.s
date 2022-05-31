@@ -16,11 +16,15 @@
     jmp (@fntbl,x)
 @nomatch:
 
-    jsr common_all
+    jsr common_fkeys
     bcc :+
         jmp @noentry
     :
-    jsr common_grid_seq
+    jsr common_mute
+    bcc :+
+        jmp @noentry
+    :
+    jsr common_undo
     bcc :+
         jmp @noentry
     :

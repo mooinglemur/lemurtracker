@@ -49,13 +49,13 @@ framecounter: .res 2
 .include "inststate.s"
 .include "util.s"
 .include "textfield.s"
-.include "playerengine.s"
 
 .include "undo.s"
 .include "grid.s"
 .include "sequencer.s"
 .include "instruments.s"
 .include "clipboard.s"
+.include "playerengine.s"
 
 .include "dispatch.s"
 .include "irq.s"
@@ -71,6 +71,7 @@ XF_CURSOR_BG_COLOR = $F0 ; light grey
 XF_HILIGHT_BG_COLOR_1 = $B0 ; dark grey
 XF_HILIGHT_BG_COLOR_2 = $C0 ; grey
 XF_SELECTION_BG_COLOR = $50 ; green
+XF_PLAYBACK_BG_COLOR = $80 ; orange?
 
 XF_BASE_FG_COLOR = $01 ; white
 XF_DIM_FG_COLOR = $0F ; grey
@@ -86,12 +87,13 @@ xf_state: .res 1
 
 XF_STATE_NOOP = 0
 XF_STATE_EDITINST = 1
-XF_STATE_SAVE_DIALOG = 2
+XF_STATE_PLAYBACK = 2
 XF_STATE_LOAD_DIALOG = 3
 XF_STATE_GRID = 4
 XF_STATE_TEXT = 5
 XF_STATE_SEQUENCER = 6
 XF_STATE_INSTRUMENTS = 7
+
 
 main:
     jsr Startup::startup

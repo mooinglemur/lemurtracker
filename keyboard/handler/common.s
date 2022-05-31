@@ -1,7 +1,7 @@
 ; These process the hotkeys common to XF_STATE_GRID, XF_STATE_SEQUENCER
 ; and potentially XF_STATE_INSTRUMENTS
 
-.proc common_all
+.proc common_fkeys
 
     ; F1/F2/F3
     lda keycode
@@ -11,7 +11,7 @@
     beq f2
     cmp #$8C
     beq f3
-    bra after_fkeys
+    bra none
 f1:
     lda #XF_STATE_GRID
     sta xf_state
@@ -27,9 +27,15 @@ f3:
     sta xf_state
     inc redraw
     jmp end
+none:
+    clc
+    rts
+end:
+    sec
+    rts
+.endproc
 
-after_fkeys:
-mute:
+.proc common_mute
     ; process Shift-1 through 8 (mute)
     lda keycode
     cmp #$31
@@ -50,10 +56,16 @@ mute:
     inc redraw
     bra end
     :
+    clc
+    rts
+end:
+    sec
+    rts
 
     ; above here are "nondestructive" ops that don't require note_entry to be true
+.endproc
 
-
+.proc common_undo
     lda GridState::entrymode
     beq end
 
@@ -99,11 +111,4 @@ end:
     sec
     rts
 
-.endproc
-
-
-.proc common_grid_seq
-
-    clc
-    rts
 .endproc

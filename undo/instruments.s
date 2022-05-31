@@ -1,8 +1,8 @@
 handle_undo_redo_instrument:
     ; the operation here is the same whether we're undoing or redoing
     ; we swap the data in the undo buffer with that in grid memory
-    lda #XF_STATE_INSTRUMENTS
-    sta xf_state
+;    lda #XF_STATE_INSTRUMENTS
+;    sta xf_state
 
     jsr set_ram_bank
 
@@ -48,6 +48,9 @@ handle_undo_redo_instrument:
         cpy #16
         bcc :-
 
+    lda tmp_undo_buffer+4
+    sta xf_state
+
     ; we're done
     rts
 
@@ -60,13 +63,16 @@ store_instrument: ; takes in .Y = row, .A = instrument data offset, affects all 
     sta tmp_undo_buffer+1
     sty tmp_undo_buffer+2
 
+    lda xf_state
+    sta tmp_undo_buffer+4
+
     lda #2
     sta checkpoint
 
     jsr InstState::set_lookup_addr ; set lookup while y is still untouched
 
     ; zero out the rest of the buffer
-    ldy #4
+    ldy #5
     lda #0
     :
         sta tmp_undo_buffer,y

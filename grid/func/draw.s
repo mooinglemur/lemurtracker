@@ -265,16 +265,21 @@ end_column:
     lda zp_tmp2
     cmp GridState::tmp_y_position
     bne not_current_row
-        lda xf_state
-        cmp #XF_STATE_GRID
-        bne not_current_row ; If we're not editing the pattern, don't hilight the current row
-        ldy #XF_AUDITION_BG_COLOR
-        lda GridState::entrymode
-        beq :+
-            ldy #XF_NOTE_ENTRY_BG_COLOR
-        :
 
-        bra got_color
+    lda xf_state
+    cmp #XF_STATE_PLAYBACK
+    beq state_playback
+    cmp #XF_STATE_GRID
+    bne not_current_row ; If we're not editing the pattern, don't hilight the current row
+    ldy #XF_AUDITION_BG_COLOR
+    lda GridState::entrymode
+    beq :+
+        ldy #XF_NOTE_ENTRY_BG_COLOR
+    :
+    bra got_color
+state_playback:
+    ldy #XF_PLAYBACK_BG_COLOR
+    bra got_color
 
 not_current_row:
 
@@ -372,14 +377,15 @@ cell_loop_inner:
 
 muted:
     lda GridState::column_fg_color_muted,y
-    bra after_mute_check
+    ora tmp2
+    bra after_mute_color
 
 inherited:
     lda GridState::column_fg_color_mix,y
 
 after_inherit_check:
     ora tmp2
-after_mute_check:
+after_mute_color:
     sta Vera::Reg::Data0
     inx
     iny

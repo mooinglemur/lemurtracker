@@ -127,4 +127,6 @@ psg_wf: .res 16
 psg_pw: .res 16
 .popseg
 
+.include "playerengine/tick.s"
+
 .endscope

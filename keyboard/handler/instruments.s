@@ -15,7 +15,11 @@ match:
     tax
     jmp (fntbl,x)
 nomatch:
-    jsr common_all
+    jsr common_fkeys
+    bcs noentry
+    jsr common_mute
+    bcs noentry
+    jsr common_undo
     bcs noentry
 
 

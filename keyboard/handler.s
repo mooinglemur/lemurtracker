@@ -8,5 +8,6 @@
 .include "keyboard/handler/instruments.s"
 .include "keyboard/handler/text.s"
 .include "keyboard/handler/editinst.s"
+.include "keyboard/handler/playback.s"
 
 .endscope

@@ -15,7 +15,10 @@ match:
     tax
     jmp (fntbl,x)
 nomatch:
-
+    jsr common_undo
+    bcc :+
+        bra noentry
+    :
 entry:
 noentry:
 end:

@@ -40,9 +40,7 @@ TF_CURSOR_COLOR = $F1
 
     ldx preserve
     bne after_init
-
-
-
+    
     ldx #0
     :
         stz textfield,x

@@ -77,7 +77,8 @@ lookup_addr: .res 2
 ; for format 04 (instrument)
 ;02 - row
 ;03 - offset in instrument data
-;04-07 - for possible future use
+;04 - state
+;05-07 - for possible future use
 ;08-0F - value (instrument type and name)
 
 

@@ -94,7 +94,8 @@ dohandler:
 handlertbl:
     .word noop
     .word Keyboard::Handler::editinst
-    .word handler2,handler3
+    .word Keyboard::Handler::playback
+    .word handler3
 ;         4/XF_STATE_GRID         5/XF_STATE_TEXT
     .word Keyboard::Handler::grid,Keyboard::Handler::text
 ;         6/XF_STATE_SEQUENCER         7/XF_STATE_INSTRUMENTS
@@ -102,8 +103,6 @@ handlertbl:
     .word handler8,handler9,handler10,handler11
     .word handler12,handler13,handler14,handler15
 
-handler1:
-handler2:
 handler3:
 handler8:
 handler9:

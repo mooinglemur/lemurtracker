@@ -238,6 +238,9 @@ endofrow:
     lda #CustomChars::GRID_BOTTOM_RIGHT
     sta Vera::Reg::Data0
 
+    lda xf_state
+    cmp #XF_STATE_PLAYBACK
+    beq end
 
 ; now put the cursor where it belongs
     lda #(1 | $20) ; high page, stride = 2
@@ -269,7 +272,9 @@ endofrow:
         dex
         bne :-
 
+end:
     rts
+
 .endproc
 
 header_text: .byte "Instruments [F3]",0

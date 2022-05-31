@@ -20,6 +20,7 @@
         dex
         dey
         bne :-
+    stz TextField::textfield+15 ; null terminate
     ldx #(Instruments::Func::EDITBOX_X+7)
     ldy #(Instruments::Func::EDITBOX_Y+3)
     lda #0
