@@ -40,12 +40,12 @@ tmpcolor: .res 1
 
 set_ram_bank:
     lda base_bank
-    sta x16::Reg::RAMBank
+    sta X16::Reg::RAMBank
     rts
 
 set_lookup_addr: ; input: .Y = row
     lda base_bank
-    sta x16::Reg::RAMBank
+    sta X16::Reg::RAMBank
 
     stz lookup_addr+1
 

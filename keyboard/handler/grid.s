@@ -266,7 +266,7 @@ key_equalsplus:
     :
     jmp Dispatch::increment_sequencer_cell
 key_enter:
-    lda #XF_STATE_PLAYBACK
+    lda #XF_STATE_PLAYBACK_START
     sta xf_state
     rts
 .endproc

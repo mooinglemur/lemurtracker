@@ -25,15 +25,15 @@ MOD_RSHIFT = KeyboardState::MOD_RSHIFT
 setup_handler:
     sei
 
-    lda x16::Vec::KbdVec
+    lda X16::Vec::KbdVec
     sta old_vec
-    lda x16::Vec::KbdVec+1
+    lda X16::Vec::KbdVec+1
     sta old_vec+1
 
     lda #<handler
-    sta x16::Vec::KbdVec
+    sta X16::Vec::KbdVec
     lda #>handler
-    sta x16::Vec::KbdVec+1
+    sta X16::Vec::KbdVec+1
 
     cli
     rts
@@ -42,9 +42,9 @@ teardown_handler:
     sei
 
     lda old_vec
-    sta x16::Vec::KbdVec
+    sta X16::Vec::KbdVec
     lda old_vec+1
-    sta x16::Vec::KbdVec+1
+    sta X16::Vec::KbdVec+1
 
     cli
     rts

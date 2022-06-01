@@ -24,7 +24,7 @@ lookup_addr: .res 2 ; storage for offset in banked ram
 
 set_lookup_addr: ; input: .Y = row
     lda base_bank
-    sta x16::Reg::RAMBank
+    sta X16::Reg::RAMBank
 
     stz lookup_addr+1
 

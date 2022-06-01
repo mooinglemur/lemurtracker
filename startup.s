@@ -5,7 +5,7 @@
 .endproc
 
 .proc romcheck
-    lda x16::Kernal::VERSION
+    lda X16::Kernal::VERSION
     bpl versioncheck
     eor #$ff
     beq detect_emu ; custom build, unable to detect
@@ -37,12 +37,12 @@ emumessageloop:
     cmp #0
     beq emumessagedone
     phx
-    jsr x16::Kernal::CHROUT
+    jsr X16::Kernal::CHROUT
     plx
     inx
     bra emumessageloop
 emumessagedone:
-    jsr x16::Kernal::CHRIN
+    jsr X16::Kernal::CHRIN
     bra continue_startup
 badversion:
     ldx #0
@@ -51,7 +51,7 @@ versionmessageloop:
     cmp #0
     beq versionmessagedone
     phx
-    jsr x16::Kernal::CHROUT
+    jsr X16::Kernal::CHROUT
     plx
     inx
     bra versionmessageloop
@@ -85,9 +85,9 @@ versionmessagedone:
     jsr Keyboard::setup_handler
 
     sec
-    jsr x16::Kernal::SCREEN_MODE ; get current screen size (in 8px) into .X and .Y
+    jsr X16::Kernal::SCREEN_MODE ; get current screen size (in 8px) into .X and .Y
     lda #1
-    jsr x16::Kernal::MOUSE_CONFIG ; show the default mouse pointer
+    jsr X16::Kernal::MOUSE_CONFIG ; show the default mouse pointer
 
     lda #1
     sta redraw

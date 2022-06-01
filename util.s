@@ -64,11 +64,11 @@ hex_char_to_nybble:
 
 set_charset:
     lda #1
-    jmp x16::Kernal::SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
+    jmp X16::Kernal::SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
 
 reset_charset:
     lda #2
-    jmp x16::Kernal::SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
+    jmp X16::Kernal::SCREEN_SET_CHARSET ; jmp replaces jsr followed by rts
 
 clear_screen:
     VERA_SET_ADDR $1B000,1

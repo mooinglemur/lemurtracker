@@ -119,7 +119,7 @@ x16_inc = 1
 
 .endscope
 
-.scope x16
+.scope X16
     .scope Reg
         r0   = $02
         r0L  = r0
@@ -174,6 +174,11 @@ x16_inc = 1
 
         ROMBank = $01
         RAMBank = $00
+
+        .scope YM2151
+            Ctrl = $9F40
+            Data = $9F41
+        .endscope
     .endscope
 
     .scope ROMBank
@@ -305,15 +310,30 @@ x16_inc = 1
         PLOT                          := $FFF0
         IOBASE                        := $FFF3
     .endscope
+
+
+
 .endscope
 
 .scope YM2151
     .scope Reg
-        Ctrl = $9F40
-        Data = $9F41
+        TEST          = $01
+        KON           = $08
+        LFRQ          = $18
+        PMD_AMD       = $19
+        CT_W          = $1B
+        RL_FB_CONNECT = $20
+        KC            = $21
+        KF            = $22
+        PMS_AMS       = $23
+        DT1_MUL       = $40
+        TL            = $60
+        KS_AR         = $80
+        AMSEN_D1R     = $A0
+        DT2_D2R       = $C0
+        D1L_RR        = $E0
     .endscope
 .endscope
-
 
 
 
@@ -346,7 +366,7 @@ BASIC_INIT        := $C003
 .endmacro
 
 .macro JSRFAR far_sr_addr, bank
-    jsr x16::Kernal::JSRFAR_kernal_addr
+    jsr X16::Kernal::JSRFAR_kernal_addr
     .addr far_sr_addr
     .byte bank
 .endmacro

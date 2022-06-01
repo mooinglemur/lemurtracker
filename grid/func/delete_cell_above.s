@@ -16,11 +16,11 @@
     dey
     bcs @empty_cell
 @copy_cell:
-    lda x16::Reg::RAMBank
+    lda X16::Reg::RAMBank
     pha
     jsr Undo::store_grid_cell
     pla
-    sta x16::Reg::RAMBank
+    sta X16::Reg::RAMBank
 
     ldy #0
     :
@@ -41,14 +41,14 @@
     inc tmp1
     bra @loop
 @empty_cell:
-    lda x16::Reg::RAMBank
+    lda X16::Reg::RAMBank
     pha
 
     jsr Undo::store_grid_cell
     jsr Undo::mark_checkpoint
 
     pla
-    sta x16::Reg::RAMBank
+    sta X16::Reg::RAMBank
 
 
     lda #0

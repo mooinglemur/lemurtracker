@@ -26,7 +26,7 @@ ktbl:
 fntbl:
     .word key_enter
 key_enter:
-    lda #XF_STATE_GRID
+    lda #XF_STATE_PLAYBACK_STOP
     sta xf_state
     inc redraw
     rts

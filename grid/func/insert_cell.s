@@ -50,14 +50,14 @@ insert_cell:
     bra @copy_cell
 
 @empty_cell:
-    lda x16::Reg::RAMBank
+    lda X16::Reg::RAMBank
     pha
 
     jsr Undo::store_grid_cell
     jsr Undo::mark_checkpoint
 
     pla
-    sta x16::Reg::RAMBank
+    sta X16::Reg::RAMBank
 
 
     lda #0

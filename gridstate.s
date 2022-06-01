@@ -84,7 +84,7 @@ big_patterns:
 add_base_bank:
     clc
     adc base_bank
-    sta x16::Reg::RAMBank
+    sta X16::Reg::RAMBank
     tya
     clc
     adc lookup_addr

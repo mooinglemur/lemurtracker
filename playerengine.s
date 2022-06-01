@@ -8,6 +8,16 @@ base_bank: .byte $0B
 lookup_addr: .res 2
 
 .segment "PLAYERRAM"
+; These are set by effects
+speed: .res 1
+speed_sub: .res 1
+
+; Subtract one per tick.  If it drops to or below zero, we step the grid
+; and speed(_sub) gets added to delay(_sub)
+delay: .res 1
+delay_sub: .res 1
+
+
 psg_slot_to_channel: .res 16
 psg_slot_to_instrument: .res 16
 psg_slot_volume_envelope_addr: .res 32
@@ -32,6 +42,7 @@ psg_slot_waveform_envelope_delay: .res 16
 psg_slot_waveform_envelope_value: .res 16
 
 ym_slot_to_channel: .res 8
+ym_slot_to_instrument: .res 8
 ym_slot_volume_envelope_addr: .res 16
 ym_slot_volume_envelope_offset: .res 8
 ym_slot_volume_envelope_delay: .res 8
@@ -47,6 +58,7 @@ ym_slot_finepitch_envelope_value: .res 8
 ym_slot_fm_parameter_addr: .res 16
 
 ymnoise_slot_to_channel: .res 1
+ymnoise_slot_to_instrument: .res 1
 ymnoise_slot_volume_envelope_addr: .res 2
 ymnoise_slot_volume_envelope_offset: .res 1
 ymnoise_slot_volume_envelope_delay: .res 1
@@ -57,6 +69,7 @@ ymnoise_slot_pitch_envelope_delay: .res 1
 ymnoise_slot_pitch_envelope_value: .res 1
 
 pcm_slot_to_channel: .res 1
+pcm_slot_to_instrument: .res 1
 pcm_bank_position: .res 1
 pcm_page_position: .res 1
 pcm_byte_position: .res 2
@@ -66,23 +79,28 @@ pcm_loop_direction: .res 1 ; 1 or -1, current looping direction
 channel_to_instrument: .res GridState::NUM_CHANNELS
 
 channel_volume_target: .res GridState::NUM_CHANNELS ; value
+channel_volume_rate_sub: .res GridState::NUM_CHANNELS ; fractional part of rate
 channel_volume_rate: .res GridState::NUM_CHANNELS ; used for volume slide timing
 channel_volume_sub: .res GridState::NUM_CHANNELS ; used for fractional part of volume during slides
 channel_volume: .res GridState::NUM_CHANNELS ; set by channel volume column and A volume slides
 channel_pitch_target: .res GridState::NUM_CHANNELS ; midi note
+channel_pitch_rate_sub: .res GridState::NUM_CHANNELS ; fractional part of rate
 channel_pitch_rate: .res GridState::NUM_CHANNELS ; zero for bend (or off), nonzero for glissando
 channel_pitch_sub: .res GridState::NUM_CHANNELS ; fractional part
 channel_pitch: .res GridState::NUM_CHANNELS ; set by note playback and indirectly by overflowing master_finepitch
 channel_finepitch_target: .res GridState::NUM_CHANNELS ; if channel_pitch_target is nonzero, ignore this until it is reached
+channel_finepitch_rate_sub: .res GridState::NUM_CHANNELS ; fractional part of rate
 channel_finepitch_rate: .res GridState::NUM_CHANNELS ; zero for glissando (or off), nonzero for bend
 channel_finepitch_sub: .res GridState::NUM_CHANNELS ; fractional part
 channel_finepitch: .res GridState::NUM_CHANNELS ; set by pitch slides and direct offsets
 channel_vibrato_target: .res GridState::NUM_CHANNELS ; acts as depth, flips sign when reached
-channel_vibrato_rate: .res GridState::NUM_CHANNELS ; subs per tick
+channel_vibrato_rate_sub: .res GridState::NUM_CHANNELS ; fractional part of rate
+channel_vibrato_rate: .res GridState::NUM_CHANNELS
 channel_vibrato_sub: .res GridState::NUM_CHANNELS ; fractional part
 channel_vibrato: .res GridState::NUM_CHANNELS ; added to fine offset
 channel_tremolo_target: .res GridState::NUM_CHANNELS ; acts as depth, flips sign when reached
-channel_tremolo_rate: .res GridState::NUM_CHANNELS ; subs per tick
+channel_tremolo_rate_sub: .res GridState::NUM_CHANNELS ; fractional part of rate
+channel_tremolo_rate: .res GridState::NUM_CHANNELS
 channel_tremolo_sub: .res GridState::NUM_CHANNELS ; fractional part
 channel_tremolo: .res GridState::NUM_CHANNELS ; only goes negative, 0 = max volume
 
@@ -127,6 +145,10 @@ psg_wf: .res 16
 psg_pw: .res 16
 .popseg
 
+.include "playerengine/ym_wait.s"
+.include "playerengine/panic.s"
 .include "playerengine/tick.s"
+
+
 
 .endscope

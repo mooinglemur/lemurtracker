@@ -55,7 +55,7 @@ save_state: ; preserve VERA regs as we need to use them for PSG
     lda Vera::Reg::AddrH
     pha
     ; store state of ram bank
-    lda x16::Reg::RAMBank
+    lda X16::Reg::RAMBank
     pha
     ; store state of zeropage lookup addresses that could be clobbered here
     lda GridState::lookup_addr
@@ -88,7 +88,7 @@ restore_state:
     sta GridState::lookup_addr
 
     pla
-    sta x16::Reg::RAMBank
+    sta X16::Reg::RAMBank
 
     pla
     sta Vera::Reg::AddrH

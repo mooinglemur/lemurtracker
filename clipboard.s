@@ -27,7 +27,7 @@ clip_y_iterator: .res 1
 
 set_ram_bank:
     lda base_bank
-    sta x16::Reg::RAMBank
+    sta X16::Reg::RAMBank
     rts
 
 
