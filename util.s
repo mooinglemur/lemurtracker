@@ -124,6 +124,32 @@ set_vera_data_txtcoords: ; .x = col (eor #$FF x coord for color attribute)
     sta Vera::Reg::AddrL
     rts
 
+.proc zero_hiram
+    stz GridState::lookup_addr
+    lda #$A0
+    sta GridState::lookup_addr+1
+    lda #0
+    ldy #0
+outerloop:
+    ldx #1
+middleloop:
+    stx X16::Reg::RAMBank
+innerloop:
+    sta (GridState::lookup_addr),y
+    dey
+    bne innerloop
+    inx
+    cpx #64
+    bcc middleloop
+
+    ldx GridState::lookup_addr+1
+    inx
+    stx GridState::lookup_addr+1
+    cpx #$C0
+    bcc outerloop
+    rts
+.endproc
+
 .include "util/dialog.s"
 .include "util/cursor.s"
 

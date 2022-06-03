@@ -58,9 +58,14 @@
         sta channel_tremolo_sub,x
         sta channel_tremolo,x
 
+        sta channel_portamento,x
+
         lda #$7F
         sta channel_volume,x
         sta channel_volume_target,x
+
+        lda #$FF
+        sta channel_to_instrument,x
 
         inx
         cpx #GridState::NUM_CHANNELS

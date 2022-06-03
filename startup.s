@@ -63,11 +63,13 @@ versionmessagedone:
 
 
 .proc continue_startup
-    jsr Util::set_charset
-
     jsr Util::clear_screen
 
+    jsr Util::set_charset
+
     jsr CustomChars::install
+
+    jsr Util::zero_hiram
 
     lda #XF_STATE_GRID
     sta xf_state
@@ -98,6 +100,12 @@ versionmessagedone:
     sta Undo::lookup_addr+1
 
     jsr SeqState::init
+
+    lda PlayerEngine::base_bank
+    sta X16::Reg::RAMBank
+    lda #15
+    sta PlayerEngine::speed
+    stz PlayerEngine::speed_sub
 
     clc
     rts

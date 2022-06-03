@@ -82,12 +82,12 @@ channel_volume_target: .res GridState::NUM_CHANNELS ; value
 channel_volume_rate_sub: .res GridState::NUM_CHANNELS ; fractional part of rate
 channel_volume_rate: .res GridState::NUM_CHANNELS ; used for volume slide timing
 channel_volume_sub: .res GridState::NUM_CHANNELS ; used for fractional part of volume during slides
-channel_volume: .res GridState::NUM_CHANNELS ; set by channel volume column and A volume slides
+channel_volume: .res GridState::NUM_CHANNELS ; set by channel volume column and Axx volume slides
 channel_pitch_target: .res GridState::NUM_CHANNELS ; midi note
 channel_pitch_rate_sub: .res GridState::NUM_CHANNELS ; fractional part of rate
 channel_pitch_rate: .res GridState::NUM_CHANNELS ; zero for bend (or off), nonzero for glissando
-channel_pitch_sub: .res GridState::NUM_CHANNELS ; fractional part
-channel_pitch: .res GridState::NUM_CHANNELS ; set by note playback and indirectly by overflowing master_finepitch
+channel_pitch_sub: .res GridState::NUM_CHANNELS ; fractional part (unsigned)
+channel_pitch: .res GridState::NUM_CHANNELS ; set by note playback and indirectly by overflowing channel_finepitch
 channel_finepitch_target: .res GridState::NUM_CHANNELS ; if channel_pitch_target is nonzero, ignore this until it is reached
 channel_finepitch_rate_sub: .res GridState::NUM_CHANNELS ; fractional part of rate
 channel_finepitch_rate: .res GridState::NUM_CHANNELS ; zero for glissando (or off), nonzero for bend
@@ -104,6 +104,7 @@ channel_tremolo_rate: .res GridState::NUM_CHANNELS
 channel_tremolo_sub: .res GridState::NUM_CHANNELS ; fractional part
 channel_tremolo: .res GridState::NUM_CHANNELS ; only goes negative, 0 = max volume
 
+channel_portamento: .res GridState::NUM_CHANNELS ; track portamento effect (3xx) persistence
 
 ; YM2151 shadow vars
 ; globals
