@@ -1,5 +1,6 @@
 if [[ -e .git ]]; then
-	echo 'githash: .asciiz "'$(git rev-parse --short HEAD)'"' > githash.s
+	dirty=$(git diff --quiet || echo "+")
+	echo 'githash: .asciiz "'$(git rev-parse --short HEAD)$dirty'"' > githash.s
 else
 	echo 'githash: .asciiz ""' > githash.s
 fi
