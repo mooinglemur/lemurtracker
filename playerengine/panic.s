@@ -7,8 +7,6 @@
 
     sta pcm_slot_to_channel
     sta pcm_slot_to_instrument
-    sta ymnoise_slot_to_channel
-    sta ymnoise_slot_to_instrument
 
     ldx #0
     :
@@ -86,16 +84,16 @@
         jsr ym_wait
         stx X16::Reg::YM2151::Ctrl
         nop
+        nop
         sta X16::Reg::YM2151::Data
         inx
         bmi :-
 
     lda #YM2151::Reg::KON
+    sta X16::Reg::YM2151::Ctrl
     ldx #0
     :
         jsr ym_wait
-        sta X16::Reg::YM2151::Ctrl
-        nop
         stx X16::Reg::YM2151::Data
         inx
         cmp #8

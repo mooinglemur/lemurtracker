@@ -12,7 +12,7 @@ check_playback_start:
     sta delay_sub
     sta delay
 
-    jsr play_row
+    jsr load_row
 
     lda #XF_STATE_PLAYBACK
     sta xf_state
@@ -26,7 +26,7 @@ check_playback:
     dec delay
     bpl :+
         jsr Grid::Func::increment_y_without_starting_selection
-        jsr play_row
+        jsr load_row
     :
 
     bra end
@@ -45,18 +45,7 @@ end:
 .endproc
 
 
-;; temp
-.proc play_row
-    lda base_bank
-    sta X16::Reg::RAMBank
-
-    lda speed_sub
-    clc
-    adc delay_sub
-    sta delay_sub
-    lda speed
-    adc delay
-    sta delay
-
+.proc finalize_tick
+    ;
     rts
 .endproc

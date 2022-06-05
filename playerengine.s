@@ -2,11 +2,13 @@
 ; Player state
 
 base_bank: .byte $0B
+tmp8b: .res 8
+tmp1: .res 1
+tmp2: .res 1
 
 .pushseg
 .segment "ZEROPAGE"
 lookup_addr: .res 2
-
 .segment "PLAYERRAM"
 ; These are set by effects
 speed: .res 1
@@ -20,22 +22,27 @@ delay_sub: .res 1
 
 psg_slot_to_channel: .res 16
 psg_slot_to_instrument: .res 16
+psg_slot_volume_envelope_bank: .res 16
 psg_slot_volume_envelope_addr: .res 32
 psg_slot_volume_envelope_offset: .res 16
 psg_slot_volume_envelope_delay: .res 16
 psg_slot_volume_envelope_value: .res 16
+psg_slot_pitch_envelope_bank: .res 16
 psg_slot_pitch_envelope_addr: .res 32
 psg_slot_pitch_envelope_offset: .res 16
 psg_slot_pitch_envelope_delay: .res 16
 psg_slot_pitch_envelope_value: .res 16
+psg_slot_finepitch_envelope_bank: .res 16
 psg_slot_finepitch_envelope_addr: .res 32
 psg_slot_finepitch_envelope_offset: .res 16
 psg_slot_finepitch_envelope_delay: .res 16
 psg_slot_finepitch_envelope_value: .res 16
+psg_slot_duty_envelope_bank: .res 16
 psg_slot_duty_envelope_addr: .res 32
 psg_slot_duty_envelope_offset: .res 16
 psg_slot_duty_envelope_delay: .res 16
 psg_slot_duty_envelope_value: .res 16
+psg_slot_waveform_envelope_bank: .res 16
 psg_slot_waveform_envelope_addr: .res 32
 psg_slot_waveform_envelope_offset: .res 16
 psg_slot_waveform_envelope_delay: .res 16
@@ -43,30 +50,22 @@ psg_slot_waveform_envelope_value: .res 16
 
 ym_slot_to_channel: .res 8
 ym_slot_to_instrument: .res 8
+ym_slot_volume_envelope_bank: .res 8
 ym_slot_volume_envelope_addr: .res 16
 ym_slot_volume_envelope_offset: .res 8
 ym_slot_volume_envelope_delay: .res 8
 ym_slot_volume_envelope_value: .res 8
+ym_slot_pitch_envelope_bank: .res 8
 ym_slot_pitch_envelope_addr: .res 16
 ym_slot_pitch_envelope_offset: .res 8
 ym_slot_pitch_envelope_delay: .res 8
 ym_slot_pitch_envelope_value: .res 8
+ym_slot_finepitch_envelope_bank: .res 8
 ym_slot_finepitch_envelope_addr: .res 16
 ym_slot_finepitch_envelope_offset: .res 8
 ym_slot_finepitch_envelope_delay: .res 8
 ym_slot_finepitch_envelope_value: .res 8
 ym_slot_fm_parameter_addr: .res 16
-
-ymnoise_slot_to_channel: .res 1
-ymnoise_slot_to_instrument: .res 1
-ymnoise_slot_volume_envelope_addr: .res 2
-ymnoise_slot_volume_envelope_offset: .res 1
-ymnoise_slot_volume_envelope_delay: .res 1
-ymnoise_slot_volume_envelope_value: .res 1
-ymnoise_slot_pitch_envelope_addr: .res 2
-ymnoise_slot_pitch_envelope_offset: .res 1
-ymnoise_slot_pitch_envelope_delay: .res 1
-ymnoise_slot_pitch_envelope_value: .res 1
 
 pcm_slot_to_channel: .res 1
 pcm_slot_to_instrument: .res 1
@@ -75,6 +74,12 @@ pcm_page_position: .res 1
 pcm_byte_position: .res 2
 pcm_play_direction: .res 1 ; 1 or -1
 pcm_loop_direction: .res 1 ; 1 or -1, current looping direction
+
+
+channel_trigger: .res GridState::NUM_CHANNELS ; when value is 1, note is played this tick
+                                              ; if value is nonzero, decrement at the end of the tick
+channel_repatch: .res GridState::NUM_CHANNELS ; when this value is 1, at next trigger, re-apply all shadow parameters, then zero
+channel_note: .res GridState::NUM_CHANNELS ; 0 for cut, 1 for released, otherwise midi value
 
 channel_to_instrument: .res GridState::NUM_CHANNELS
 
@@ -130,9 +135,9 @@ ym_mul: .res 32 ; phase multiply
 ym_tl: .res 32 ; total level (attenuation)
 ym_ks: .res 32 ; key scaling
 ym_ar: .res 32 ; attack rate
-ym_d1l: .res 32 ; first decay level
+ym_d1l: .res 32 ; first decay level (sustain point)
 ym_d1r: .res 32 ; first decay rate
-ym_d2r: .res 32 ; second decay rate
+ym_d2r: .res 32 ; second decay rate (if nonzero, sustain becomes second decay)
 ym_rr: .res 32 ; release rate
 ym_amsen: .res 32 ; amplitude modulation sensitivity enable
 
@@ -148,6 +153,9 @@ psg_pw: .res 16
 
 .include "playerengine/ym_wait.s"
 .include "playerengine/panic.s"
+.include "playerengine/release_voices.s"
+.include "playerengine/assign_voices.s"
+.include "playerengine/load_row.s"
 .include "playerengine/tick.s"
 
 
