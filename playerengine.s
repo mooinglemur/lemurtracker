@@ -5,68 +5,64 @@ base_bank: .byte $0B
 tmp8b: .res 8
 tmp1: .res 1
 tmp2: .res 1
+theft: .byte $00 ; pointer to arbitrary next voice to steal
 
 .pushseg
 .segment "ZEROPAGE"
 lookup_addr: .res 2
 .segment "PLAYERRAM"
-; These are set by effects
+; These are set by global state, and effects
 speed: .res 1
 speed_sub: .res 1
 
-; Subtract one per tick.  If it drops to or below zero, we step the grid
+; Subtract one per tick.  If it drops below zero, we step the grid
 ; and speed(_sub) gets added to delay(_sub)
 delay: .res 1
 delay_sub: .res 1
 
 
+psg_slot_playing: .res 16
 psg_slot_to_channel: .res 16
 psg_slot_to_instrument: .res 16
-psg_slot_volume_envelope_bank: .res 16
-psg_slot_volume_envelope_addr: .res 32
+psg_slot_volume_envelope_index: .res 16
 psg_slot_volume_envelope_offset: .res 16
 psg_slot_volume_envelope_delay: .res 16
 psg_slot_volume_envelope_value: .res 16
-psg_slot_pitch_envelope_bank: .res 16
-psg_slot_pitch_envelope_addr: .res 32
+psg_slot_pitch_envelope_index: .res 16
 psg_slot_pitch_envelope_offset: .res 16
 psg_slot_pitch_envelope_delay: .res 16
 psg_slot_pitch_envelope_value: .res 16
-psg_slot_finepitch_envelope_bank: .res 16
-psg_slot_finepitch_envelope_addr: .res 32
+psg_slot_finepitch_envelope_index: .res 16
 psg_slot_finepitch_envelope_offset: .res 16
 psg_slot_finepitch_envelope_delay: .res 16
 psg_slot_finepitch_envelope_value: .res 16
-psg_slot_duty_envelope_bank: .res 16
-psg_slot_duty_envelope_addr: .res 32
+psg_slot_duty_envelope_index: .res 16
 psg_slot_duty_envelope_offset: .res 16
 psg_slot_duty_envelope_delay: .res 16
 psg_slot_duty_envelope_value: .res 16
-psg_slot_waveform_envelope_bank: .res 16
-psg_slot_waveform_envelope_addr: .res 32
+psg_slot_waveform_envelope_index: .res 16
 psg_slot_waveform_envelope_offset: .res 16
 psg_slot_waveform_envelope_delay: .res 16
 psg_slot_waveform_envelope_value: .res 16
 
+ym_slot_playing: .res 8
 ym_slot_to_channel: .res 8
 ym_slot_to_instrument: .res 8
-ym_slot_volume_envelope_bank: .res 8
-ym_slot_volume_envelope_addr: .res 16
+ym_slot_volume_envelope_index: .res 8
 ym_slot_volume_envelope_offset: .res 8
 ym_slot_volume_envelope_delay: .res 8
 ym_slot_volume_envelope_value: .res 8
-ym_slot_pitch_envelope_bank: .res 8
-ym_slot_pitch_envelope_addr: .res 16
+ym_slot_pitch_envelope_index: .res 8
 ym_slot_pitch_envelope_offset: .res 8
 ym_slot_pitch_envelope_delay: .res 8
 ym_slot_pitch_envelope_value: .res 8
-ym_slot_finepitch_envelope_bank: .res 8
-ym_slot_finepitch_envelope_addr: .res 16
+ym_slot_finepitch_envelope_index: .res 8
 ym_slot_finepitch_envelope_offset: .res 8
 ym_slot_finepitch_envelope_delay: .res 8
 ym_slot_finepitch_envelope_value: .res 8
 ym_slot_fm_parameter_addr: .res 16
 
+pcm_slot_playing: .res 1
 pcm_slot_to_channel: .res 1
 pcm_slot_to_instrument: .res 1
 pcm_bank_position: .res 1
@@ -119,9 +115,9 @@ ym_lfw: .res 1 ; LFO waveform
 ym_pmd: .res 1 ; phase modulation depth
 ym_amd: .res 1 ; amplitude modulation depth
 
-; per YM channel
+; per YM channel (voice)
 ym_rl: .res 8 ; right/left
-ym_fl: .res 8 ; feedback level
+ym_fb: .res 8 ; feedback level
 ym_con: .res 8 ; algorithm / operator connect
 ym_kc: .res 8 ; key code (octave + note)
 ym_kf: .res 8 ; key fraction (pitch bend upwards)
@@ -140,7 +136,6 @@ ym_d1r: .res 32 ; first decay rate
 ym_d2r: .res 32 ; second decay rate (if nonzero, sustain becomes second decay)
 ym_rr: .res 32 ; release rate
 ym_amsen: .res 32 ; amplitude modulation sensitivity enable
-
 
 ; PSG shadow vars
 psg_freql: .res 16

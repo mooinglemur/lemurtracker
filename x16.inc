@@ -317,21 +317,24 @@ x16_inc = 1
 
 .scope YM2151
     .scope Reg
-        TEST          = $01
-        KON           = $08
-        LFRQ          = $18
-        PMD_AMD       = $19
-        CT_W          = $1B
-        RL_FB_CONNECT = $20
-        KC            = $21
-        KF            = $22
-        PMS_AMS       = $23
-        DT1_MUL       = $40
-        TL            = $60
-        KS_AR         = $80
-        AMSEN_D1R     = $A0
-        DT2_D2R       = $C0
-        D1L_RR        = $E0
+        TEST          = $01 ; [1] LFO RESET
+        KON           = $08 ; [6:3] SN [2:0] CN
+        NE_NFRQ       = $0F ; [7] NE [4:0] NFRQ
+        LFRQ          = $18 ; [7:0] LFRQ
+        PMD_AMD       = $19 ; [7] 1=PMD,0=AMD [6:0] PMD/AMD value
+        CT_W          = $1B ; [7:6] CT [1:0] W
+
+        RL_FL_CONNECT = $20 ; [7:6] RL [5:3] FL [2:0] CON
+        KC            = $28 ; [6:4] OCT [3:0] NOTE
+        KF            = $30 ; [7:2] KF
+        PMS_AMS       = $38 ; [6:4] PMS [1:0] AMS
+
+        DT1_MUL       = $40 ; [6:4] DT1 [3:0] MUL
+        TL            = $60 ; [6:0] TL
+        KS_AR         = $80 ; [7:6] KS [4:0] AR
+        AMSEN_D1R     = $A0 ; [7] AMSEN [4:0] D1R
+        DT2_D2R       = $C0 ; [7:6] DT2 [4:0] D2R
+        D1L_RR        = $E0 ; [7:4] D1L [3:0] RR
     .endscope
 .endscope
 
