@@ -315,7 +315,7 @@ found:
 
     lda ltmpb+8 ; DT1_MUL (MUL) M1
     and #7
-    sta ym_dt1,y
+    sta ym_mul,y
 
     lda ltmpb+9 ; DT1_MUL (DT1) M2
     lsr
@@ -326,7 +326,7 @@ found:
 
     lda ltmpb+9 ; DT1_MUL (MUL) M2
     and #7
-    sta ym_dt1+8,y
+    sta ym_mul+8,y
 
     lda ltmpb+10 ; DT1_MUL (DT1) C1
     lsr
@@ -337,7 +337,7 @@ found:
 
     lda ltmpb+10 ; DT1_MUL (MUL) C1
     and #7
-    sta ym_dt1+16,y
+    sta ym_mul+16,y
 
     lda ltmpb+11 ; DT1_MUL (DT1) C2
     lsr
@@ -348,7 +348,7 @@ found:
 
     lda ltmpb+11 ; DT1_MUL (MUL) C2
     and #7
-    sta ym_dt1+24,y
+    sta ym_mul+24,y
 
     lda ltmpb+12 ; TL M1
     sta ym_tl,y
@@ -362,9 +362,169 @@ found:
     lda ltmpb+15 ; TL C2
     sta ym_tl+24,y
 
+    lda ltmpb+16 ; KS_AR (KS) M1
+    clc
+    rol
+    rol
+    rol
+    sta ym_ks,y
 
+    lda ltmpb+16 ; KS_AR (AR) M1
+    and #31
+    sta ym_ar,y
 
+    lda ltmpb+17 ; KS_AR (KS) M2
+    clc
+    rol
+    rol
+    rol
+    sta ym_ks+8,y
 
+    lda ltmpb+17 ; KS_AR (AR) M2
+    and #31
+    sta ym_ar+8,y
+
+    lda ltmpb+18 ; KS_AR (KS) C1
+    clc
+    rol
+    rol
+    rol
+    sta ym_ks+16,y
+
+    lda ltmpb+18 ; KS_AR (AR) C1
+    and #31
+    sta ym_ar+16,y
+
+    lda ltmpb+19 ; KS_AR (KS) C2
+    clc
+    rol
+    rol
+    rol
+    sta ym_ks+24,y
+
+    lda ltmpb+19 ; KS_AR (AR) C2
+    and #31
+    sta ym_ar+24,y
+
+    lda ltmpb+20 ; AMSEN_D1R (AMSEN) M1
+    and #$80
+    sta ym_amsen,y
+
+    lda ltmpb+20 ; AMSEN_D1R (D1R) M1
+    and #31
+    sta ym_d1r,y
+
+    lda ltmpb+21 ; AMSEN_D1R (AMSEN) M2
+    and #$80
+    sta ym_amsen+8,y
+
+    lda ltmpb+21 ; AMSEN_D1R (D1R) M2
+    and #31
+    sta ym_d1r+8,y
+
+    lda ltmpb+22 ; AMSEN_D1R (AMSEN) C1
+    and #$80
+    sta ym_amsen+16,y
+
+    lda ltmpb+22 ; AMSEN_D1R (D1R) C1
+    and #31
+    sta ym_d1r+16,y
+
+    lda ltmpb+23 ; AMSEN_D1R (AMSEN) C2
+    and #$80
+    sta ym_amsen+24,y
+
+    lda ltmpb+23 ; AMSEN_D1R (D1R) C2
+    and #31
+    sta ym_d1r+24,y
+
+    lda ltmpb+24 ; DT2_D2R (DT2) M1
+    clc
+    rol
+    rol
+    rol
+    sta ym_dt2,y
+
+    lda ltmpb+24 ; DT2_D2R (D2R) M1
+    and #31
+    sta ym_d2r,y
+
+    lda ltmpb+25 ; DT2_D2R (DT2) M2
+    clc
+    rol
+    rol
+    rol
+    sta ym_dt2+8,y
+
+    lda ltmpb+25 ; DT2_D2R (D2R) M2
+    and #31
+    sta ym_d2r+8,y
+
+    lda ltmpb+26 ; DT2_D2R (DT2) C1
+    clc
+    rol
+    rol
+    rol
+    sta ym_dt2+16,y
+
+    lda ltmpb+26 ; DT2_D2R (D2R) C1
+    and #31
+    sta ym_d2r+16,y
+
+    lda ltmpb+27 ; DT2_D2R (DT2) C2
+    clc
+    rol
+    rol
+    rol
+    sta ym_dt2+24,y
+
+    lda ltmpb+27 ; DT2_D2R (D2R) C2
+    and #31
+    sta ym_d2r+24,y
+
+    lda ltmpb+28 ; D1L_RR (D1L) M1
+    lsr
+    lsr
+    lsr
+    lsr
+    sta ym_d1l,y
+
+    lda ltmpb+28 ; D1L_RR (RR) M1
+    and #15
+    sta ym_rr,y
+
+    lda ltmpb+29 ; D1L_RR (D1L) M2
+    lsr
+    lsr
+    lsr
+    lsr
+    sta ym_d1l+8,y
+
+    lda ltmpb+29 ; D1L_RR (RR) M2
+    and #15
+    sta ym_rr+8,y
+
+    lda ltmpb+30 ; D1L_RR (D1L) C1
+    lsr
+    lsr
+    lsr
+    lsr
+    sta ym_d1l+16,y
+
+    lda ltmpb+30 ; D1L_RR (RR) C1
+    and #15
+    sta ym_rr+16,y
+
+    lda ltmpb+31 ; D1L_RR (D1L) C2
+    lsr
+    lsr
+    lsr
+    lsr
+    sta ym_d1l+24,y
+
+    lda ltmpb+31 ; D1L_RR (RR) C2
+    and #15
+    sta ym_rr+24,y
 
 
 end:
