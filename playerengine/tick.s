@@ -9,8 +9,8 @@ check_playback_start:
     inc redraw
 
     lda #$FF
-    sta delay_sub
-    sta delay
+    sta PlayerState::delay_sub
+    sta PlayerState::delay
 
     jsr load_row
 
@@ -21,9 +21,9 @@ check_playback:
     cmp #XF_STATE_PLAYBACK
     bne check_playback_stop
 
-    lda base_bank
+    lda PlayerState::base_bank
     sta X16::Reg::RAMBank
-    dec delay
+    dec PlayerState::delay
     bpl :+
         jsr Grid::Func::increment_y_without_starting_selection
         jsr load_row

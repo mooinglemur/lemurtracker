@@ -22,6 +22,71 @@
         bra :-
     :
 
+    ; Voice display
+    lda PlayerState::base_bank
+    sta X16::Reg::RAMBank
+
+    ; display psg header
+    VERA_SET_ADDR ($006C+$1B000),2
+    ldx #0
+    :
+        lda psg_text,x
+        beq :+
+        sta Vera::Reg::Data0
+        inx
+        bra :-
+    :
+    ; display the psg voice status
+    VERA_SET_ADDR ($0077+$1B000),2
+    ldx #0
+psg_voice_loop:
+    ldy #GridState::COLOR_VOICE_UNALLOCATED
+    lda PlayerState::psg_slot_to_channel,x
+    cmp #$FF
+    beq psg_voice_loop_end
+    ldy #GridState::COLOR_VOICE_ALLOCATED
+    lda PlayerState::psg_slot_playing,x
+    beq psg_voice_loop_end
+    ldy #GridState::COLOR_VOICE_PLAYING
+psg_voice_loop_end:
+    sty Vera::Reg::Data0
+    inx
+    cpx #16
+    bcc psg_voice_loop
+
+
+    VERA_SET_ADDR ($016C+$1B000),2
+    ldx #0
+    :
+        lda opm_text,x
+        beq :+
+        sta Vera::Reg::Data0
+        inx
+        bra :-
+    :
+
+    ; display the fm voice status
+    VERA_SET_ADDR ($0177+$1B000),2
+    ldx #0
+ym_voice_loop:
+    ldy #GridState::COLOR_VOICE_UNALLOCATED
+    lda PlayerState::ym_slot_to_channel,x
+    cmp #$FF
+    beq ym_voice_loop_end
+    ldy #GridState::COLOR_VOICE_ALLOCATED
+    lda PlayerState::ym_slot_playing,x
+    beq ym_voice_loop_end
+    ldy #GridState::COLOR_VOICE_PLAYING
+ym_voice_loop_end:
+    sty Vera::Reg::Data0
+    inx
+    cpx #8
+    bcc ym_voice_loop
+
+
+
+
+
     ; Grid Header
     VERA_SET_ADDR ($0106+$1B000),2
 
@@ -521,3 +586,5 @@ end_cursor:
 
 title_text: .asciiz "LemurTracker v0.0"
 header_text: .asciiz "Pattern [F1]"
+psg_text: .asciiz "PSG: 0123456789ABCDEF"
+opm_text: .asciiz "OPM: 01234567"

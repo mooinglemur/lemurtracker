@@ -1,7 +1,6 @@
 .proc load_row
     ; tmp8b - buffer to hold cell
     ; tmp1 - channel
-
     ; load the row
     jsr SeqState::update_grid_patterns
 
@@ -21,12 +20,18 @@ channel_loop:
         bcc :-
 
     ; switch back to PlayerEngine bank
-    lda base_bank
+    lda PlayerState::base_bank
     sta X16::Reg::RAMBank
+
+    ; no note this cell? don't change the instrument
+    lda tmp8b
+    cmp #3 ; (0 = no note, 1 = cut, 2 = release)
+    bcc same_instrument
+
 
     ; did the instrument change?
     ldx tmp1
-    lda channel_to_instrument,x
+    lda PlayerState::channel_to_instrument,x
     cmp tmp8b+1
     beq same_instrument
 
@@ -46,12 +51,12 @@ channel_loop:
     jsr release_voices
     ldx tmp1
     lda #1
-    sta channel_repatch,x
+    sta PlayerState::channel_repatch,x
 
     ; now assign the instrument
     lda tmp8b+1
+    sta PlayerState::channel_to_instrument,x
     jsr assign_voices ; x = channel, a = instrument
-
 
 
 same_instrument:
@@ -66,15 +71,15 @@ same_instrument:
     bcc channel_loop
 
     ; now add speed(_sub) to delay(_sub)
-    lda base_bank
+    lda PlayerState::base_bank
     sta X16::Reg::RAMBank
-    lda speed_sub
+    lda PlayerState::speed_sub
     clc
-    adc delay_sub
-    sta delay_sub
-    lda speed
-    adc delay
-    sta delay
+    adc PlayerState::delay_sub
+    sta PlayerState::delay_sub
+    lda PlayerState::speed
+    adc PlayerState::delay
+    sta PlayerState::delay
 
     rts
 .endproc

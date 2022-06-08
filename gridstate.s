@@ -4,6 +4,10 @@ NUM_CHANNELS = 8
 MAX_OCTAVE = 8 ; max octave for the editor (Z key is C in that octave)
 MAX_STEP = 15
 
+COLOR_VOICE_UNALLOCATED = $B1
+COLOR_VOICE_ALLOCATED = $21
+COLOR_VOICE_PLAYING = $51
+
 ; vars that keep state
 x_position: .res 1 ; which tracker column (channel) are we in
 y_position: .res 1 ; which tracker row are we in

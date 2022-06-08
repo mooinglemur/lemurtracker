@@ -47,6 +47,7 @@ framecounter: .res 2
 .include "gridstate.s"
 .include "seqstate.s"
 .include "inststate.s"
+.include "playerstate.s"
 .include "util.s"
 .include "textfield.s"
 

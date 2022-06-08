@@ -1,25 +1,25 @@
 .proc panic
-    lda PlayerEngine::base_bank
+    lda PlayerState::base_bank
     sta X16::Reg::RAMBank
 
     ; clear all mappings
     lda #$FF
 
-    sta pcm_slot_to_channel
-    sta pcm_slot_to_instrument
+    sta PlayerState::pcm_slot_to_channel
+    sta PlayerState::pcm_slot_to_instrument
 
     ldx #0
     :
-        sta psg_slot_to_channel,x
-        sta psg_slot_to_instrument,x
-        sta ym_slot_to_channel,x
-        sta ym_slot_to_instrument,x
+        sta PlayerState::psg_slot_to_channel,x
+        sta PlayerState::psg_slot_to_instrument,x
+        sta PlayerState::ym_slot_to_channel,x
+        sta PlayerState::ym_slot_to_instrument,x
         inx
         cpx #8
         bcc :-
     :
-        sta psg_slot_to_channel,x
-        sta psg_slot_to_instrument,x
+        sta PlayerState::psg_slot_to_channel,x
+        sta PlayerState::psg_slot_to_instrument,x
         inx
         cpx #16
         bcc :-
@@ -28,42 +28,42 @@
     ldx #0
     :
         lda #0
-        sta channel_volume_rate_sub,x
-        sta channel_volume_rate,x
-        sta channel_volume_sub,x
+        sta PlayerState::channel_volume_rate_sub,x
+        sta PlayerState::channel_volume_rate,x
+        sta PlayerState::channel_volume_sub,x
 
-        sta channel_pitch_rate_sub,x
-        sta channel_pitch_rate,x
-        sta channel_pitch_target,x
-        sta channel_pitch_sub,x
-        sta channel_pitch,x
+        sta PlayerState::channel_pitch_rate_sub,x
+        sta PlayerState::channel_pitch_rate,x
+        sta PlayerState::channel_pitch_target,x
+        sta PlayerState::channel_pitch_sub,x
+        sta PlayerState::channel_pitch,x
 
-        sta channel_finepitch_rate_sub,x
-        sta channel_finepitch_rate,x
-        sta channel_finepitch_target,x
-        sta channel_finepitch_sub,x
-        sta channel_finepitch,x
+        sta PlayerState::channel_finepitch_rate_sub,x
+        sta PlayerState::channel_finepitch_rate,x
+        sta PlayerState::channel_finepitch_target,x
+        sta PlayerState::channel_finepitch_sub,x
+        sta PlayerState::channel_finepitch,x
 
-        sta channel_vibrato_rate_sub,x
-        sta channel_vibrato_rate,x
-        sta channel_vibrato_target,x
-        sta channel_vibrato_sub,x
-        sta channel_vibrato,x
+        sta PlayerState::channel_vibrato_rate_sub,x
+        sta PlayerState::channel_vibrato_rate,x
+        sta PlayerState::channel_vibrato_target,x
+        sta PlayerState::channel_vibrato_sub,x
+        sta PlayerState::channel_vibrato,x
 
-        sta channel_tremolo_rate_sub,x
-        sta channel_tremolo_rate,x
-        sta channel_tremolo_target,x
-        sta channel_tremolo_sub,x
-        sta channel_tremolo,x
+        sta PlayerState::channel_tremolo_rate_sub,x
+        sta PlayerState::channel_tremolo_rate,x
+        sta PlayerState::channel_tremolo_target,x
+        sta PlayerState::channel_tremolo_sub,x
+        sta PlayerState::channel_tremolo,x
 
-        sta channel_portamento,x
+        sta PlayerState::channel_portamento,x
 
         lda #$7F
-        sta channel_volume,x
-        sta channel_volume_target,x
+        sta PlayerState::channel_volume,x
+        sta PlayerState::channel_volume_target,x
 
         lda #$FF
-        sta channel_to_instrument,x
+        sta PlayerState::channel_to_instrument,x
 
         inx
         cpx #GridState::NUM_CHANNELS

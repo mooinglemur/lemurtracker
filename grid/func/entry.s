@@ -43,7 +43,8 @@ entry:
     rts
 @insth: ; changing the instrument high nybble
     lda (GridState::lookup_addr)
-    beq @end
+    cmp #3
+    bcc @end
     lda tmp1
     jsr @key_to_hexh
     cmp #$ff
@@ -64,7 +65,8 @@ entry:
     bra @end
 @instl: ; changing the instrument low nybble
     lda (GridState::lookup_addr)
-    beq @end
+    cmp #3
+    bcc @end
     lda tmp1
     jsr @key_to_hex
     cmp #$ff

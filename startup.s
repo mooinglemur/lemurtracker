@@ -101,11 +101,13 @@ versionmessagedone:
 
     jsr SeqState::init
 
-    lda PlayerEngine::base_bank
+    lda PlayerState::base_bank
     sta X16::Reg::RAMBank
     lda #15
-    sta PlayerEngine::speed
-    stz PlayerEngine::speed_sub
+    sta PlayerState::speed
+    stz PlayerState::speed_sub
+
+    jsr PlayerEngine::panic
 
     clc
     rts
