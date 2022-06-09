@@ -2,7 +2,9 @@
     ; if channel was not in use, just return
     lda PlayerState::channel_to_instrument,x
     cmp #$FF
-    beq end
+    bne :+
+        jmp end
+    :
 
     stx ltmp1
 
@@ -33,6 +35,20 @@ fm_loop:
         sty X16::Reg::YM2151::Data
         lda #0
         sta PlayerState::ym_slot_playing,y
+        cpy #7
+        bne :+
+        ; clear the noise bit if we're freeing slot #7
+        lda PlayerState::ym_ne
+        and #$7F
+        sta PlayerState::ym_ne
+
+        ldx #YM2151::Reg::NE_NFRQ
+
+        jsr ym_wait
+        stx X16::Reg::YM2151::Ctrl
+        nop
+        nop
+        sta X16::Reg::YM2151::Data
     :
     iny
     cpy #8

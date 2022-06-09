@@ -74,6 +74,14 @@ ym_voice_loop:
     cmp #$FF
     beq ym_voice_loop_end
     ldy #GridState::COLOR_VOICE_ALLOCATED
+    ; check to see if the noise enable bit is set on slot 7
+    cpx #7
+    bne :+
+        lda PlayerState::ym_ne
+        and #$80
+        beq :+
+        ldy #GridState::COLOR_VOICE_ALLOCATED_NOISE
+    :
     lda PlayerState::ym_slot_playing,x
     beq ym_voice_loop_end
     ldy #GridState::COLOR_VOICE_PLAYING

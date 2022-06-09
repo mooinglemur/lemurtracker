@@ -70,14 +70,3 @@ ltmp2: .res 1 ; master instrument
 ltmp3: .res 1 ; layer index when looping
 ltmp4: .res 1 ; layer sub-instrument
 .endproc
-
-
-
-
-
-
-.proc assign_voice_ymnoise
-
-    rts
-ltmpb: .res 8
-.endproc

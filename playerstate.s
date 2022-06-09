@@ -57,6 +57,7 @@ ym_slot_finepitch_envelope_offset: .res 8
 ym_slot_finepitch_envelope_delay: .res 8
 ym_slot_finepitch_envelope_value: .res 8
 ym_slot_fm_parameter_addr: .res 16
+ymnoise_slot_noisefreq_envelope_index: .res 1
 
 pcm_slot_playing: .res 1
 pcm_slot_to_channel: .res 1
