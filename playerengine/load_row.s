@@ -64,6 +64,7 @@ same_instrument:
 
 
 
+    ; set the note value, honoring portamento or other non-retrigger if appropriate
 
     inc tmp1
     ldx tmp1

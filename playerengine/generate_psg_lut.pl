@@ -1,5 +1,7 @@
 #!/bin/env perl
 
+# Usage: ./generate_psg_lut.pl > psgfreq.inc
+
 use v5.16;
 use warnings;
 use strict;
@@ -8,32 +10,37 @@ use Math::Round qw(round);
 
 my $a4_reference_freq = 440;
 
-# This extrapolates the frequencies of the the 128 midi notes, 0-127
-# plus an extra one to calculate deltas
+# These are 1/768 of an octave, or 1/64 of a semitone
+# so that we can fine-pitch the PSG like the YM2151
+# linear by note pitch rather than linear by frequency
 
-my @notes = (
-    (reverse map { $a4_reference_freq / ((2**(1/12))**$_) } (0..69)),
-    map { $a4_reference_freq * ((2**(1/12))**$_) } (1..59)
+# 1.5kB of lookup tables is unfortunately large,
+# and as it turns out, cumbersome to look things up in.
+
+my @freqs = (
+    map { ($a4_reference_freq * 16) * ((2**(1/768))**$_) } (0..959)
 );
 
 # Turn them into PSG frequencies
 
 my @psgfreqs = (
-    map { $_ / (48828.125 / (2**17)) } @notes[0..127]
+    map { $_ / (48828.125 / (2**17)) } @freqs[192..959]
 );
 
-my @delta64 = (
-    map { $notes[$_+1] - $notes[$_] } (0..127)
-);
+my @notenames = qw(c cs d ds e f fs g gs a as b);
 
-print "psgnote_lo: .byte ";
-say join(",",map { sprintf("\$%02x",round($_) % 256) } @psgfreqs);
+    say "noteindex:";
 
-print "psgnote_hi: .byte ";
-say join(",",map { sprintf("\$%02x",round($_/256)) } @psgfreqs);
+for my $note (@notenames) {
+    say "noteindex_${note}: .word psgfreq_${note}_lo,psgfreq_${note}_hi";
+}
 
-print "psgdelta_sub: .byte ";
-say join(",",map { sprintf("\$%02x",round($_*4) % 256) } @delta64);
+for (my ($i,$j)=(0,0);$i < 768;$i += 64,$j++) {
+    print "psgfreq_${notenames[$j]}_lo: .byte ";
+    say join(",",map { sprintf("\$%02x",round($_) % 256) } @psgfreqs[$i..$i+63]);
+}
 
-print "psgdelta: .byte ";
-say join(",",map { sprintf("\$%02x",round($_/64)) } @delta64);
+for (my ($i,$j)=(0,0);$i < 768;$i += 64,$j++) {
+    print "psgfreq_${notenames[$j]}_hi: .byte ";
+    say join(",",map { sprintf("\$%02x",round($_/256)) } @psgfreqs[$i..$i+63]);
+}

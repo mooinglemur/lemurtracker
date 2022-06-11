@@ -7,6 +7,7 @@ tmp2: .res 1
 
 
 
+.include "playerengine/psgfreq.inc"
 .include "playerengine/ym_wait.s"
 .include "playerengine/panic.s"
 .include "playerengine/release_voices.s"
