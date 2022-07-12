@@ -13,6 +13,7 @@ check_playback_start:
     sta PlayerState::delay
 
     jsr load_row
+    jsr tick_play
 
     lda #XF_STATE_PLAYBACK
     sta xf_state
@@ -20,6 +21,7 @@ check_playback:
     lda xf_state
     cmp #XF_STATE_PLAYBACK
     bne check_playback_stop
+   
 
     lda PlayerState::base_bank
     sta X16::Reg::RAMBank
@@ -27,6 +29,7 @@ check_playback:
     bpl :+
         jsr Grid::Func::increment_y_without_starting_selection
         jsr load_row
+        jsr tick_play
     :
 
     bra end

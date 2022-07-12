@@ -61,14 +61,27 @@ channel_loop:
 
 
 same_instrument:
-    ; then process all of the effects (including delay triggers which reset channel_trigger)
+    ; then process all of the effects
 
 
+    ; channel trigger processing
+    lda tmp8b
+    beq no_note ; skip if no note
+    ; first set default channel trigger
+    lda #1
+    ldx tmp1
+    sta PlayerState::channel_trigger,x
+    ; if delay trigger, set channel_trigger to that many ticks
 
-    ; set the note value, honoring portamento or other non-trigger if appropriate,
-    ; unless the instrument changed in which trigger was set earlier and remains valid
-    
+    ; if portamento 3xx, set channel_trigger to 0 but only if not cut or release (note val >= 3)
+process_note:
+    ; set the note value if it exists
+    lda tmp8b
+    ldx tmp1
+    sta PlayerState::channel_note,x
 
+no_note:
+    ; move on to the next channel if appropriate
     inc tmp1
     ldx tmp1
     cpx #GridState::NUM_CHANNELS
