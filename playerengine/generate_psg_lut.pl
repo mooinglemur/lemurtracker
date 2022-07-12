@@ -42,5 +42,23 @@ for (my ($i,$j)=(0,0);$i < 768;$i += 64,$j++) {
 
 for (my ($i,$j)=(0,0);$i < 768;$i += 64,$j++) {
     print "psgfreq_${notenames[$j]}_hi: .byte ";
-    say join(",",map { sprintf("\$%02x",round($_/256)) } @psgfreqs[$i..$i+63]);
+    say join(",",map { sprintf("\$%02x",int($_/256)) } @psgfreqs[$i..$i+63]);
 }
+
+# Now let's do the entire range of pure note frequencies
+
+my @notes = ( # A-2 (A negative 2) onward, so we shift the start so that C-1 (C negative 1) is note 0
+    map { ($a4_reference_freq / (2**6)) * ((2**(1/12))**$_) } (3..130)
+);
+
+my @psgnotefreqs = (
+    map { $_ / (48828.125 / (2**17)) } @notes
+);
+
+print "psgfreq_notes_lo: .byte ";
+say join(",",map { sprintf("\$%02x",round($_) % 256) } @psgnotefreqs);
+
+print "psgfreq_notes_hi: .byte ";
+say join(",",map { sprintf("\$%02x",int($_/256)) } @psgnotefreqs);
+
+

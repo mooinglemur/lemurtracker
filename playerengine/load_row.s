@@ -52,6 +52,7 @@ channel_loop:
     ldx tmp1
     lda #1
     sta PlayerState::channel_repatch,x
+    sta PlayerState::channel_trigger,x
 
     ; now assign the instrument
     lda tmp8b+1
@@ -64,7 +65,9 @@ same_instrument:
 
 
 
-    ; set the note value, honoring portamento or other non-retrigger if appropriate
+    ; set the note value, honoring portamento or other non-trigger if appropriate,
+    ; unless the instrument changed in which trigger was set earlier and remains valid
+    
 
     inc tmp1
     ldx tmp1
