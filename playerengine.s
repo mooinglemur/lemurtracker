@@ -16,7 +16,6 @@ tmp2: .res 1
 .include "playerengine/assign_voice_ymnoise.s"
 .include "playerengine/assign_voices.s"
 .include "playerengine/load_row.s"
-.include "playerengine/tick_play.s"
 .include "playerengine/tick.s"
 
 
