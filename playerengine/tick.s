@@ -30,6 +30,8 @@ check_playback:
         jsr load_row
     :
 
+    jsr tick_play
+
     bra end
 
 check_playback_stop:

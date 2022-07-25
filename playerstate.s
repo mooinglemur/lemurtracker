@@ -17,7 +17,7 @@ speed_sub: .res 1
 delay: .res 1
 delay_sub: .res 1
 
-psg_slot_playing: .res 16
+psg_slot_playing: .res 16 ; if playing is 0, we're either cut or released.  This value gets set on note trigger, and is set to 0 by the advance_macros function when it notices that the note has been released or cut
 psg_slot_to_channel: .res 16
 psg_slot_to_instrument: .res 16
 psg_slot_volume_envelope_index: .res 16
