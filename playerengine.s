@@ -16,6 +16,8 @@ tmp2: .res 1
 .include "playerengine/assign_voice_ymnoise.s"
 .include "playerengine/assign_voices.s"
 .include "playerengine/advance_envelopes.s"
+.include "playerengine/trigger_note_ym.s"
+.include "playerengine/trigger_note_psg.s"
 .include "playerengine/trigger_note.s"
 .include "playerengine/tick_play.s"
 .include "playerengine/load_row.s"
